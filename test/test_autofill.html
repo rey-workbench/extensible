@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIO Extension - Autofill Test Page</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 40px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container {
+      width: 100%;
+      max-width: 540px;
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    h1 {
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 14px;
+      background: #0f172a;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      color: #ffffff;
+      outline: none;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: #3b82f6;
+    }
+    .result-box {
+      margin-top: 20px;
+      padding: 12px;
+      background: #0f172a;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: monospace;
+      color: #38bdf8;
+    }
+    button[type="submit"] {
+      padding: 12px 20px;
+      background: #3b82f6;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Test Email Autofill</h1>
+    <p>Install the AIO Chrome Extension in Developer Mode and test the autofill buttons below.</p>
+
+    <form id="testForm">
+      <!-- Standard type="email" -->
+      <div class="form-group">
+        <label for="email1">1. Standard &lt;input type="email"&gt;:</label>
+        <input type="email" id="email1" name="user_email" placeholder="name@example.com" />
+      </div>
+
+      <!-- Text input with email name/id -->
+      <div class="form-group">
+        <label for="userEmail">2. &lt;input type="text" id="userEmail"&gt;:</label>
+        <input type="text" id="userEmail" name="email" placeholder="Enter your business email" />
+      </div>
+
+      <!-- Autocomplete email -->
+      <div class="form-group">
+        <label for="acEmail">3. &lt;input autocomplete="email"&gt;:</label>
+        <input type="text" id="acEmail" autocomplete="email" placeholder="Account recovery email" />
+      </div>
+
+      <button type="submit">Submit Form</button>
+    </form>
+
+    <div class="result-box" id="resultLog">
+      Values will appear here when form inputs change...
+    </div>
+  </div>
+
+  <script>
+    const inputs = document.querySelectorAll('input');
+    const log = document.getElementById('resultLog');
+
+    function updateLog() {
+      const vals = Array.from(inputs).map(i => `${i.id || i.name}: "${i.value}"`);
+      log.textContent = vals.join('\n');
+    }
+
+    inputs.forEach(input => {
+      input.addEventListener('input', updateLog);
+      input.addEventListener('change', updateLog);
+    });
+
+    document.getElementById('testForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      alert('Form submitted with:\\n' + Array.from(inputs).map(i => `${i.id}: ${i.value}`).join('\\n'));
+    });
+  </script>
+</body>
+</html>

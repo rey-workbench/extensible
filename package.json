@@ -1,0 +1,40 @@
+{
+  "name": "my-aio-extension",
+  "version": "1.0.0",
+  "description": "Modular OOP MVC Chrome Extension Suite with TempMail autofill and inbox reader",
+  "type": "module",
+  "scripts": {
+    "icons": "node scripts/generate_icons.js",
+    "typecheck": "tsc --noEmit",
+    "build": "node scripts/build.js",
+    "test": "npx -y tsx test/verify_model.ts"
+  },
+  "keywords": [
+    "chrome-extension",
+    "tempmail",
+    "autofill",
+    "inbox",
+    "oop",
+    "mvc"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/chrome": "^0.2.9",
+    "@types/node": "^26.5.0",
+    "esbuild": "^0.28.2",
+    "knip": "^6.34.0",
+    "typescript": "^7.0.2"
+  },
+  "knip": {
+    "entry": [
+      "src/background/main.ts",
+      "src/content/main.ts",
+      "src/popup/main.ts"
+    ],
+    "project": [
+      "src/**/*.ts"
+    ],
+    "esbuild": false
+  }
+}
