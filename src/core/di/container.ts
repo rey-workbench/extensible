@@ -1,4 +1,10 @@
-import type { ClassConstructor, ContextOptions, ExecutionContext, ModuleDefinition, RegisteredModule } from '@/core/types/index';
+import type {
+  ClassConstructor,
+  ContextOptions,
+  ExecutionContext,
+  ModuleDefinition,
+  RegisteredModule,
+} from "@/core/types/index";
 
 interface ProviderBinding {
   readonly token: any;
@@ -17,7 +23,10 @@ export class Container {
   private readonly _resolvingStack = new Set<any>();
   private _contextOptions: ContextOptions = {};
 
-  async registerModule(moduleDef: ModuleDefinition, contextOptions: ContextOptions = {}): Promise<RegisteredModule> {
+  async registerModule(
+    moduleDef: ModuleDefinition,
+    contextOptions: ContextOptions = {}
+  ): Promise<RegisteredModule> {
     this._contextOptions = contextOptions;
     const moduleClass = moduleDef.module || moduleDef;
     if (this._modules.has(moduleClass)) {
@@ -41,14 +50,15 @@ export class Container {
 
     // Phase 3: Eagerly resolve provider singletons (order-independent)
     for (const provider of providers) {
-      const token = (typeof provider === 'object' && provider !== null && 'provide' in provider)
-        ? provider.provide
-        : provider;
+      const token =
+        typeof provider === "object" && provider !== null && "provide" in provider
+          ? provider.provide
+          : provider;
       this.get(token);
     }
 
     // Phase 4: Instantiate context-matching controllers
-    const currentContext = contextOptions.context || 'all';
+    const currentContext = contextOptions.context || "all";
     const activeControllers: any[] = [];
 
     for (const controller of controllers) {
@@ -59,14 +69,14 @@ export class Container {
     }
 
     const registered: RegisteredModule = {
-      id: moduleDef.id || (typeof moduleClass === 'function' ? moduleClass.name : 'module'),
-      name: moduleDef.name || moduleDef.id || 'Module',
-      description: moduleDef.description || '',
-      icon: moduleDef.icon || '',
+      id: moduleDef.id || (typeof moduleClass === "function" ? moduleClass.name : "module"),
+      name: moduleDef.name || moduleDef.id || "Module",
+      description: moduleDef.description || "",
+      icon: moduleDef.icon || "",
       moduleDef,
       moduleClass,
       controllers: activeControllers,
-      exports
+      exports,
     };
 
     this._modules.set(moduleClass, registered);
@@ -78,7 +88,7 @@ export class Container {
     let providerClass = provider;
     let useValue: any;
 
-    if (typeof provider === 'object' && provider !== null && 'provide' in provider) {
+    if (typeof provider === "object" && provider !== null && "provide" in provider) {
       token = provider.provide;
       useValue = provider.useValue;
       providerClass = provider.useClass || provider.provide;
@@ -94,11 +104,11 @@ export class Container {
     target: ExecutionContext | undefined,
     current: ExecutionContext | readonly ExecutionContext[]
   ): boolean {
-    const targetCtx = target || 'all';
+    const targetCtx = target || "all";
     if (Array.isArray(current)) {
-      return targetCtx === 'all' || current.includes(targetCtx);
+      return targetCtx === "all" || current.includes(targetCtx);
     }
-    return current === 'all' || targetCtx === 'all' || targetCtx === current;
+    return current === "all" || targetCtx === "all" || targetCtx === current;
   }
 
   get<T>(token: any): T {
@@ -135,7 +145,9 @@ export class Container {
 
   private _resolveDefinition(def: ProviderBinding): any {
     if (this._resolvingStack.has(def.token)) {
-      const cycle = [...this._resolvingStack, def.token].map((t) => t?.name || String(t)).join(' -> ');
+      const cycle = [...this._resolvingStack, def.token]
+        .map((t) => t?.name || String(t))
+        .join(" -> ");
       throw new Error(`[DI Container] Circular dependency detected: ${cycle}`);
     }
 
@@ -171,13 +183,13 @@ export class Container {
 
   async init(): Promise<void> {
     for (const [, instance] of this._providers) {
-      if (typeof instance?.onModuleInit === 'function') {
+      if (typeof instance?.onModuleInit === "function") {
         await instance.onModuleInit();
       }
     }
     for (const [, module] of this._modules) {
       for (const ctrl of module.controllers) {
-        if (typeof ctrl?.onModuleInit === 'function') {
+        if (typeof ctrl?.onModuleInit === "function") {
           await ctrl.onModuleInit();
         }
       }
@@ -187,13 +199,13 @@ export class Container {
   async destroy(): Promise<void> {
     for (const [, module] of this._modules) {
       for (const ctrl of module.controllers) {
-        if (typeof ctrl?.onModuleDestroy === 'function') {
+        if (typeof ctrl?.onModuleDestroy === "function") {
           await ctrl.onModuleDestroy();
         }
       }
     }
     for (const [, instance] of this._providers) {
-      if (typeof instance?.onModuleDestroy === 'function') {
+      if (typeof instance?.onModuleDestroy === "function") {
         await instance.onModuleDestroy();
       }
     }
@@ -204,7 +216,7 @@ export class Container {
   }
 
   private _instantiate(TargetClass: any, contextOptions: ContextOptions): any {
-    if (typeof TargetClass !== 'function') {
+    if (typeof TargetClass !== "function") {
       return TargetClass;
     }
 
@@ -212,7 +224,7 @@ export class Container {
     const dependencies: any[] = [];
 
     for (const depToken of injectTokens) {
-      if (depToken === 'CONTEXT_OPTIONS') {
+      if (depToken === "CONTEXT_OPTIONS") {
         dependencies.push(contextOptions);
       } else {
         dependencies.push(this.get(depToken));

@@ -1,5 +1,5 @@
-import { ExtensionUtils } from '@/core/utils/extension.utils';
-import type { ApiResponse } from '@/core/types/api.types';
+import type { ApiResponse } from "@/core/types/api.types";
+import { ExtensionUtils } from "@/core/utils/extension.utils";
 
 export type MessageHandler<P = any, R = any> = (
   payload: P,
@@ -13,7 +13,13 @@ export type MessageHandler<P = any, R = any> = (
 export class MessageRouterService {
   private readonly _handlers = new Map<string, MessageHandler>();
   private _isListening = false;
-  private _listenerRef: ((message: any, sender: chrome.runtime.MessageSender, sendResponse: (response?: any) => void) => boolean) | null = null;
+  private _listenerRef:
+    | ((
+        message: any,
+        sender: chrome.runtime.MessageSender,
+        sendResponse: (response?: any) => void
+      ) => boolean)
+    | null = null;
 
   subscribe<P = any, R = any>(pattern: string, handler: MessageHandler<P, R>): void {
     this._handlers.set(pattern, handler as MessageHandler);
@@ -32,20 +38,22 @@ export class MessageRouterService {
   }
 
   startListening(): void {
-    if (this._isListening || typeof chrome === 'undefined' || !chrome.runtime?.onMessage) {
+    if (this._isListening || typeof chrome === "undefined" || !chrome.runtime?.onMessage) {
       return;
     }
 
     this._isListening = true;
     this._listenerRef = (message, sender, sendResponse) => {
-      if (!message || typeof message.action !== 'string') {
+      if (!message || typeof message.action !== "string") {
         return false;
       }
 
       // Security check: restrict messages to our extension context only
-      if (typeof chrome !== 'undefined' && chrome.runtime?.id) {
+      if (typeof chrome !== "undefined" && chrome.runtime?.id) {
         if (sender.id && sender.id !== chrome.runtime.id) {
-          console.warn(`[MessageRouterService] Blocked message from unauthorized sender: ${sender.id}`);
+          console.warn(
+            `[MessageRouterService] Blocked message from unauthorized sender: ${sender.id}`
+          );
           return false;
         }
       }
@@ -90,7 +98,12 @@ export class MessageRouterService {
   }
 
   stopListening(): void {
-    if (this._isListening && this._listenerRef && typeof chrome !== 'undefined' && chrome.runtime?.onMessage) {
+    if (
+      this._isListening &&
+      this._listenerRef &&
+      typeof chrome !== "undefined" &&
+      chrome.runtime?.onMessage
+    ) {
       chrome.runtime.onMessage.removeListener(this._listenerRef);
       this._isListening = false;
       this._listenerRef = null;
@@ -98,8 +111,8 @@ export class MessageRouterService {
   }
 
   async send<T = unknown>(action: string, payload: unknown = null): Promise<T> {
-    if (typeof chrome === 'undefined' || !chrome.runtime?.sendMessage) {
-      throw new Error('Chrome runtime unavailable');
+    if (typeof chrome === "undefined" || !chrome.runtime?.sendMessage) {
+      throw new Error("Chrome runtime unavailable");
     }
 
     return new Promise<T>((resolve, reject) => {
@@ -107,7 +120,7 @@ export class MessageRouterService {
         if (chrome.runtime.lastError) {
           reject(new Error(chrome.runtime.lastError.message));
         } else if (response && response.success === false) {
-          reject(new Error(response.error || 'Request failed'));
+          reject(new Error(response.error || "Request failed"));
         } else {
           // SAFETY: response data is typed as T
           resolve((response ? response.data : null) as T);
@@ -117,8 +130,8 @@ export class MessageRouterService {
   }
 
   async sendToTab<T = unknown>(tabId: number, action: string, payload: unknown = null): Promise<T> {
-    if (typeof chrome === 'undefined' || !chrome.tabs?.sendMessage) {
-      throw new Error('Chrome tabs API unavailable');
+    if (typeof chrome === "undefined" || !chrome.tabs?.sendMessage) {
+      throw new Error("Chrome tabs API unavailable");
     }
 
     return new Promise<T>((resolve, reject) => {
@@ -126,7 +139,7 @@ export class MessageRouterService {
         if (chrome.runtime.lastError) {
           reject(new Error(chrome.runtime.lastError.message));
         } else if (response && response.success === false) {
-          reject(new Error(response.error || 'Tab request failed'));
+          reject(new Error(response.error || "Tab request failed"));
         } else {
           // SAFETY: response data is typed as T
           resolve((response ? response.data : null) as T);

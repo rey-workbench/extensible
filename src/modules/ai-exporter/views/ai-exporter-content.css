@@ -1,0 +1,291 @@
+/* ==========================================================================
+   AI Exporter & Caveman In-Composer Bar (Docked inside Chat Input Form)
+   ========================================================================== */
+
+.aio-composer-bar-root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.aio-composer-bar-root * {
+  box-sizing: border-box;
+}
+
+/* When docked inside the host chat form/composer toolbar */
+.aio-composer-bar-root.aio-docked-in-form {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  margin: 0 4px !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+  z-index: 50 !important;
+  flex-shrink: 0 !important;
+}
+
+/* Fallback floating dock if form is not found */
+.aio-composer-bar-root.aio-fallback-dock {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 2147483640 !important;
+}
+
+/* Modern pill container */
+.aio-composer-bar {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  height: 28px !important;
+  padding: 2px 4px !important;
+  background: rgba(30, 41, 59, 0.72) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 9999px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.aio-composer-bar:hover {
+  background: rgba(30, 41, 59, 0.88) !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32) !important;
+}
+
+/* When Caveman is ON: subtle warm amber glow */
+.aio-composer-bar.aio-caveman-on {
+  background: rgba(40, 28, 20, 0.85) !important;
+  border-color: rgba(249, 115, 22, 0.35) !important;
+  box-shadow:
+    0 0 10px rgba(249, 115, 22, 0.15),
+    0 2px 8px rgba(0, 0, 0, 0.25) !important;
+}
+
+.aio-bar-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  height: 22px !important;
+  padding: 0 7px !important;
+  background: transparent !important;
+  border: none !important;
+  color: #cbd5e1 !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  border-radius: 9999px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  line-height: 1 !important;
+  outline: none !important;
+  text-decoration: none !important;
+}
+
+.aio-bar-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.aio-bar-btn:active {
+  transform: scale(0.97) !important;
+}
+
+.aio-bar-btn-text {
+  font-size: 11px !important;
+  letter-spacing: 0.1px !important;
+  font-weight: 500 !important;
+}
+
+.aio-caveman-on .aio-caveman-toggle-btn .aio-bar-btn-text {
+  color: #fed7aa !important;
+  font-weight: 600 !important;
+}
+
+.aio-bar-badge {
+  font-size: 8.5px !important;
+  font-weight: 700 !important;
+  padding: 1.5px 5px !important;
+  border-radius: 9999px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #94a3b8 !important;
+  letter-spacing: 0.4px !important;
+  text-transform: uppercase !important;
+  line-height: 1 !important;
+  transition: all 0.2s ease !important;
+}
+
+.aio-lvl-lite {
+  background: rgba(56, 189, 248, 0.16) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+}
+
+.aio-lvl-full {
+  background: rgba(249, 115, 22, 0.18) !important;
+  color: #fb923c !important;
+  border: 1px solid rgba(249, 115, 22, 0.28) !important;
+}
+
+.aio-lvl-ultra {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(168, 85, 247, 0.25)) !important;
+  color: #f43f5e !important;
+  border: 1px solid rgba(244, 63, 94, 0.3) !important;
+  text-shadow: 0 0 6px rgba(244, 63, 94, 0.3) !important;
+}
+
+.aio-flame-icon {
+  transition:
+    fill 0.2s ease,
+    transform 0.2s ease !important;
+}
+
+.aio-caveman-on .aio-flame-icon {
+  filter: drop-shadow(0 0 4px rgba(249, 115, 22, 0.45)) !important;
+}
+
+.aio-bar-btn:hover .aio-flame-icon {
+  transform: scale(1.1) !important;
+}
+
+.aio-bar-divider {
+  width: 1px !important;
+  height: 12px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  margin: 0 1px !important;
+}
+
+.aio-export-wrapper {
+  position: relative !important;
+  display: inline-flex !important;
+}
+
+.aio-export-caret {
+  font-size: 8px !important;
+  opacity: 0.55 !important;
+  margin-left: -1px !important;
+  transition: transform 0.15s ease !important;
+}
+
+/* Dropdown Menu (Glassmorphism Floating Card) */
+.aio-composer-menu {
+  position: fixed !important;
+  min-width: 185px !important;
+  background: rgba(15, 23, 42, 0.94) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 12px !important;
+  box-shadow:
+    0 16px 36px rgba(0, 0, 0, 0.65),
+    0 2px 8px rgba(0, 0, 0, 0.4) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 6px !important;
+  overflow: hidden !important;
+  z-index: 2147483647 !important;
+  animation: aio-menu-pop 0.16s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  user-select: none !important;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+.aio-composer-menu * {
+  box-sizing: border-box !important;
+}
+
+@keyframes aio-menu-pop {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.aio-composer-menu-header {
+  padding: 6px 10px 4px 10px !important;
+  font-size: 9.5px !important;
+  font-weight: 700 !important;
+  color: #64748b !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.6px !important;
+}
+
+.aio-composer-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  padding: 7px 10px !important;
+  border-radius: 7px !important;
+  background: transparent !important;
+  border: none !important;
+  color: #e2e8f0 !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+  text-align: left !important;
+  line-height: 1.2 !important;
+  outline: none !important;
+}
+
+.aio-composer-menu-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+.aio-composer-menu-item:active {
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+.aio-composer-menu-item svg {
+  flex-shrink: 0 !important;
+  opacity: 0.75 !important;
+  transition: opacity 0.12s ease !important;
+}
+
+.aio-composer-menu-item:hover svg {
+  opacity: 1 !important;
+}
+
+.aio-composer-menu-divider {
+  height: 1px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  margin: 4px 0 !important;
+}
+
+/* Toast Message */
+.aio-composer-toast {
+  position: fixed !important;
+  padding: 6px 14px !important;
+  background: rgba(15, 23, 42, 0.94) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  color: #f8fafc !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 9999px !important;
+  font-size: 11.5px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  z-index: 2147483647 !important;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+.aio-composer-toast.show {
+  opacity: 1 !important;
+  transform: translateX(-50%) translateY(0) !important;
+}
+
+.aio-composer-toast.error {
+  border-color: rgba(239, 68, 68, 0.4) !important;
+  color: #fca5a5 !important;
+}

@@ -1,7 +1,7 @@
 /**
  * Core runtime execution context and DI constructor contracts.
  */
-export type ExecutionContext = 'all' | 'background' | 'content' | 'popup';
+export type ExecutionContext = "all" | "background" | "content" | "popup";
 
 export interface ContextOptions {
   context?: ExecutionContext | readonly ExecutionContext[];

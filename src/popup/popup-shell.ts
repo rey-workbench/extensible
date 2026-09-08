@@ -1,4 +1,9 @@
-import { escapeHtml, type NestApplicationContext, type PopupViewController, type RegisteredModule } from '@/core/index';
+import {
+  escapeHtml,
+  type NestApplicationContext,
+  type PopupViewController,
+  type RegisteredModule,
+} from "@/core/index";
 
 /**
  * Extensity-Style Popup Shell.
@@ -27,15 +32,15 @@ export class PopupShell {
     rootElement: Document | ShadowRoot | HTMLElement = document
   ) {
     this.root = rootElement;
-    this.listView = this._query('#extListView');
-    this.detailView = this._query('#extDetailView');
-    this.moduleListContainer = this._query('#moduleList');
-    this.mountContainer = this._query('#moduleMount');
-    this.searchInput = this._query<HTMLInputElement>('#extSearchInput');
-    this.clearSearchBtn = this._query('#extClearSearch');
-    this.backBtn = this._query('#backToListBtn');
-    this.detailTitle = this._query('#detailTitle');
-    this.masterToggle = this._query<HTMLInputElement>('#masterToggle');
+    this.listView = this._query("#extListView");
+    this.detailView = this._query("#extDetailView");
+    this.moduleListContainer = this._query("#moduleList");
+    this.mountContainer = this._query("#moduleMount");
+    this.searchInput = this._query<HTMLInputElement>("#extSearchInput");
+    this.clearSearchBtn = this._query("#extClearSearch");
+    this.backBtn = this._query("#backToListBtn");
+    this.detailTitle = this._query("#detailTitle");
+    this.masterToggle = this._query<HTMLInputElement>("#masterToggle");
   }
 
   private _query<T extends HTMLElement = HTMLElement>(selector: string): T | null {
@@ -44,9 +49,13 @@ export class PopupShell {
 
   init(): void {
     const allModules = this.app.getModules();
-    this.modules = allModules.filter((m) => 
-      m.controllers && m.controllers.length > 0 &&
-      m.controllers.some((c) => c.constructor.contextType === 'popup' || typeof c.mount === 'function')
+    this.modules = allModules.filter(
+      (m) =>
+        m.controllers &&
+        m.controllers.length > 0 &&
+        m.controllers.some(
+          (c) => c.constructor.contextType === "popup" || typeof c.mount === "function"
+        )
     );
 
     // Initialize all modules as enabled by default
@@ -61,10 +70,10 @@ export class PopupShell {
   private _bindEvents(): void {
     // Search input filtering
     if (this.searchInput) {
-      this.searchInput.addEventListener('input', () => {
-        const query = this.searchInput?.value.trim().toLowerCase() || '';
+      this.searchInput.addEventListener("input", () => {
+        const query = this.searchInput?.value.trim().toLowerCase() || "";
         if (this.clearSearchBtn) {
-          this.clearSearchBtn.classList.toggle('visible', query.length > 0);
+          this.clearSearchBtn.classList.toggle("visible", query.length > 0);
         }
         this.renderList(query);
       });
@@ -72,36 +81,36 @@ export class PopupShell {
 
     // Clear search
     if (this.clearSearchBtn) {
-      this.clearSearchBtn.addEventListener('click', () => {
+      this.clearSearchBtn.addEventListener("click", () => {
         if (this.searchInput) {
-          this.searchInput.value = '';
+          this.searchInput.value = "";
         }
-        this.clearSearchBtn!.classList.remove('visible');
-        this.renderList('');
+        this.clearSearchBtn!.classList.remove("visible");
+        this.renderList("");
         this.searchInput?.focus();
       });
     }
 
     // Back to list navigation
     if (this.backBtn) {
-      this.backBtn.addEventListener('click', () => {
+      this.backBtn.addEventListener("click", () => {
         this.showListView();
       });
     }
 
     // Master switch
     if (this.masterToggle) {
-      this.masterToggle.addEventListener('change', () => {
+      this.masterToggle.addEventListener("change", () => {
         const isMasterOn = this.masterToggle!.checked;
         this.modules.forEach((m) => {
           this.enabledMap.set(m.id, isMasterOn);
         });
-        this.renderList(this.searchInput?.value.trim().toLowerCase() || '');
+        this.renderList(this.searchInput?.value.trim().toLowerCase() || "");
       });
     }
   }
 
-  renderList(filterQuery = ''): void {
+  renderList(filterQuery = ""): void {
     if (!this.moduleListContainer) return;
 
     const filtered = this.modules.filter((m) => {
@@ -119,15 +128,14 @@ export class PopupShell {
       return;
     }
 
-    this.moduleListContainer.innerHTML = filtered.map((mod) => {
-      const isEnabled = this.enabledMap.get(mod.id) ?? true;
-      const iconSvg = this._renderModuleIcon(mod);
-      const subtitle = !isEnabled
-        ? 'Disabled'
-        : (mod.description || 'Active & Running');
+    this.moduleListContainer.innerHTML = filtered
+      .map((mod) => {
+        const isEnabled = this.enabledMap.get(mod.id) ?? true;
+        const iconSvg = this._renderModuleIcon(mod);
+        const subtitle = !isEnabled ? "Disabled" : mod.description || "Active & Running";
 
-      return `
-        <div class="ext-item ${isEnabled ? '' : 'disabled'}" data-module-id="${mod.id}" role="listitem">
+        return `
+        <div class="ext-item ${isEnabled ? "" : "disabled"}" data-module-id="${mod.id}" role="listitem">
           <div class="ext-item-icon">
             ${iconSvg}
           </div>
@@ -144,18 +152,19 @@ export class PopupShell {
           </div>
         </div>
       `;
-    }).join('');
+      })
+      .join("");
 
     // Attach click listeners to rows
-    this.moduleListContainer.querySelectorAll('.ext-item').forEach((item) => {
-      item.addEventListener('click', async (e) => {
+    this.moduleListContainer.querySelectorAll(".ext-item").forEach((item) => {
+      item.addEventListener("click", async (e) => {
         const target = e.target as HTMLElement;
         const moduleId = (item as HTMLElement).dataset.moduleId;
         const mod = this.modules.find((m) => m.id === moduleId);
         if (!mod) return;
 
         // If clicking gear or clicking row, open module detail
-        if (target.closest('.ext-item-gear') || !target.closest('.ext-item-toggle')) {
+        if (target.closest(".ext-item-gear") || !target.closest(".ext-item-toggle")) {
           await this.openModuleDetail(mod);
         }
       });
@@ -166,15 +175,15 @@ export class PopupShell {
     if (!this.mountContainer) return;
 
     if (this.activeController) {
-      if (typeof this.activeController.unmount === 'function') {
+      if (typeof this.activeController.unmount === "function") {
         this.activeController.unmount();
-      } else if (typeof this.activeController.onModuleDestroy === 'function') {
+      } else if (typeof this.activeController.onModuleDestroy === "function") {
         this.activeController.onModuleDestroy();
       }
       this.activeController = null;
     }
 
-    this.mountContainer.innerHTML = '';
+    this.mountContainer.innerHTML = "";
     this.activeModule = moduleInfo;
 
     if (this.detailTitle) {
@@ -182,16 +191,20 @@ export class PopupShell {
     }
 
     // Switch view to Detail View
-    this.listView?.classList.remove('active');
-    this.detailView?.classList.add('active');
+    this.listView?.classList.remove("active");
+    this.detailView?.classList.add("active");
 
-    const ctrl = (moduleInfo.controllers.find((c) => 
-      c && (c.constructor.contextType === 'popup' || typeof (c as PopupViewController).mount === 'function')
-    ) as PopupViewController | undefined) ?? null;
+    const ctrl =
+      (moduleInfo.controllers.find(
+        (c) =>
+          c &&
+          (c.constructor.contextType === "popup" ||
+            typeof (c as PopupViewController).mount === "function")
+      ) as PopupViewController | undefined) ?? null;
 
     if (ctrl) {
       this.activeController = ctrl;
-      if (typeof ctrl.mount === 'function') {
+      if (typeof ctrl.mount === "function") {
         await ctrl.mount(this.mountContainer);
       }
     } else {
@@ -204,19 +217,19 @@ export class PopupShell {
   }
 
   showListView(): void {
-    if (this.activeController && typeof this.activeController.unmount === 'function') {
+    if (this.activeController && typeof this.activeController.unmount === "function") {
       this.activeController.unmount();
       this.activeController = null;
     }
     this.activeModule = null;
 
-    this.detailView?.classList.remove('active');
-    this.listView?.classList.add('active');
-    this.renderList(this.searchInput?.value.trim().toLowerCase() || '');
+    this.detailView?.classList.remove("active");
+    this.listView?.classList.add("active");
+    this.renderList(this.searchInput?.value.trim().toLowerCase() || "");
   }
 
   suspend(): void {
-    if (this.activeController && typeof this.activeController.unmount === 'function') {
+    if (this.activeController && typeof this.activeController.unmount === "function") {
       this.activeController.unmount();
       this.activeController = null;
     }

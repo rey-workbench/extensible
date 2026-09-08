@@ -1,10 +1,10 @@
-import { AppModule } from '@/app.module';
-import { NestFactory } from '@/core/index';
-import { SideNotchView } from '@/content/side-notch.view';
+import { AppModule } from "@/app.module";
+import { SideNotchView } from "@/content/side-notch.view";
+import { NestFactory } from "@/core/index";
 
 async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule, {
-    context: ['content', 'popup']
+    context: ["content", "popup"],
   });
 
   // Always display the right-side notch on web pages
@@ -14,4 +14,4 @@ async function bootstrap() {
   return app;
 }
 
-bootstrap().catch((err) => console.error('[NestJS AIO] Content script bootstrap failed:', err));
+bootstrap().catch((err) => console.error("[NestJS AIO] Content script bootstrap failed:", err));

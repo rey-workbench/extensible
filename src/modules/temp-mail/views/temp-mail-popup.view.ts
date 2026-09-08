@@ -1,22 +1,18 @@
-import { ExtensionUtils, TimeUtils, escapeHtml } from '@/core/index';
-import { TempMailUtils } from '@/modules/temp-mail/utils/index';
-import type { EmailMessage, TempEmail } from '@/modules/temp-mail/types/index';
+import { ExtensionUtils, escapeHtml, TimeUtils } from "@/core/index";
+import type { EmailMessage, TempEmail } from "@/modules/temp-mail/types/index";
+import { TempMailUtils } from "@/modules/temp-mail/utils/index";
 import {
-  renderButton,
-  renderIconButton,
   renderBadge,
-  renderStatusIndicator,
-  renderCountdown,
+  renderButton,
   renderCopyInput,
-  renderSectionHeader,
+  renderCountdown,
   renderEmptyState,
-  renderModal
-} from '@/shared/index';
-
-const SVG_NEW_ADDRESS = `<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`;
-const SVG_AUTOFILL = `<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/></svg>`;
-const SVG_REFRESH_ICON = `<svg viewBox="0 0 24 24" id="tmRefreshIcon"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`;
-const SVG_MAIL_ICON = `<svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>`;
+  renderIcon,
+  renderIconButton,
+  renderModal,
+  renderSectionHeader,
+  renderStatusIndicator,
+} from "@/shared/index";
 
 /**
  * View responsible for rendering and managing TempMail UI within the Extension Popup.
@@ -37,7 +33,7 @@ export class TempMailPopupView {
   private statusText!: HTMLElement;
   private emailsList!: HTMLElement;
   private emailCountBadge!: HTMLElement;
-  
+
   private modal!: HTMLElement;
   private modalCloseBtn!: HTMLButtonElement;
   private modalSubject!: HTMLElement;
@@ -64,53 +60,53 @@ export class TempMailPopupView {
 
   renderLayout(): void {
     const statusIndicatorHtml = renderStatusIndicator({
-      id: 'tmStatus',
+      id: "tmStatus",
       active: true,
-      label: 'Active'
+      label: "Active",
     });
 
     const countdownHtml = renderCountdown({
-      id: 'tmCountdown',
-      value: '--:--'
+      id: "tmCountdown",
+      value: "--:--",
     });
 
     const copyInputHtml = renderCopyInput({
-      id: 'tmEmailInput',
-      buttonId: 'tmCopyBtn',
-      value: 'Loading...',
+      id: "tmEmailInput",
+      buttonId: "tmCopyBtn",
+      value: "Loading...",
       readOnly: true,
-      buttonTitle: 'Copy Address'
+      buttonTitle: "Copy Address",
     });
 
     const generateBtnHtml = renderButton({
-      id: 'tmGenerateBtn',
-      variant: 'primary',
-      icon: SVG_NEW_ADDRESS,
-      text: 'New Address',
-      title: 'Generate new address'
+      id: "tmGenerateBtn",
+      variant: "primary",
+      icon: renderIcon("refresh", 16),
+      text: "New Address",
+      title: "Generate new address",
     });
 
     const autofillBtnHtml = renderButton({
-      id: 'tmAutofillBtn',
-      variant: 'secondary',
-      icon: SVG_AUTOFILL,
-      text: 'Autofill Page',
-      title: 'Fill into active tab'
+      id: "tmAutofillBtn",
+      variant: "secondary",
+      icon: renderIcon("autofill", 16),
+      text: "Autofill Page",
+      title: "Fill into active tab",
     });
 
-    const sectionHeaderHtml = renderSectionHeader('Inbox', {
-      badge: renderBadge({ id: 'tmEmailCount', text: '0', variant: 'primary' }),
+    const sectionHeaderHtml = renderSectionHeader("Inbox", {
+      badge: renderBadge({ id: "tmEmailCount", text: "0", variant: "primary" }),
       action: renderIconButton({
-        id: 'tmRefreshBtn',
-        icon: SVG_REFRESH_ICON,
-        title: 'Refresh Inbox',
-        variant: 'ghost'
-      })
+        id: "tmRefreshBtn",
+        icon: renderIcon("refresh", 16, "", "tmRefreshIcon"),
+        title: "Refresh Inbox",
+        variant: "ghost",
+      }),
     });
 
     const modalHtml = renderModal({
-      id: 'tmReaderModal',
-      title: '(No Subject)',
+      id: "tmReaderModal",
+      title: "(No Subject)",
       contentHtml: `
         <div class="tm-modal-meta">
           <div class="tm-meta-row">
@@ -126,14 +122,14 @@ export class TempMailPopupView {
         <div class="tm-otp-card" id="tmOtpCard" style="display: none;">
           <span class="tm-otp-label">Verification Code:</span>
           <span class="tm-otp-code" id="tmOtpCode"></span>
-          ${renderButton({ id: 'tmOtpCopyBtn', variant: 'secondary', size: 'sm', text: 'Copy Code' })}
+          ${renderButton({ id: "tmOtpCopyBtn", variant: "secondary", size: "sm", text: "Copy Code" })}
         </div>
 
         <div class="tm-modal-body-container" id="tmModalBody"></div>
       `,
       footerHtml: `
-        ${renderButton({ id: 'tmModalDeleteBtn', variant: 'danger', size: 'sm', text: 'Delete Message' })}
-      `
+        ${renderButton({ id: "tmModalDeleteBtn", variant: "danger", size: "sm", text: "Delete Message" })}
+      `,
     });
 
     this.container.innerHTML = `
@@ -167,56 +163,60 @@ export class TempMailPopupView {
   }
 
   private _bindLayoutEvents(): void {
-    this.emailInput = this.container.querySelector('#tmEmailInput')!;
-    this.copyBtn = this.container.querySelector('#tmCopyBtn')!;
-    this.generateBtn = this.container.querySelector('#tmGenerateBtn')!;
-    this.autofillBtn = this.container.querySelector('#tmAutofillBtn')!;
-    this.refreshBtn = this.container.querySelector('#tmRefreshBtn')!;
-    this.refreshIcon = this.container.querySelector('#tmRefreshIcon')!;
-    this.countdownEl = this.container.querySelector('#tmCountdown')!;
-    this.statusDot = this.container.querySelector('#tmStatusDot')!;
-    this.statusText = this.container.querySelector('#tmStatusText')!;
-    this.emailsList = this.container.querySelector('#tmEmailsList')!;
-    this.emailCountBadge = this.container.querySelector('#tmEmailCount')!;
+    this.emailInput = this.container.querySelector("#tmEmailInput")!;
+    this.copyBtn = this.container.querySelector("#tmCopyBtn")!;
+    this.generateBtn = this.container.querySelector("#tmGenerateBtn")!;
+    this.autofillBtn = this.container.querySelector("#tmAutofillBtn")!;
+    this.refreshBtn = this.container.querySelector("#tmRefreshBtn")!;
+    this.refreshIcon = this.container.querySelector("#tmRefreshIcon")!;
+    this.countdownEl = this.container.querySelector("#tmCountdown")!;
+    this.statusDot = this.container.querySelector("#tmStatusDot")!;
+    this.statusText = this.container.querySelector("#tmStatusText")!;
+    this.emailsList = this.container.querySelector("#tmEmailsList")!;
+    this.emailCountBadge = this.container.querySelector("#tmEmailCount")!;
 
-    this.modal = this.container.querySelector('#tmReaderModal')!;
-    this.modalCloseBtn = this.container.querySelector('#tmReaderModalCloseBtn')!;
-    this.modalSubject = this.container.querySelector('#tmReaderModalTitle')!;
-    this.modalFrom = this.container.querySelector('#tmModalFrom')!;
-    this.modalDate = this.container.querySelector('#tmModalDate')!;
-    this.modalBody = this.container.querySelector('#tmModalBody')!;
-    this.modalDeleteBtn = this.container.querySelector('#tmModalDeleteBtn')!;
-    this.otpCard = this.container.querySelector('#tmOtpCard')!;
-    this.otpCode = this.container.querySelector('#tmOtpCode')!;
-    this.otpCopyBtn = this.container.querySelector('#tmOtpCopyBtn')!;
-    this.toast = this.container.querySelector('#tmToast')!;
+    this.modal = this.container.querySelector("#tmReaderModal")!;
+    this.modalCloseBtn = this.container.querySelector("#tmReaderModalCloseBtn")!;
+    this.modalSubject = this.container.querySelector("#tmReaderModalTitle")!;
+    this.modalFrom = this.container.querySelector("#tmModalFrom")!;
+    this.modalDate = this.container.querySelector("#tmModalDate")!;
+    this.modalBody = this.container.querySelector("#tmModalBody")!;
+    this.modalDeleteBtn = this.container.querySelector("#tmModalDeleteBtn")!;
+    this.otpCard = this.container.querySelector("#tmOtpCard")!;
+    this.otpCode = this.container.querySelector("#tmOtpCode")!;
+    this.otpCopyBtn = this.container.querySelector("#tmOtpCopyBtn")!;
+    this.toast = this.container.querySelector("#tmToast")!;
 
-    this.copyBtn.addEventListener('click', async () => {
-      if (this.emailInput.value && this.emailInput.value !== 'Loading...' && this.emailInput.value !== 'No active address') {
+    this.copyBtn.addEventListener("click", async () => {
+      if (
+        this.emailInput.value &&
+        this.emailInput.value !== "Loading..." &&
+        this.emailInput.value !== "No active address"
+      ) {
         const ok = await ExtensionUtils.copyToClipboard(this.emailInput.value);
-        if (ok) this.showToast('Copied to clipboard!');
+        if (ok) this.showToast("Copied to clipboard!");
       }
     });
 
-    this.generateBtn.addEventListener('click', () => this._emit('generate_new'));
-    this.autofillBtn.addEventListener('click', () => this._emit('autofill_page'));
-    this.refreshBtn.addEventListener('click', () => this._emit('refresh_inbox'));
-    this.modalCloseBtn.addEventListener('click', () => this.closeModal());
-    this.modal.addEventListener('click', (e) => {
+    this.generateBtn.addEventListener("click", () => this._emit("generate_new"));
+    this.autofillBtn.addEventListener("click", () => this._emit("autofill_page"));
+    this.refreshBtn.addEventListener("click", () => this._emit("refresh_inbox"));
+    this.modalCloseBtn.addEventListener("click", () => this.closeModal());
+    this.modal.addEventListener("click", (e) => {
       if (e.target === this.modal) this.closeModal();
     });
 
-    this.otpCopyBtn.addEventListener('click', async () => {
+    this.otpCopyBtn.addEventListener("click", async () => {
       if (this.otpCode.textContent) {
         const ok = await ExtensionUtils.copyToClipboard(this.otpCode.textContent);
-        if (ok) this.showToast('Verification code copied!');
+        if (ok) this.showToast("Verification code copied!");
       }
     });
 
-    this.modalDeleteBtn.addEventListener('click', () => {
+    this.modalDeleteBtn.addEventListener("click", () => {
       const emailId = this.modalDeleteBtn.dataset.emailId;
       if (emailId) {
-        this._emit('delete_email', emailId);
+        this._emit("delete_email", emailId);
         this.closeModal();
       }
     });
@@ -224,17 +224,17 @@ export class TempMailPopupView {
 
   updateEmailCard(email: TempEmail | null, remainingSeconds: number): void {
     if (!email || remainingSeconds <= 0) {
-      this.emailInput.value = 'No active address';
-      this.statusDot.className = 'ext-status-dot expired';
-      this.statusText.textContent = 'Expired';
-      this.countdownEl.textContent = '00:00';
+      this.emailInput.value = "No active address";
+      this.statusDot.className = "ext-status-dot expired";
+      this.statusText.textContent = "Expired";
+      this.countdownEl.textContent = "00:00";
       this.stopCountdown();
       return;
     }
 
     this.emailInput.value = email.address;
-    this.statusDot.className = 'ext-status-dot active';
-    this.statusText.textContent = 'Active';
+    this.statusDot.className = "ext-status-dot active";
+    this.statusText.textContent = "Active";
 
     this.startCountdown(remainingSeconds);
   }
@@ -247,9 +247,9 @@ export class TempMailPopupView {
     this._countdownInterval = setInterval(() => {
       remaining -= 1;
       if (remaining <= 0) {
-        this.countdownEl.textContent = '00:00';
-        this.statusDot.className = 'ext-status-dot expired';
-        this.statusText.textContent = 'Expired';
+        this.countdownEl.textContent = "00:00";
+        this.statusDot.className = "ext-status-dot expired";
+        this.statusText.textContent = "Expired";
         this.stopCountdown();
       } else {
         this.countdownEl.textContent = TempMailUtils.formatCountdown(remaining);
@@ -269,60 +269,64 @@ export class TempMailPopupView {
 
     if (emails.length === 0) {
       this.emailsList.innerHTML = renderEmptyState({
-        icon: SVG_MAIL_ICON,
-        title: 'Inbox is currently empty',
-        subtitle: 'Waiting for incoming messages...'
+        icon: renderIcon("mail", 32),
+        title: "Inbox is currently empty",
+        subtitle: "Waiting for incoming messages...",
       });
       return;
     }
 
-    this.emailsList.innerHTML = emails.map((item) => `
-      <div class="ext-item tm-email-item ${item.is_read ? 'read' : 'unread'}" data-id="${escapeHtml(item.id)}">
+    this.emailsList.innerHTML = emails
+      .map(
+        (item) => `
+      <div class="ext-item tm-email-item ${item.is_read ? "read" : "unread"}" data-id="${escapeHtml(item.id)}">
         <div class="ext-item-icon">
-          ${SVG_MAIL_ICON}
+          ${renderIcon("mail", 16)}
         </div>
         <div class="ext-item-info">
-          <div class="ext-item-title">${escapeHtml(item.from_address || 'Unknown')}</div>
-          <div class="ext-item-subtitle">${escapeHtml(item.subject || '(No Subject)')}</div>
+          <div class="ext-item-title">${escapeHtml(item.from_address || "Unknown")}</div>
+          <div class="ext-item-subtitle">${escapeHtml(item.subject || "(No Subject)")}</div>
         </div>
         <div class="ext-item-actions">
           <span class="tm-item-time">${TimeUtils.formatRelativeTime(item.received_at)}</span>
         </div>
       </div>
-    `).join('');
+    `
+      )
+      .join("");
 
-    this.emailsList.querySelectorAll('.tm-email-item').forEach((row) => {
-      row.addEventListener('click', () => {
+    this.emailsList.querySelectorAll(".tm-email-item").forEach((row) => {
+      row.addEventListener("click", () => {
         const id = (row as HTMLElement).dataset.id;
         const target = emails.find((e) => String(e.id) === String(id));
         if (target) {
-          this._emit('open_email', target);
+          this._emit("open_email", target);
         }
       });
     });
   }
 
   openModal(email: EmailMessage): void {
-    this.modalSubject.textContent = email.subject || '(No Subject)';
-    this.modalFrom.textContent = email.from_address || 'Unknown';
+    this.modalSubject.textContent = email.subject || "(No Subject)";
+    this.modalFrom.textContent = email.from_address || "Unknown";
     this.modalDate.textContent = new Date(email.received_at).toLocaleString();
     this.modalDeleteBtn.dataset.emailId = String(email.id);
 
-    const code = TempMailUtils.extractOtpCode((email.subject || '') + ' ' + (email.content || ''));
+    const code = TempMailUtils.extractOtpCode(`${email.subject || ""} ${email.content || ""}`);
     if (code) {
       this.otpCode.textContent = code;
-      this.otpCard.style.display = 'flex';
+      this.otpCard.style.display = "flex";
     } else {
-      this.otpCard.style.display = 'none';
+      this.otpCard.style.display = "none";
     }
 
     const content = email.content || '<p style="color:#64748b;">(Empty email content)</p>';
-    this.modalBody.innerHTML = '';
+    this.modalBody.innerHTML = "";
 
-    const frame = document.createElement('iframe');
-    frame.id = 'tmModalFrame';
-    frame.className = 'tm-body-frame';
-    frame.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
+    const frame = document.createElement("iframe");
+    frame.id = "tmModalFrame";
+    frame.className = "tm-body-frame";
+    frame.setAttribute("sandbox", "allow-popups allow-popups-to-escape-sandbox");
     frame.srcdoc = `
       <!DOCTYPE html>
       <html>
@@ -341,29 +345,29 @@ export class TempMailPopupView {
     `;
     this.modalBody.appendChild(frame);
 
-    this.modal.style.display = 'flex';
+    this.modal.style.display = "flex";
   }
 
   closeModal(): void {
-    this.modal.style.display = 'none';
+    this.modal.style.display = "none";
     if (this.modalBody) {
-      this.modalBody.innerHTML = '';
+      this.modalBody.innerHTML = "";
     }
   }
 
   setRefreshing(loading: boolean): void {
     if (loading) {
-      this.refreshIcon.classList.add('spinning');
+      this.refreshIcon.classList.add("spinning");
     } else {
-      this.refreshIcon.classList.remove('spinning');
+      this.refreshIcon.classList.remove("spinning");
     }
   }
 
   showToast(message: string): void {
     this.toast.textContent = message;
-    this.toast.classList.add('visible');
+    this.toast.classList.add("visible");
     setTimeout(() => {
-      this.toast.classList.remove('visible');
+      this.toast.classList.remove("visible");
     }, 2000);
   }
 }

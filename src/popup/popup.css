@@ -2,10 +2,10 @@
    Extensity Popup Chrome - Barrel Stylesheet
    ========================================================================== */
 
-@import './styles/header.css';
-@import './styles/search.css';
-@import './styles/list.css';
-@import './styles/navigation.css';
+@import "./styles/header.css";
+@import "./styles/search.css";
+@import "./styles/list.css";
+@import "./styles/navigation.css";
 
 body {
   width: 320px;

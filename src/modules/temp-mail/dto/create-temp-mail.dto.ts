@@ -11,7 +11,7 @@ export class CreateTempMailDto {
 
   validate(): void {
     if (this.duration <= 0 || this.duration > 1440) {
-      throw new Error('Duration must be between 1 and 1440 minutes');
+      throw new Error("Duration must be between 1 and 1440 minutes");
     }
   }
 }

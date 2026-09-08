@@ -7,26 +7,26 @@ export class TempMailUtils {
    * Determine if an input element represents an email field targeted for TempMail autofill.
    */
   static isEmailField(element: Element | null): boolean {
-    if (!element || element.tagName !== 'INPUT') return false;
+    if (element?.tagName !== "INPUT") return false;
     // SAFETY: verified tag is INPUT
     const input = element as HTMLInputElement;
-    const type = (input.type || '').toLowerCase();
+    const type = (input.type || "").toLowerCase();
 
-    if (type === 'email') return true;
-    if (type !== 'text' && type !== '') return false;
+    if (type === "email") return true;
+    if (type !== "text" && type !== "") return false;
 
-    const name = (input.name || '').toLowerCase();
-    const id = (input.id || '').toLowerCase();
-    const autocomplete = (input.autocomplete || '').toLowerCase();
-    const placeholder = (input.placeholder || '').toLowerCase();
-    const ariaLabel = (input.getAttribute('aria-label') || '').toLowerCase();
+    const name = (input.name || "").toLowerCase();
+    const id = (input.id || "").toLowerCase();
+    const autocomplete = (input.autocomplete || "").toLowerCase();
+    const placeholder = (input.placeholder || "").toLowerCase();
+    const ariaLabel = (input.getAttribute("aria-label") || "").toLowerCase();
 
     return Boolean(
-      autocomplete === 'email' ||
-      name.includes('email') ||
-      id.includes('email') ||
-      placeholder.includes('email') ||
-      ariaLabel.includes('email')
+      autocomplete === "email" ||
+        name.includes("email") ||
+        id.includes("email") ||
+        placeholder.includes("email") ||
+        ariaLabel.includes("email")
     );
   }
 
@@ -39,11 +39,11 @@ export class TempMailUtils {
 
     // 1. Strip CSS blocks, script tags, URLs, and HTML tags to avoid matching hex colors (#555555) or hashes
     const cleanText = text
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ')
-      .replace(/https?:\/\/[^\s"'<>]+/gi, ' ')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&[a-z0-9#]+;/gi, ' ');
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+      .replace(/https?:\/\/[^\s"'<>]+/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&[a-z0-9#]+;/gi, " ");
 
     // 2. High-confidence contextual patterns for OTPs
     const patterns = [
@@ -56,12 +56,12 @@ export class TempMailUtils {
       // "use code 123456", "enter code 123456"
       /\b(?:enter|use|input)\s+(?:the\s+)?code\s+([0-9]{4,8})\b/i,
       // "[123456] is your ..."
-      /\[([0-9]{4,8})\]\s*(?:is\s+your|verification)/i
+      /\[([0-9]{4,8})\]\s*(?:is\s+your|verification)/i,
     ];
 
     for (const pattern of patterns) {
       const match = cleanText.match(pattern);
-      if (match && match[1]) {
+      if (match?.[1]) {
         return match[1];
       }
     }
@@ -73,9 +73,9 @@ export class TempMailUtils {
    * Format remaining active seconds for a temporary email address into MM:SS format.
    */
   static formatCountdown(seconds: number): string {
-    if (seconds <= 0) return 'Expired';
+    if (seconds <= 0) return "Expired";
     const m = Math.floor(seconds / 60);
     const s = Math.floor(seconds % 60);
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 }

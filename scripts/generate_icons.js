@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
-import zlib from 'zlib';
+import fs from "node:fs";
+import path from "node:path";
+import zlib from "node:zlib";
 
 /**
  * Minimal pure-Node PNG generator without external dependencies.
@@ -35,14 +35,14 @@ function createPng(width, height, drawPixel) {
   ihdrData[10] = 0; // Compression: Deflate
   ihdrData[11] = 0; // Filter: Standard
   ihdrData[12] = 0; // Interlace: None
-  const ihdrChunk = createChunk('IHDR', ihdrData);
+  const ihdrChunk = createChunk("IHDR", ihdrData);
 
   // IDAT chunk
   const compressed = zlib.deflateSync(buffer);
-  const idatChunk = createChunk('IDAT', compressed);
+  const idatChunk = createChunk("IDAT", compressed);
 
   // IEND chunk
-  const iendChunk = createChunk('IEND', Buffer.alloc(0));
+  const iendChunk = createChunk("IEND", Buffer.alloc(0));
 
   return Buffer.concat([signature, ihdrChunk, idatChunk, iendChunk]);
 }
@@ -51,11 +51,11 @@ function createChunk(type, data) {
   const length = data.length;
   const chunk = Buffer.alloc(4 + 4 + length + 4);
   chunk.writeUInt32BE(length, 0);
-  chunk.write(type, 4, 4, 'ascii');
+  chunk.write(type, 4, 4, "ascii");
   data.copy(chunk, 8);
 
   // Calculate CRC32 on type + data
-  const crcTarget = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+  const crcTarget = Buffer.concat([Buffer.from(type, "ascii"), data]);
   const crc = crc32(crcTarget);
   chunk.writeUInt32BE(crc, 8 + length);
   return chunk;
@@ -143,7 +143,7 @@ function iconDrawer(x, y, w, h) {
   return [r, g, b, a];
 }
 
-const outDir = path.resolve('assets/icons');
+const outDir = path.resolve("assets/icons");
 fs.mkdirSync(outDir, { recursive: true });
 
 for (const size of [16, 48, 128]) {

@@ -2,7 +2,8 @@
    Design System Tokens (Safe for Content Scripts & App Shell)
    ========================================================================== */
 
-:root, :host {
+:root,
+:host {
   /* Extensity Brand Tokens */
   --ext-bg: #ffffff;
   --ext-surface: #f8fafc;
@@ -19,8 +20,14 @@
   --ext-radius-sm: 4px;
   --ext-radius-md: 6px;
   --ext-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
 
-  /* Shared Compatibility Tokens */
+/* Shared Compatibility Tokens - Strictly Scoped so host web pages are never polluted */
+:root:has(#app),
+:host,
+.ext-shell,
+.aio-inpage-element,
+[class*="aio-"] {
   --bg-primary: #ffffff;
   --bg-secondary: #f8fafc;
   --bg-card: #ffffff;

@@ -1,6 +1,6 @@
-import { ExtensionUtils, type NestApplicationContext } from '@/core/index';
-import { PopupShell } from '@/popup/popup-shell';
-import { APP_CONFIG } from '@/shared/index';
+import { ExtensionUtils, type NestApplicationContext } from "@/core/index";
+import { PopupShell } from "@/popup/popup-shell";
+import { APP_CONFIG } from "@/shared/index";
 
 declare const __POPUP_CSS__: string;
 
@@ -17,14 +17,14 @@ export class SideNotchView {
   constructor(private readonly app: NestApplicationContext) {}
 
   init(): void {
-    if (document.getElementById('aio-side-notch-host')) return;
+    if (document.getElementById("aio-side-notch-host")) return;
 
-    this.host = document.createElement('div');
-    this.host.id = 'aio-side-notch-host';
-    this.host.style.all = 'initial';
+    this.host = document.createElement("div");
+    this.host.id = "aio-side-notch-host";
+    this.host.style.all = "initial";
     document.body.appendChild(this.host);
 
-    this.shadow = this.host.attachShadow({ mode: 'open' });
+    this.shadow = this.host.attachShadow({ mode: "open" });
     this._render();
     this._bind();
   }
@@ -32,7 +32,7 @@ export class SideNotchView {
   private _render(): void {
     if (!this.shadow) return;
 
-    const popupStyles = typeof __POPUP_CSS__ !== 'undefined' ? __POPUP_CSS__ : '';
+    const popupStyles = typeof __POPUP_CSS__ !== "undefined" ? __POPUP_CSS__ : "";
 
     this.shadow.innerHTML = `
       <style>
@@ -271,20 +271,20 @@ export class SideNotchView {
   private _bind(): void {
     if (!this.shadow) return;
 
-    const notchBtn = this.shadow.getElementById('notchBtn');
-    const closeBtn = this.shadow.getElementById('drawerCloseBtn');
-    const backdrop = this.shadow.getElementById('drawerBackdrop');
-    const drawer = this.shadow.getElementById('sideDrawer');
+    const notchBtn = this.shadow.getElementById("notchBtn");
+    const closeBtn = this.shadow.getElementById("drawerCloseBtn");
+    const backdrop = this.shadow.getElementById("drawerBackdrop");
+    const _drawer = this.shadow.getElementById("sideDrawer");
 
-    notchBtn?.addEventListener('click', () => {
+    notchBtn?.addEventListener("click", () => {
       this.toggleDrawer();
     });
 
-    closeBtn?.addEventListener('click', () => {
+    closeBtn?.addEventListener("click", () => {
       this.closeDrawer();
     });
 
-    backdrop?.addEventListener('click', () => {
+    backdrop?.addEventListener("click", () => {
       this.closeDrawer();
     });
 
@@ -303,29 +303,29 @@ export class SideNotchView {
 
   openDrawer(): void {
     if (!this.shadow) return;
-    const drawer = this.shadow.getElementById('sideDrawer');
-    const backdrop = this.shadow.getElementById('drawerBackdrop');
-    const notch = this.shadow.getElementById('notchBtn');
+    const drawer = this.shadow.getElementById("sideDrawer");
+    const backdrop = this.shadow.getElementById("drawerBackdrop");
+    const notch = this.shadow.getElementById("notchBtn");
 
-    drawer?.classList.add('open');
-    backdrop?.classList.add('visible');
-    if (notch) notch.style.opacity = '0';
+    drawer?.classList.add("open");
+    backdrop?.classList.add("visible");
+    if (notch) notch.style.opacity = "0";
     this.isOpen = true;
     this.popupShell?.resume().catch((err) => {
       if (ExtensionUtils.isContextInvalidated(err)) return;
-      console.error('[SideNotchView] Resume error:', err);
+      console.error("[SideNotchView] Resume error:", err);
     });
   }
 
   closeDrawer(): void {
     if (!this.shadow) return;
-    const drawer = this.shadow.getElementById('sideDrawer');
-    const backdrop = this.shadow.getElementById('drawerBackdrop');
-    const notch = this.shadow.getElementById('notchBtn');
+    const drawer = this.shadow.getElementById("sideDrawer");
+    const backdrop = this.shadow.getElementById("drawerBackdrop");
+    const notch = this.shadow.getElementById("notchBtn");
 
-    drawer?.classList.remove('open');
-    backdrop?.classList.remove('visible');
-    if (notch) notch.style.opacity = '1';
+    drawer?.classList.remove("open");
+    backdrop?.classList.remove("visible");
+    if (notch) notch.style.opacity = "1";
     this.isOpen = false;
     this.popupShell?.suspend();
   }

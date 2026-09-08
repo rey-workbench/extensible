@@ -7,18 +7,18 @@ export class ExtensionUtils {
    * context has been invalidated (e.g. extension updated or reloaded in developer mode).
    */
   static isContextInvalidated(err: unknown): boolean {
-    if (typeof chrome === 'undefined' || !chrome.runtime?.id) {
+    if (typeof chrome === "undefined" || !chrome.runtime?.id) {
       return true;
     }
     const msg = err instanceof Error ? err.message : String(err);
-    return msg.includes('Extension context invalidated');
+    return msg.includes("Extension context invalidated");
   }
 
   /**
    * Safely query the active tab in the current window.
    */
   static async getActiveTab(): Promise<chrome.tabs.Tab | null> {
-    if (typeof chrome === 'undefined' || !chrome.tabs?.query) {
+    if (typeof chrome === "undefined" || !chrome.tabs?.query) {
       return null;
     }
     try {
@@ -35,7 +35,7 @@ export class ExtensionUtils {
   static async copyToClipboard(text: string): Promise<boolean> {
     if (!text) return false;
     try {
-      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(text);
         return true;
       }
@@ -48,10 +48,10 @@ export class ExtensionUtils {
   /**
    * Update or clear the browser action badge.
    */
-  static async setBadge(text: string, backgroundColor = '#10b981'): Promise<void> {
-    if (typeof chrome === 'undefined' || !chrome.action) return;
+  static async setBadge(text: string, backgroundColor = "#10b981"): Promise<void> {
+    if (typeof chrome === "undefined" || !chrome.action) return;
     try {
-      await chrome.action.setBadgeText({ text: text || '' });
+      await chrome.action.setBadgeText({ text: text || "" });
       if (text) {
         await chrome.action.setBadgeBackgroundColor({ color: backgroundColor });
       }
@@ -64,7 +64,7 @@ export class ExtensionUtils {
    * Clear the browser action badge.
    */
   static async clearBadge(): Promise<void> {
-    await this.setBadge('');
+    await this.setBadge("");
   }
 
   /**
@@ -76,17 +76,17 @@ export class ExtensionUtils {
     iconUrl?: string;
     priority?: number;
   }): void {
-    if (typeof chrome === 'undefined' || !chrome.notifications) return;
+    if (typeof chrome === "undefined" || !chrome.notifications) return;
     try {
       chrome.notifications.create({
-        type: 'basic',
-        iconUrl: options.iconUrl || chrome.runtime.getURL('assets/icons/icon-48.png'),
+        type: "basic",
+        iconUrl: options.iconUrl || chrome.runtime.getURL("assets/icons/icon-48.png"),
         title: options.title,
         message: options.message,
-        priority: options.priority ?? 2
+        priority: options.priority ?? 2,
       });
     } catch (err) {
-      console.warn('[ExtensionUtils] Failed to create notification:', err);
+      console.warn("[ExtensionUtils] Failed to create notification:", err);
     }
   }
 }

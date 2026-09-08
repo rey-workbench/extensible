@@ -1,5 +1,10 @@
-import type { ClassConstructor, ContextOptions, ModuleDefinition, RegisteredModule } from '@/core/types/index';
-import { Container } from '@/core/di/container';
+import { Container } from "@/core/di/container";
+import type {
+  ClassConstructor,
+  ContextOptions,
+  ModuleDefinition,
+  RegisteredModule,
+} from "@/core/types/index";
 
 /**
  * NestJS-style Application Context for Chrome Extensions.

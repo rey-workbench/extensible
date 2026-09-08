@@ -1,4 +1,4 @@
-import { escapeHtml } from '@/core/index';
+import { escapeHtml } from "@/core/index";
 
 export interface ModalOptions {
   id: string;
@@ -16,7 +16,7 @@ export function renderModal(options: ModalOptions): string {
   const bodyId = `${options.id}Body`;
 
   return `
-    <div class="ext-modal-backdrop ${options.className || ''}" id="${escapeHtml(options.id)}" style="display: none;">
+    <div class="ext-modal-backdrop ${options.className || ""}" id="${escapeHtml(options.id)}" style="display: none;">
       <div class="ext-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="${escapeHtml(titleId)}">
         <div class="ext-modal-header">
           <h3 class="ext-modal-title" id="${escapeHtml(titleId)}">${escapeHtml(options.title)}</h3>
@@ -25,9 +25,9 @@ export function renderModal(options: ModalOptions): string {
           </button>
         </div>
         <div class="ext-modal-body" id="${escapeHtml(bodyId)}">
-          ${options.contentHtml || ''}
+          ${options.contentHtml || ""}
         </div>
-        ${options.footerHtml ? `<div class="ext-modal-footer">${options.footerHtml}</div>` : ''}
+        ${options.footerHtml ? `<div class="ext-modal-footer">${options.footerHtml}</div>` : ""}
       </div>
     </div>
   `.trim();

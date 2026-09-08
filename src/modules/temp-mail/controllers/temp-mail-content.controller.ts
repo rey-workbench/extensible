@@ -1,17 +1,15 @@
-import { MessageRouterService, StorageService } from '@/core/index';
-import { CONTENT_ACTIONS } from '@/shared/index';
-import type { ExecutionContext } from '@/core/index';
-import { TEMPMAIL_ACTIONS, TEMPMAIL_STORAGE_KEYS } from '@/modules/temp-mail/constants/index';
-import { TempMailUtils } from '@/modules/temp-mail/utils/index';
-import type { TempMailSettings } from '@/modules/temp-mail/types/index';
-import { TempMailContentView } from '@/modules/temp-mail/views/temp-mail-content.view';
+import { type ExecutionContext, MessageRouterService, StorageService } from "@/core/index";
+import { TEMPMAIL_ACTIONS, TEMPMAIL_STORAGE_KEYS } from "@/modules/temp-mail/constants/index";
+import type { TempMailSettings } from "@/modules/temp-mail/types/index";
+import { TempMailUtils } from "@/modules/temp-mail/utils/index";
+import { TempMailContentView } from "@/modules/temp-mail/views/temp-mail-content.view";
 
 /**
  * Controller managing TempMail features inside the Content Script context.
  */
 export class TempMailContentController {
-  static contextType: ExecutionContext = 'content';
-  static inject = [MessageRouterService, StorageService];
+  public static readonly contextType: ExecutionContext = "content";
+  public static readonly inject = [MessageRouterService, StorageService] as const;
 
   public readonly view = new TempMailContentView();
   private observer: MutationObserver | null = null;
@@ -19,7 +17,7 @@ export class TempMailContentController {
   private settings: TempMailSettings = {
     autoFillOnFocus: false,
     showFloatingButton: true,
-    defaultDuration: 60
+    defaultDuration: 60,
   };
 
   constructor(
@@ -48,7 +46,10 @@ export class TempMailContentController {
   }
 
   private async _loadSettings(): Promise<void> {
-    const saved = await this.storage.get<Partial<TempMailSettings>>(TEMPMAIL_STORAGE_KEYS.SETTINGS, null);
+    const saved = await this.storage.get<Partial<TempMailSettings>>(
+      TEMPMAIL_STORAGE_KEYS.SETTINGS,
+      null
+    );
     if (saved) {
       this.settings = { ...this.settings, ...saved };
     }
@@ -74,7 +75,7 @@ export class TempMailContentController {
   }
 
   private _registerRoutes(): void {
-    this.router.subscribe(CONTENT_ACTIONS.AUTOFILL_EMAIL, (payload: { email?: string }) => {
+    this.router.subscribe(TEMPMAIL_ACTIONS.AUTOFILL_EMAIL, (payload: { email?: string }) => {
       const email = payload?.email;
       if (!email) return false;
 
@@ -84,7 +85,7 @@ export class TempMailContentController {
         return true;
       }
 
-      const inputs = document.querySelectorAll('input');
+      const inputs = document.querySelectorAll("input");
       for (const input of inputs) {
         if (TempMailUtils.isEmailField(input)) {
           this.view.fillInput(input, email);
@@ -98,7 +99,7 @@ export class TempMailContentController {
   private _scanAndAttach(): void {
     if (!this.settings.showFloatingButton) return;
 
-    const inputs = document.querySelectorAll('input');
+    const inputs = document.querySelectorAll("input");
     for (const input of inputs) {
       if (TempMailUtils.isEmailField(input)) {
         this._attachToInput(input);
@@ -109,21 +110,29 @@ export class TempMailContentController {
   private _attachToInput(input: HTMLInputElement): void {
     if (this.settings.showFloatingButton && !this.view.hasButton(input)) {
       this.view.attachButton(input, async () => {
-        const res = await this.router.send<any>(TEMPMAIL_ACTIONS.GET_CURRENT, { autoGenerate: true });
+        const res = await this.router.send<any>(TEMPMAIL_ACTIONS.GET_CURRENT, {
+          autoGenerate: true,
+        });
         return res?.address || res?.email?.address || null;
       });
     }
 
     if (this.settings.autoFillOnFocus) {
-      input.addEventListener('focus', async () => {
-        if (!input.value) {
-          const res = await this.router.send<any>(TEMPMAIL_ACTIONS.GET_CURRENT, { autoGenerate: true });
-          const email = res?.address || res?.email?.address;
-          if (email && !input.value) {
-            this.view.fillInput(input, email);
+      input.addEventListener(
+        "focus",
+        async () => {
+          if (!input.value) {
+            const res = await this.router.send<any>(TEMPMAIL_ACTIONS.GET_CURRENT, {
+              autoGenerate: true,
+            });
+            const email = res?.address || res?.email?.address;
+            if (email && !input.value) {
+              this.view.fillInput(input, email);
+            }
           }
-        }
-      }, { once: true });
+        },
+        { once: true }
+      );
     }
   }
 
@@ -134,10 +143,10 @@ export class TempMailContentController {
           if (node.nodeType !== Node.ELEMENT_NODE) continue;
           const el = node as HTMLElement;
 
-          if (el.tagName === 'INPUT' && TempMailUtils.isEmailField(el)) {
+          if (el.tagName === "INPUT" && TempMailUtils.isEmailField(el)) {
             this._attachToInput(el as HTMLInputElement);
           } else if (el.querySelectorAll) {
-            const nested = el.querySelectorAll('input');
+            const nested = el.querySelectorAll("input");
             for (const input of nested) {
               if (TempMailUtils.isEmailField(input)) {
                 this._attachToInput(input);

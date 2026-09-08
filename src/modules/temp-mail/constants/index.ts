@@ -1,1 +1,1 @@
-export * from '@/modules/temp-mail/constants/temp-mail.constants';
+export * from "@/modules/temp-mail/constants/temp-mail.constants";

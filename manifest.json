@@ -35,7 +35,8 @@
     "contextMenus",
     "clipboardWrite",
     "scripting",
-    "notifications"
+    "notifications",
+    "downloads"
   ],
   "host_permissions": [
     "https://api.tempmail.ing/*"

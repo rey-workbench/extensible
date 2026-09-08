@@ -1,1 +1,1 @@
-export * from '@/shared/constants/app.constants';
+export * from "@/shared/constants/app.constants";

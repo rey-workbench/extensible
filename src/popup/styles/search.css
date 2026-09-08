@@ -11,7 +11,9 @@
   border-radius: var(--ext-radius-sm);
   padding: 3px 8px;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: border-color 0.15s, background-color 0.15s;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s;
 }
 
 .ext-search-bar:focus-within {

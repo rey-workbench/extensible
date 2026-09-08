@@ -1,1 +1,1 @@
-export * from '@/modules/temp-mail/utils/temp-mail.utils';
+export * from "@/modules/temp-mail/utils/temp-mail.utils";

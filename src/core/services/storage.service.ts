@@ -7,7 +7,7 @@ export class StorageService {
   private readonly _memory = new Map<string, unknown>();
   private readonly _watchers = new Map<string, Set<(newValue: any, oldValue: any) => void>>();
 
-  constructor(namespace: string = 'aio') {
+  constructor(namespace: string = "aio") {
     this.namespace = namespace;
   }
 
@@ -17,11 +17,11 @@ export class StorageService {
 
   async get<T>(key: string, defaultValue: T | null = null): Promise<T | null> {
     const fullKey = this._getKey(key);
-    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+    if (typeof chrome !== "undefined" && chrome.storage?.local) {
       return new Promise<T | null>((resolve) => {
         chrome.storage.local.get([fullKey], (result) => {
           if (chrome.runtime.lastError) {
-            console.warn('[StorageService] Get error:', chrome.runtime.lastError);
+            console.warn("[StorageService] Get error:", chrome.runtime.lastError);
             resolve(defaultValue);
           } else {
             // SAFETY: typed result from chrome.storage
@@ -36,7 +36,7 @@ export class StorageService {
 
   async set<T>(key: string, value: T): Promise<void> {
     const fullKey = this._getKey(key);
-    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+    if (typeof chrome !== "undefined" && chrome.storage?.local) {
       return new Promise<void>((resolve, reject) => {
         chrome.storage.local.set({ [fullKey]: value }, () => {
           if (chrome.runtime.lastError) {
@@ -54,7 +54,7 @@ export class StorageService {
 
   async remove(key: string): Promise<void> {
     const fullKey = this._getKey(key);
-    if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+    if (typeof chrome !== "undefined" && chrome.storage?.local) {
       return new Promise<void>((resolve) => {
         chrome.storage.local.remove([fullKey], () => resolve());
       });
@@ -71,9 +71,12 @@ export class StorageService {
   watch<T>(key: string, callback: (newValue: T | null, oldValue: T | null) => void): () => void {
     const fullKey = this._getKey(key);
 
-    if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
-      const listener = (changes: { [key: string]: chrome.storage.StorageChange }, areaName: string) => {
-        if (areaName === 'local' && fullKey in changes) {
+    if (typeof chrome !== "undefined" && chrome.storage?.onChanged) {
+      const listener = (
+        changes: { [key: string]: chrome.storage.StorageChange },
+        areaName: string
+      ) => {
+        if (areaName === "local" && fullKey in changes) {
           const change = changes[fullKey];
           callback(
             change.newValue !== undefined ? (change.newValue as T) : null,

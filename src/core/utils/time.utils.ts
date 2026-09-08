@@ -6,12 +6,12 @@ export class TimeUtils {
    * Format a past timestamp into human-readable relative string.
    */
   static formatRelativeTime(dateString: string | number | Date | null | undefined): string {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
-    const now = new Date().getTime();
+    const now = Date.now();
     const diffSeconds = Math.floor((now - date.getTime()) / 1000);
 
-    if (diffSeconds < 10) return 'just now';
+    if (diffSeconds < 10) return "just now";
     if (diffSeconds < 60) return `${diffSeconds}s ago`;
 
     const diffMinutes = Math.floor(diffSeconds / 60);

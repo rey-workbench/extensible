@@ -1,5 +1,3 @@
-import type { ClassConstructor } from '@/core/types/context.types';
-
 /**
  * Module metadata and registry contracts for the DI container.
  */
