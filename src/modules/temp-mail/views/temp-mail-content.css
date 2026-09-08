@@ -1,4 +1,6 @@
-/* AIO Extension Content Script Styles */
+/* ==========================================================================
+   TempMail In-Page Autofill Button - Extensity Home Aligned
+   ========================================================================== */
 
 .aio-tempmail-wrapper {
   position: relative !important;
@@ -7,22 +9,22 @@
 
 .aio-tempmail-btn {
   position: fixed !important;
-  width: 24px !important;
-  height: 24px !important;
+  width: 22px !important;
+  height: 22px !important;
   padding: 0 !important;
   margin: 0 !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
+  background: var(--ext-primary-gradient, linear-gradient(to bottom, #5b7ca6, #41638e)) !important;
   color: #ffffff !important;
-  border: none !important;
-  border-radius: 6px !important;
+  border: 1px solid #36567f !important;
+  border-radius: var(--ext-radius-sm, 4px) !important;
   cursor: pointer !important;
   z-index: 2147483640 !important;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15) !important;
-  opacity: 0.8 !important;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12) !important;
+  opacity: 0.85 !important;
+  transition: background-color 0.12s ease, border-color 0.12s ease, opacity 0.12s ease, box-shadow 0.12s ease !important;
   outline: none !important;
   -webkit-user-select: none !important;
   user-select: none !important;
@@ -31,17 +33,19 @@
 
 .aio-tempmail-btn:hover {
   opacity: 1 !important;
-  transform: scale(1.1) !important;
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
+  background: linear-gradient(to bottom, #4f7099, #35567f) !important;
+  border-color: #2a486d !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18) !important;
 }
 
 .aio-tempmail-btn:active {
-  transform: scale(0.95) !important;
+  background: #2d527c !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
 }
 
 .aio-tempmail-btn svg {
-  width: 14px !important;
-  height: 14px !important;
+  width: 13px !important;
+  height: 13px !important;
   fill: currentColor !important;
   pointer-events: none !important;
 }
@@ -51,9 +55,9 @@
 }
 
 .aio-tempmail-filled {
-  outline: 2px solid #10b981 !important;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2) !important;
-  transition: all 0.3s ease !important;
+  outline: 2px solid var(--ext-success, #10b981) !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2) !important;
+  transition: all 0.25s ease !important;
 }
 
 @keyframes aio-spin {
@@ -63,21 +67,22 @@
 
 .aio-tempmail-tooltip {
   position: absolute !important;
-  bottom: calc(100% + 6px) !important;
+  bottom: calc(100% + 5px) !important;
   right: 0 !important;
   background: #1e293b !important;
   color: #f8fafc !important;
   font-size: 11px !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
   font-weight: 500 !important;
-  padding: 4px 8px !important;
-  border-radius: 4px !important;
+  padding: 3px 7px !important;
+  border-radius: 3px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   white-space: nowrap !important;
   pointer-events: none !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
   opacity: 0 !important;
-  transform: translateY(4px) !important;
-  transition: all 0.15s ease !important;
+  transform: translateY(3px) !important;
+  transition: all 0.12s ease !important;
   z-index: 2147483647 !important;
 }
 

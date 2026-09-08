@@ -1,9 +1,26 @@
 import { ExtensionUtils, TimeUtils, escapeHtml } from '@/core/index';
 import { TempMailUtils } from '@/modules/temp-mail/utils/index';
 import type { EmailMessage, TempEmail } from '@/modules/temp-mail/types/index';
+import {
+  renderButton,
+  renderIconButton,
+  renderBadge,
+  renderStatusIndicator,
+  renderCountdown,
+  renderCopyInput,
+  renderSectionHeader,
+  renderEmptyState,
+  renderModal
+} from '@/shared/index';
+
+const SVG_NEW_ADDRESS = `<svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`;
+const SVG_AUTOFILL = `<svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/></svg>`;
+const SVG_REFRESH_ICON = `<svg viewBox="0 0 24 24" id="tmRefreshIcon"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`;
+const SVG_MAIL_ICON = `<svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>`;
 
 /**
  * View responsible for rendering and managing TempMail UI within the Extension Popup.
+ * Aligned with the Extensity Home design system and utilizing shared reusable components.
  */
 export class TempMailPopupView {
   private _countdownInterval: NodeJS.Timeout | null = null;
@@ -46,82 +63,103 @@ export class TempMailPopupView {
   }
 
   renderLayout(): void {
+    const statusIndicatorHtml = renderStatusIndicator({
+      id: 'tmStatus',
+      active: true,
+      label: 'Active'
+    });
+
+    const countdownHtml = renderCountdown({
+      id: 'tmCountdown',
+      value: '--:--'
+    });
+
+    const copyInputHtml = renderCopyInput({
+      id: 'tmEmailInput',
+      buttonId: 'tmCopyBtn',
+      value: 'Loading...',
+      readOnly: true,
+      buttonTitle: 'Copy Address'
+    });
+
+    const generateBtnHtml = renderButton({
+      id: 'tmGenerateBtn',
+      variant: 'primary',
+      icon: SVG_NEW_ADDRESS,
+      text: 'New Address',
+      title: 'Generate new address'
+    });
+
+    const autofillBtnHtml = renderButton({
+      id: 'tmAutofillBtn',
+      variant: 'secondary',
+      icon: SVG_AUTOFILL,
+      text: 'Autofill Page',
+      title: 'Fill into active tab'
+    });
+
+    const sectionHeaderHtml = renderSectionHeader('Inbox', {
+      badge: renderBadge({ id: 'tmEmailCount', text: '0', variant: 'primary' }),
+      action: renderIconButton({
+        id: 'tmRefreshBtn',
+        icon: SVG_REFRESH_ICON,
+        title: 'Refresh Inbox',
+        variant: 'ghost'
+      })
+    });
+
+    const modalHtml = renderModal({
+      id: 'tmReaderModal',
+      title: '(No Subject)',
+      contentHtml: `
+        <div class="tm-modal-meta">
+          <div class="tm-meta-row">
+            <span class="tm-meta-label">From:</span>
+            <span class="tm-meta-val" id="tmModalFrom"></span>
+          </div>
+          <div class="tm-meta-row">
+            <span class="tm-meta-label">Date:</span>
+            <span class="tm-meta-val" id="tmModalDate"></span>
+          </div>
+        </div>
+
+        <div class="tm-otp-card" id="tmOtpCard" style="display: none;">
+          <span class="tm-otp-label">Verification Code:</span>
+          <span class="tm-otp-code" id="tmOtpCode"></span>
+          ${renderButton({ id: 'tmOtpCopyBtn', variant: 'secondary', size: 'sm', text: 'Copy Code' })}
+        </div>
+
+        <div class="tm-modal-body-container" id="tmModalBody"></div>
+      `,
+      footerHtml: `
+        ${renderButton({ id: 'tmModalDeleteBtn', variant: 'danger', size: 'sm', text: 'Delete Message' })}
+      `
+    });
+
     this.container.innerHTML = `
       <div class="tm-module">
-        <div class="tm-card tm-email-card">
-          <div class="tm-card-header">
-            <div class="tm-status-indicator">
-              <span class="tm-status-dot active" id="tmStatusDot"></span>
-              <span class="tm-status-text" id="tmStatusText">Active</span>
-            </div>
-            <div class="tm-countdown" id="tmCountdown">--:--</div>
+        <div class="ext-card tm-email-card">
+          <div class="ext-card-header">
+            ${statusIndicatorHtml}
+            ${countdownHtml}
           </div>
 
-          <div class="tm-email-box">
-            <input type="text" id="tmEmailInput" class="tm-email-input" readonly value="Loading..." />
-            <button type="button" id="tmCopyBtn" class="tm-btn-icon" title="Copy Address">
-              <svg viewBox="0 0 24 24"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
-            </button>
-          </div>
+          ${copyInputHtml}
 
-          <div class="tm-action-row">
-            <button type="button" id="tmGenerateBtn" class="tm-btn tm-btn-primary">
-              <svg viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-              <span>New Address</span>
-            </button>
-            <button type="button" id="tmAutofillBtn" class="tm-btn tm-btn-secondary" title="Fill into active tab">
-              <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/></svg>
-              <span>Autofill Page</span>
-            </button>
+          <div class="ext-btn-group">
+            ${generateBtnHtml}
+            ${autofillBtnHtml}
           </div>
         </div>
 
         <div class="tm-inbox-section">
-          <div class="tm-inbox-header">
-            <div class="tm-inbox-title">
-              <span>Inbox</span>
-              <span class="tm-badge" id="tmEmailCount">0</span>
-            </div>
-            <button type="button" id="tmRefreshBtn" class="tm-btn-icon-subtle" title="Refresh Inbox">
-              <svg viewBox="0 0 24 24" id="tmRefreshIcon"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-            </button>
-          </div>
-
-          <div class="tm-emails-list" id="tmEmailsList"></div>
+          ${sectionHeaderHtml}
+          <div class="tm-emails-list ext-list" id="tmEmailsList"></div>
         </div>
 
-        <div class="tm-modal" id="tmReaderModal" style="display: none;">
-          <div class="tm-modal-content">
-            <div class="tm-modal-header">
-              <h3 class="tm-modal-title" id="tmModalSubject">(No Subject)</h3>
-              <button type="button" class="tm-btn-close" id="tmModalCloseBtn">&times;</button>
-            </div>
-            <div class="tm-modal-meta">
-              <div class="tm-meta-row">
-                <span class="tm-meta-label">From:</span>
-                <span class="tm-meta-val" id="tmModalFrom"></span>
-              </div>
-              <div class="tm-meta-row">
-                <span class="tm-meta-label">Date:</span>
-                <span class="tm-meta-val" id="tmModalDate"></span>
-              </div>
-            </div>
+        ${modalHtml}
 
-            <div class="tm-otp-card" id="tmOtpCard" style="display: none;">
-              <span class="tm-otp-label">Verification Code:</span>
-              <span class="tm-otp-code" id="tmOtpCode"></span>
-              <button type="button" class="tm-btn-copy-sm" id="tmOtpCopyBtn">Copy Code</button>
-            </div>
-
-            <div class="tm-modal-body" id="tmModalBody"></div>
-
-            <div class="tm-modal-footer">
-              <button type="button" id="tmModalDeleteBtn" class="tm-btn tm-btn-danger">Delete Message</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="tm-toast" id="tmToast"></div>
+        <div class="ext-toast" id="tmToast"></div>
       </div>
     `;
 
@@ -142,8 +180,8 @@ export class TempMailPopupView {
     this.emailCountBadge = this.container.querySelector('#tmEmailCount')!;
 
     this.modal = this.container.querySelector('#tmReaderModal')!;
-    this.modalCloseBtn = this.container.querySelector('#tmModalCloseBtn')!;
-    this.modalSubject = this.container.querySelector('#tmModalSubject')!;
+    this.modalCloseBtn = this.container.querySelector('#tmReaderModalCloseBtn')!;
+    this.modalSubject = this.container.querySelector('#tmReaderModalTitle')!;
     this.modalFrom = this.container.querySelector('#tmModalFrom')!;
     this.modalDate = this.container.querySelector('#tmModalDate')!;
     this.modalBody = this.container.querySelector('#tmModalBody')!;
@@ -154,7 +192,7 @@ export class TempMailPopupView {
     this.toast = this.container.querySelector('#tmToast')!;
 
     this.copyBtn.addEventListener('click', async () => {
-      if (this.emailInput.value && this.emailInput.value !== 'Loading...') {
+      if (this.emailInput.value && this.emailInput.value !== 'Loading...' && this.emailInput.value !== 'No active address') {
         const ok = await ExtensionUtils.copyToClipboard(this.emailInput.value);
         if (ok) this.showToast('Copied to clipboard!');
       }
@@ -187,7 +225,7 @@ export class TempMailPopupView {
   updateEmailCard(email: TempEmail | null, remainingSeconds: number): void {
     if (!email || remainingSeconds <= 0) {
       this.emailInput.value = 'No active address';
-      this.statusDot.className = 'tm-status-dot expired';
+      this.statusDot.className = 'ext-status-dot expired';
       this.statusText.textContent = 'Expired';
       this.countdownEl.textContent = '00:00';
       this.stopCountdown();
@@ -195,7 +233,7 @@ export class TempMailPopupView {
     }
 
     this.emailInput.value = email.address;
-    this.statusDot.className = 'tm-status-dot active';
+    this.statusDot.className = 'ext-status-dot active';
     this.statusText.textContent = 'Active';
 
     this.startCountdown(remainingSeconds);
@@ -210,7 +248,7 @@ export class TempMailPopupView {
       remaining -= 1;
       if (remaining <= 0) {
         this.countdownEl.textContent = '00:00';
-        this.statusDot.className = 'tm-status-dot expired';
+        this.statusDot.className = 'ext-status-dot expired';
         this.statusText.textContent = 'Expired';
         this.stopCountdown();
       } else {
@@ -230,23 +268,26 @@ export class TempMailPopupView {
     this.emailCountBadge.textContent = String(emails.length);
 
     if (emails.length === 0) {
-      this.emailsList.innerHTML = `
-        <div class="tm-empty-state">
-          <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-          <p>Inbox is currently empty</p>
-          <span class="tm-subtext">Waiting for incoming messages...</span>
-        </div>
-      `;
+      this.emailsList.innerHTML = renderEmptyState({
+        icon: SVG_MAIL_ICON,
+        title: 'Inbox is currently empty',
+        subtitle: 'Waiting for incoming messages...'
+      });
       return;
     }
 
     this.emailsList.innerHTML = emails.map((item) => `
-      <div class="tm-email-item ${item.is_read ? 'read' : 'unread'}" data-id="${escapeHtml(item.id)}">
-        <div class="tm-item-header">
-          <span class="tm-item-sender">${escapeHtml(item.from_address || 'Unknown')}</span>
+      <div class="ext-item tm-email-item ${item.is_read ? 'read' : 'unread'}" data-id="${escapeHtml(item.id)}">
+        <div class="ext-item-icon">
+          ${SVG_MAIL_ICON}
+        </div>
+        <div class="ext-item-info">
+          <div class="ext-item-title">${escapeHtml(item.from_address || 'Unknown')}</div>
+          <div class="ext-item-subtitle">${escapeHtml(item.subject || '(No Subject)')}</div>
+        </div>
+        <div class="ext-item-actions">
           <span class="tm-item-time">${TimeUtils.formatRelativeTime(item.received_at)}</span>
         </div>
-        <div class="tm-item-subject">${escapeHtml(item.subject || '(No Subject)')}</div>
       </div>
     `).join('');
 
@@ -281,16 +322,18 @@ export class TempMailPopupView {
     const frame = document.createElement('iframe');
     frame.id = 'tmModalFrame';
     frame.className = 'tm-body-frame';
-    frame.setAttribute('sandbox', '');
+    frame.setAttribute('sandbox', 'allow-popups allow-popups-to-escape-sandbox');
     frame.srcdoc = `
       <!DOCTYPE html>
       <html>
       <head>
-        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:;">
+        <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data: https: http:; font-src data:;">
+        <base target="_blank">
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; line-height: 1.5; color: #1e293b; margin: 12px; }
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; line-height: 1.45; color: #202124; margin: 8px; word-break: break-word; }
           img { max-width: 100%; height: auto; }
-          a { color: #3b82f6; text-decoration: none; pointer-events: none; }
+          a { color: #2563eb; text-decoration: underline; cursor: pointer; }
+          a:hover { color: #1d4ed8; }
         </style>
       </head>
       <body>${content}</body>

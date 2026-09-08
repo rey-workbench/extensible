@@ -1,0 +1,25 @@
+/* ==========================================================================
+   Extensity Popup Chrome - Barrel Stylesheet
+   ========================================================================== */
+
+@import './styles/header.css';
+@import './styles/search.css';
+@import './styles/list.css';
+@import './styles/navigation.css';
+
+body {
+  width: 320px;
+  min-height: 480px;
+  max-height: 560px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background-color: var(--ext-bg);
+}
+
+/* App Shell Container */
+.ext-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--ext-bg);
+}

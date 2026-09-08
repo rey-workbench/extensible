@@ -1,0 +1,195 @@
+/* ==========================================================================
+   Button & Button Group Component Styles
+   ========================================================================== */
+
+.ext-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-family: inherit;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: var(--ext-radius-sm, 4px);
+  border: 1px solid transparent;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ext-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.ext-btn-md {
+  padding: 6px 12px;
+  font-size: 12px;
+  height: 28px;
+}
+
+.ext-btn-sm {
+  padding: 3px 8px;
+  font-size: 11px;
+  height: 22px;
+}
+
+.ext-btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ext-btn-icon svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.ext-btn-sm .ext-btn-icon svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ext-btn-label {
+  display: inline-block;
+}
+
+/* Button Variants */
+.ext-btn-primary {
+  background: var(--ext-primary-gradient, linear-gradient(to bottom, #5b7ca6, #41638e));
+  color: #ffffff;
+  border-color: #36567f;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.ext-btn-primary:hover {
+  background: linear-gradient(to bottom, #4f7099, #35567f);
+  border-color: #2a486d;
+}
+
+.ext-btn-primary:active {
+  background: #2d527c;
+}
+
+.ext-btn-secondary {
+  background: #ffffff;
+  color: var(--ext-text, #202124);
+  border-color: var(--ext-border-input, #dadce0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ext-btn-secondary:hover {
+  background: var(--ext-hover, #f1f5f9);
+  border-color: #cbd5e1;
+}
+
+.ext-btn-secondary:active {
+  background: var(--ext-active, #e2e8f0);
+}
+
+.ext-btn-danger {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.ext-btn-danger:hover {
+  background: #fecaca;
+  color: #991b1b;
+  border-color: #f87171;
+}
+
+.ext-btn-ghost {
+  background: transparent;
+  color: var(--ext-text-muted, #5f6368);
+  border-color: transparent;
+}
+
+.ext-btn-ghost:hover {
+  background: var(--ext-hover, #f1f5f9);
+  color: var(--ext-text, #202124);
+}
+
+.ext-btn-outline {
+  background: transparent;
+  color: var(--ext-primary, #2d527c);
+  border-color: var(--ext-primary, #2d527c);
+}
+
+.ext-btn-outline:hover {
+  background: rgba(45, 82, 124, 0.08);
+}
+
+/* Button Group Grid */
+.ext-btn-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Icon Buttons */
+.ext-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px;
+  border-radius: var(--ext-radius-sm, 4px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ext-text-muted, #64748b);
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.ext-icon-btn:hover {
+  background: var(--ext-hover, #f1f5f9);
+  color: var(--ext-text, #1e293b);
+}
+
+.ext-icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+.ext-icon-btn-sm {
+  width: 22px;
+  height: 22px;
+  padding: 2px;
+}
+
+.ext-icon-btn-md {
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+}
+
+.ext-icon-btn-ghost {
+  background: transparent;
+  border: none;
+  color: var(--ext-text-muted, #5f6368);
+}
+
+.ext-icon-btn-ghost:hover {
+  background: var(--ext-hover, #f1f5f9);
+  color: var(--ext-text, #202124);
+}
+
+.ext-icon-btn-secondary {
+  background: #ffffff;
+  border: 1px solid var(--ext-border-input, #dadce0);
+  color: var(--ext-text, #202124);
+}
+
+.ext-icon-btn-secondary:hover {
+  background: var(--ext-hover, #f1f5f9);
+}

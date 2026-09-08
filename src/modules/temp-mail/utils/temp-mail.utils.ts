@@ -32,19 +32,41 @@ export class TempMailUtils {
 
   /**
    * Extract a 4-8 digit verification / OTP code from incoming email subject and body content.
+   * Uses strict contextual matching and strips CSS, scripts, tags, and URLs to prevent false positives.
    */
   static extractOtpCode(text: string | null | undefined): string | null {
     if (!text) return null;
 
-    // Look for explicit code/otp labels first
-    const match = text.match(/(?:code|otp|verification|token|pin|verify|confirm)\s*(?:is|:|-)?\s*([0-9]{4,8})\b/i);
-    if (match && match[1]) {
-      return match[1];
+    // 1. Strip CSS blocks, script tags, URLs, and HTML tags to avoid matching hex colors (#555555) or hashes
+    const cleanText = text
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, ' ')
+      .replace(/https?:\/\/[^\s"'<>]+/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&[a-z0-9#]+;/gi, ' ');
+
+    // 2. High-confidence contextual patterns for OTPs
+    const patterns = [
+      // "verification code is 123456", "security code: 123456", "code is: 123456"
+      /(?:verification|security|login|one-time|confirmation|access)?\s*code\s*(?:is|:|-)?\s*([0-9]{4,8})\b/i,
+      // "123456 is your verification code", "123456 is your code"
+      /\b([0-9]{4,8})\s+is\s+your\s+(?:[a-z]+\s+)?code\b/i,
+      // "otp: 123456", "otp is 123456", "passcode: 123456", "pin: 1234"
+      /\b(?:otp|passcode|pin)\s*(?:is|:|-)?\s*([0-9]{4,8})\b/i,
+      // "use code 123456", "enter code 123456"
+      /\b(?:enter|use|input)\s+(?:the\s+)?code\s+([0-9]{4,8})\b/i,
+      // "[123456] is your ..."
+      /\[([0-9]{4,8})\]\s*(?:is\s+your|verification)/i
+    ];
+
+    for (const pattern of patterns) {
+      const match = cleanText.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
     }
 
-    // Fallback: search for first 4-8 standalone digit block
-    const standalone = text.match(/\b\d{4,8}\b/);
-    return standalone ? standalone[0] : null;
+    return null;
   }
 
   /**

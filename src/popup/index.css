@@ -1,2 +1,4 @@
-@import './shell.css';
+@import '../shared/styles/global.css';
+@import './popup.css';
+@import '../shared/styles/components.css';
 @import '../modules/temp-mail/views/temp-mail-popup.css';

@@ -4,6 +4,17 @@ import { TempMailModule } from '@/modules/temp-mail/temp-mail.module';
 import { TempMailService } from '@/modules/temp-mail/temp-mail.service';
 import { TempMailUtils } from '@/modules/temp-mail/utils/index';
 import { CreateTempMailDto } from '@/modules/temp-mail/dto/create-temp-mail.dto';
+import {
+  renderButton,
+  renderIconButton,
+  renderBadge,
+  renderStatusIndicator,
+  renderCountdown,
+  renderCopyInput,
+  renderSectionHeader,
+  renderEmptyState,
+  renderModal
+} from '@/shared/index';
 
 console.log('[Test] Running NestJS TypeScript Unit & Integration Tests...\n');
 
@@ -83,6 +94,8 @@ console.log('\n3. Testing Utilities (Core, Shared, Domain):');
 // Domain: TempMailUtils
 const otp1 = TempMailUtils.extractOtpCode('Your verification code is 492810. Do not share it.');
 assert.strictEqual(otp1, '492810', 'Should extract 6-digit verification code');
+const magicLinkEmail = '<style>p { color: #555555; font-size: 14px; }</style><p>Click this link: https://app.faceless.video/auth/confirm?token_hash=pkce_4a686446df7117ce7f7d25cd7c55edb230587c7c779ccdb04595105a&type=signup</p>';
+assert.strictEqual(TempMailUtils.extractOtpCode(magicLinkEmail), null, 'Should return null for magic link email without OTP');
 const cd = TempMailUtils.formatCountdown(125);
 assert.strictEqual(cd, '02:05', 'Should format 125 seconds to 02:05');
 assert.strictEqual(TempMailUtils.formatCountdown(0), 'Expired', 'Should report Expired for 0 seconds');
@@ -98,7 +111,37 @@ assert.strictEqual(rel, 'just now', 'Should format recent time as just now');
 // Core: ExtensionUtils
 const isInvalidated = ExtensionUtils.isContextInvalidated(new Error('Extension context invalidated.'));
 assert.strictEqual(isInvalidated, true, 'Should detect invalidated extension context');
-console.log('   ✓ Core, Shared, and Domain Utilities tests passed.');
+
+// Shared UI Components
+const btnHtml = renderButton({ id: 'testBtn', text: 'Click Me', variant: 'primary' });
+assert.ok(btnHtml.includes('id="testBtn"'), 'Button HTML should include id');
+assert.ok(btnHtml.includes('ext-btn-primary'), 'Button HTML should include primary variant class');
+assert.ok(btnHtml.includes('Click Me'), 'Button HTML should include label');
+
+const iconBtnHtml = renderIconButton({ id: 'testIconBtn', icon: '<svg></svg>', title: 'Refresh' });
+assert.ok(iconBtnHtml.includes('id="testIconBtn"'), 'IconButton HTML should include id');
+assert.ok(iconBtnHtml.includes('title="Refresh"'), 'IconButton HTML should include title');
+
+const badgeHtml = renderBadge({ text: '5', variant: 'primary' });
+assert.ok(badgeHtml.includes('ext-badge-primary'), 'Badge HTML should include primary class');
+assert.ok(badgeHtml.includes('5'), 'Badge HTML should include text');
+
+const statusHtml = renderStatusIndicator({ id: 'statusTest', active: true });
+assert.ok(statusHtml.includes('ext-status-dot active'), 'Status indicator should include active dot class');
+
+const copyInputHtml = renderCopyInput({ id: 'copyInp', buttonId: 'copyBtn', value: 'user@test.com' });
+assert.ok(copyInputHtml.includes('id="copyInp"'), 'CopyInput should include input id');
+assert.ok(copyInputHtml.includes('id="copyBtn"'), 'CopyInput should include button id');
+assert.ok(copyInputHtml.includes('user@test.com'), 'CopyInput should include value');
+
+const emptyHtml = renderEmptyState({ title: 'No Messages', subtitle: 'Check back later' });
+assert.ok(emptyHtml.includes('No Messages'), 'Empty state should include title');
+
+const modalHtml = renderModal({ id: 'testModal', title: 'Details' });
+assert.ok(modalHtml.includes('id="testModal"'), 'Modal should include modal id');
+assert.ok(modalHtml.includes('Details'), 'Modal should include title');
+
+console.log('   ✓ Core, Shared, Domain Utilities & Shared UI Components tests passed.');
 
 // 4. Test TempMailService API
 console.log('\n4. Testing TempMailService with live API (api.tempmail.ing):');
