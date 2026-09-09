@@ -81,11 +81,11 @@
   function getFeatureColor(id: string): string {
     switch (id) {
       case "temp-mail":
-        return "#ea4335";
+        return "#D63230";
       case "ai-exporter":
-        return "#10b981";
+        return "#2D8C4E";
       default:
-        return "#2563eb";
+        return "#1B4DDB";
     }
   }
 </script>
@@ -96,107 +96,122 @@
 />
 
 <div
-  class="ext-container flex h-full min-h-0 flex-col select-none bg-white text-slate-800"
+  class="ext-container flex h-full min-h-0 flex-col select-none bg-ext-bg text-ext-text"
 >
   {#if view === "list"}
-    <!-- Header: Extensible Branding + Toolbar -->
+    <!-- Header -->
     <header
-      class="flex h-[36px] items-center justify-between bg-white px-2.5 py-1"
+      class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-ext-border bg-ext-surface px-3"
     >
-      <!-- Left: Logo & Brand Name -->
-      <div class="flex cursor-default items-center gap-1.5">
-        <!-- Extensible-style spiral logo badge -->
-        <svg
-          class="h-[20px] w-[20px] shrink-0 rounded-[3px] shadow-xs"
-          viewBox="0 0 24 24"
-        >
-          <rect width="24" height="24" rx="4" fill="#1b3668" />
-          <path
-            d="M12 4a8 8 0 108 8 1 1 0 10-2 0 6 6 0 11-6-6 1 1 0 100-2zm0 4a4 4 0 104 4 1 1 0 10-2 0 2 2 0 11-2-2 1 1 0 100-2z"
-            fill="#ffffff"
-          />
-        </svg>
+      <!-- Brand -->
+      <div class="flex items-center gap-2">
         <span
-          class="text-[16px] font-bold leading-none tracking-tight text-[#21407a]"
+          class="flex h-5.5 w-5.5 items-center justify-center rounded-[5px] border-[1.5px] border-ext-primary-dark bg-ext-primary text-white shadow-[1px_1px_0_#1A1A1A]"
         >
+          <Icon name="puzzle" size={13} />
+        </span>
+        <span class="text-[13px] font-bold uppercase tracking-wider text-ext-text">
           Extensible
         </span>
       </div>
 
-      <!-- Right: Toolbar Action Icons -->
-      <div class="flex items-center">
-        <!-- Master Switch (Oval Outline Toggle) -->
+      <!-- Right: Master Toggle -->
+      <div class="flex items-center gap-1.5">
+        <span
+          class="text-[10.5px] font-bold uppercase tracking-wider text-ext-muted"
+        >{masterOn ? "All on" : "All off"}</span>
         <button
           type="button"
-          class="relative h-[14px] w-[26px] cursor-pointer rounded-full border-[1.5px] border-[#475569] bg-white transition-colors focus:outline-none"
+          class="relative h-4.5 w-8 cursor-pointer rounded-sm border-[1.5px] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ext-primary/40 focus-visible:ring-offset-1 {masterOn
+            ? 'bg-ext-success border-[#1E6B38]'
+            : 'bg-[#D4CEC2] border-ext-muted'}"
           title={masterOn ? "Disable all extensions" : "Enable all extensions"}
           aria-label="Toggle all extensions"
           onclick={() => toggleAll(!masterOn)}
         >
           <span
-            class="absolute top-[1.5px] h-[8px] w-[8px] rounded-full bg-[#334155] transition-all duration-150 {masterOn
-              ? 'right-[2px]'
-              : 'left-[2px]'}"
+            class="absolute top-[1.5px] h-3.25 w-3.25 rounded-[3px] bg-white shadow-[1px_1px_0_rgba(26,26,26,0.2)] transition-all duration-200 {masterOn
+              ? 'left-3.75'
+              : 'left-0.5'}"
           ></span>
         </button>
       </div>
     </header>
 
-    <!-- Search Input Bar -->
-    <div
-      class="flex h-[30px] items-center gap-2 border-t border-b border-[#e2e8f0] bg-white px-2.5"
-    >
-      <button
-        type="button"
-        class="flex cursor-pointer items-center text-[#6b7280] hover:text-[#374151]"
-        title="Search"
-        aria-label="Search"
-        onclick={focusSearch}
+    <!-- Search Input -->
+    <div class="border-b-[1.5px] border-ext-border bg-ext-surface px-2.5 pb-2.5 pt-2">
+      <div
+        class="flex h-7.5 items-center gap-1.5 rounded-md border-[1.5px] border-ext-border bg-ext-surface px-2.5 transition-all focus-within:ring-2 focus-within:ring-ext-primary/20"
       >
-        <Icon name="search" size={14} />
-      </button>
-      <input
-        bind:this={searchInput}
-        type="text"
-        class="h-full min-w-0 flex-1 border-0 bg-transparent text-[13px] text-[#1f2937] outline-none placeholder:text-transparent"
-        placeholder=""
-        autocomplete="off"
-        spellcheck="false"
-        bind:value={query}
-      />
-      {#if query}
         <button
           type="button"
-          class="cursor-pointer text-xs text-[#9ca3af] hover:text-[#4b5563]"
-          aria-label="Clear search"
-          onclick={() => (query = "")}>&times;</button
+          class="flex cursor-pointer items-center text-ext-muted hover:text-ext-text"
+          title="Search"
+          aria-label="Search"
+          onclick={focusSearch}
         >
-      {/if}
+          <Icon name="search" size={13} />
+        </button>
+        <input
+          bind:this={searchInput}
+          type="text"
+          class="h-full min-w-0 flex-1 border-0 bg-transparent text-[12px] font-medium text-ext-text outline-none"
+          placeholder="Search extensions..."
+          autocomplete="off"
+          spellcheck="false"
+          bind:value={query}
+        />
+        {#if query}
+          <button
+            type="button"
+            class="flex h-4 w-4 cursor-pointer items-center justify-center rounded-[3px] bg-[#EDE7DA] text-[9px] font-bold text-ext-text-secondary transition-colors hover:bg-[#D4CEC2] hover:text-ext-text"
+            aria-label="Clear search"
+            onclick={() => (query = "")}>&times;</button
+          >
+        {/if}
+      </div>
     </div>
 
-    <!-- Category Header Bar (Steel Blue Gradient) -->
+    <!-- Category Header Bar -->
     <div
-      class="flex h-[24px] items-center border-t border-[#7d9dc6] border-b border-[#2d476e] px-2.5 text-[12px] font-bold text-white shadow-xs"
-      style="background: linear-gradient(180deg, #6c8cb8 0%, #466795 50%, #3a5b88 100%); text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);"
+      class="flex h-6.5 items-center justify-between px-3"
     >
-      Extensions
+      <span
+        class="text-[10.5px] font-bold uppercase tracking-widest text-ext-muted"
+      >
+        Extensions
+      </span>
+      <span
+        class="rounded-sm border border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-px text-[9.5px] font-bold tabular-nums text-ext-text-secondary"
+      >{filtered.length}</span>
     </div>
 
     <!-- Extension List -->
-    <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-2.5 pb-2.5">
       {#if filtered.length === 0}
-        <div class="px-3 py-6 text-center text-xs text-[#9ca3af]">
-          No extensions found.
+        <div
+          class="flex flex-col items-center gap-2 px-3 py-10 text-center"
+        >
+          <span
+            class="flex h-10 w-10 items-center justify-center rounded-md border-[1.5px] border-[#D4CEC2] bg-[#EDE7DA] text-ext-muted"
+          >
+            <Icon name="puzzle" size={18} />
+          </span>
+          <div class="text-[12.5px] font-bold text-ext-text">
+            {query ? "No matches" : "No extensions"}
+          </div>
+          <div class="text-[11px] text-ext-text-secondary">
+            {query ? "Try a different search term" : "Nothing to show here yet"}
+          </div>
         </div>
       {:else}
         {#each filtered as feature (feature.id)}
           {@const enabled = enabledMap[feature.id] !== false}
           <div
-            class="flex h-[29px] cursor-pointer items-center gap-2 px-2.5 transition-colors {enabled
-              ? 'bg-white hover:bg-[#f8f9fa]'
-              : 'bg-[#f4f4f4] hover:bg-[#eaeaea]'} {activeDropdownId ===
-            feature.id
-              ? 'relative z-20'
+            class="group flex cursor-pointer items-center gap-2.5 rounded-lg border-[1.5px] border-ext-border bg-ext-surface px-2 py-1.5 shadow-[2px_2px_0_#1A1A1A] transition-all {enabled
+              ? 'hover:bg-[#EDE7DA] hover:shadow-[3px_3px_0_#1A1A1A] active:shadow-[1px_1px_0_#1A1A1A] active:translate-x-px active:translate-y-px'
+              : 'opacity-55 hover:opacity-75'} {activeDropdownId === feature.id
+              ? 'relative z-20 bg-[#EDE7DA] shadow-[3px_3px_0_#1A1A1A]'
               : ''}"
             role="button"
             tabindex="0"
@@ -208,30 +223,40 @@
             onkeydown={(e) =>
               e.key === "Enter" && feature.popup && openDetail(feature.id)}
           >
-            <!-- Extension Icon -->
+            <!-- App Icon -->
             <span
-              class="flex h-4.5 w-4.5 shrink-0 items-center justify-center transition-opacity"
-              style="color: {getFeatureColor(feature.id)}; {enabled
+              class="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] text-white shadow-[1px_1px_0_#1A1A1A] transition-transform group-hover:scale-105"
+              style="background: {getFeatureColor(feature.id)}; border-color: {getFeatureColor(feature.id)}; {enabled
                 ? ''
-                : 'filter: grayscale(100%); opacity: 0.35;'}"
+                : 'filter: grayscale(100%); opacity: 0.55;'}"
             >
-              <Icon name={feature.icon} size={17} />
+              <Icon name={feature.icon} size={14} />
             </span>
 
-            <!-- Extension Title -->
-            <span
-              class="min-w-0 flex-1 truncate text-[13px] leading-tight {enabled
-                ? 'font-normal text-[#111827]'
-                : 'text-[#9e9e9e]'}"
-            >
-              {feature.name}
-            </span>
+            <!-- Extension Info -->
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <span
+                  class="truncate text-[12.5px] font-bold text-ext-text"
+                >
+                  {feature.name}
+                </span>
+                {#if !enabled}
+                  <span
+                    class="shrink-0 rounded-[3px] border border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-ext-muted"
+                  >Off</span>
+                {/if}
+              </div>
+              <div
+                class="truncate text-[10.5px] text-ext-text-secondary"
+              >{feature.description}</div>
+            </div>
 
             <!-- Settings Gear Button & Options Dropdown -->
             <div class="relative">
               <button
                 type="button"
-                class="flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded text-[#707070] transition-colors hover:bg-slate-200 hover:text-[#111827]"
+                class="flex h-5.5 w-5.5 shrink-0 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text"
                 title="Options"
                 aria-label="Options for {feature.name}"
                 onclick={(e) => {
@@ -240,12 +265,12 @@
                     activeDropdownId === feature.id ? null : feature.id;
                 }}
               >
-                <Icon name="gear" size={14} />
+                <Icon name="gear" size={13} />
               </button>
 
               {#if activeDropdownId === feature.id}
                 <div
-                  class="absolute right-0 top-full z-50 mt-1 min-w-[110px] rounded border border-slate-200 bg-white py-1 shadow-lg text-[12px] text-slate-700"
+                  class="ext-menu absolute right-0 top-full z-50 mt-1 min-w-32.5 text-[12px]"
                   role="menu"
                   tabindex="-1"
                   onclick={(e) => e.stopPropagation()}
@@ -254,57 +279,88 @@
                   {#if feature.popup}
                     <button
                       type="button"
-                      class="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900"
+                      class="ext-menu-item text-ext-text"
                       onclick={() => {
                         activeDropdownId = null;
                         openDetail(feature.id);
                       }}
                     >
-                      <Icon name="gear" size={12} class="text-slate-400" />
-                      <span>Detail</span>
+                      <Icon name="gear" size={12} class="opacity-60" />
+                      <span>Details</span>
                     </button>
+                    <div
+                      class="mx-2 my-1 h-px bg-ext-border/20"
+                    ></div>
                   {/if}
                   <button
                     type="button"
-                    class="flex w-full cursor-pointer items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-slate-100 {enabled
-                      ? 'text-red-600'
-                      : 'text-emerald-600'}"
+                    class="ext-menu-item {enabled
+                      ? 'text-ext-danger'
+                      : 'text-ext-success'}"
                     onclick={() => {
                       activeDropdownId = null;
                       toggleFeature(feature, !enabled);
                     }}
                   >
                     <span
-                      class="h-2 w-2 rounded-full {enabled
-                        ? 'bg-red-500'
-                        : 'bg-emerald-500'}"
+                      class="h-1.5 w-1.5 rounded-full {enabled
+                        ? 'bg-ext-danger'
+                        : 'bg-ext-success'}"
                     ></span>
                     <span>{enabled ? "Disable" : "Enable"}</span>
                   </button>
                 </div>
               {/if}
             </div>
+
+            <!-- Navigable affordance -->
+            {#if feature.popup}
+              <svg
+                class="h-3.5 w-3.5 shrink-0 text-ext-muted transition-all group-hover:translate-x-0.5 group-hover:text-ext-text"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            {/if}
           </div>
         {/each}
       {/if}
     </div>
   {:else}
-    <!-- Detail View (Extensible Gradient Header) -->
-    <div
-      class="ext-gradient-bar flex h-[26px] shrink-0 items-center justify-between px-2.5 text-white"
+    <!-- Detail View -->
+    <header
+      class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-ext-border bg-ext-surface px-3"
     >
       <button
         type="button"
-        class="flex cursor-pointer items-center gap-1 text-[12px] font-bold text-white transition-opacity hover:opacity-85"
+        class="flex cursor-pointer items-center gap-1 rounded-[5px] py-1 pr-2 text-[12.5px] font-bold uppercase tracking-wide text-ext-text-secondary transition-colors hover:bg-[#EDE7DA] hover:text-ext-text"
         onclick={showList}
       >
-        <span class="text-sm font-bold leading-none">&#8249;</span>
+        <svg
+          class="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
         <span>Extensions</span>
       </button>
-      <span class="max-w-[170px] truncate text-[12px] font-bold text-white/95">
+      <span
+        class="max-w-42.5 truncate text-[12.5px] font-bold text-ext-text"
+      >
         {activeFeature?.name ?? ""}
       </span>
-    </div>
+      <div class="w-14"></div>
+    </header>
     <div class="min-h-0 flex-1 overflow-y-auto">
       {#if activeFeature?.popup}
         {@const DetailView = activeFeature.popup}

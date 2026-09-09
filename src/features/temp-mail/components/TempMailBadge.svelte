@@ -52,8 +52,8 @@
       if (email) {
         phase = "filled";
         // Brief green outline on the filled field
-        target.style.outline = "2px solid #10b981";
-        target.style.boxShadow = "0 0 0 3px rgba(16, 185, 129, 0.2)";
+        target.style.outline = "2px solid #2D8C4E";
+        target.style.boxShadow = "2px 2px 0 #1A1A1A";
         setTimeout(() => {
           target.style.outline = "";
           target.style.boxShadow = "";
@@ -76,18 +76,19 @@
 {#if !hidden}
   <button
     type="button"
-    class="group flex items-center justify-center rounded text-white shadow-md opacity-85 transition-[opacity,background-color,box-shadow] hover:opacity-100"
+    class="group flex items-center justify-center rounded-[4px] text-ext-danger transition-transform hover:scale-105 active:translate-x-px active:translate-y-px"
     class:aio-loading={phase === "loading"}
     style:top="{top}px"
     style:left="{left}px"
-    style:width="22px"
-    style:height="22px"
+    style:width="24px"
+    style:height="24px"
     style:position="fixed"
     style:z-index="2147483640"
     style:margin="0"
     style:padding="0"
-    style:background="linear-gradient(to bottom, #5b7ca6, #41638e)"
-    style:border="1px solid #36567f"
+    style:background="#FFFDF7"
+    style:border="1.5px solid #1A1A1A"
+    style:box-shadow="2px 2px 0 #1A1A1A"
     style:cursor="pointer"
     style:outline="none"
     style:user-select="none"
@@ -100,17 +101,17 @@
     aria-label={tooltip}
   >
     {#if phase === "loading"}
-      <Icon name="spinner" size={14} class="animate-spin" />
+      <Icon name="spinner" size={13} class="animate-spin text-ext-text" />
     {:else if phase === "filled"}
-      <Icon name="check" size={14} />
+      <Icon name="check" size={13} class="text-ext-success" />
     {:else if phase === "error"}
-      <Icon name="close" size={14} />
+      <Icon name="close" size={13} class="text-ext-danger" />
     {:else}
-      <Icon name="mail" size={14} />
+      <Icon name="mail" size={13} class="text-ext-danger" />
     {/if}
     <span
-      class="pointer-events-none absolute bottom-full right-0 mb-1 whitespace-nowrap rounded border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] font-medium text-slate-100 shadow-md opacity-0 transition-all group-hover:opacity-100"
-      style:font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+      class="pointer-events-none absolute bottom-full right-0 mb-1.5 whitespace-nowrap rounded-[4px] border-[1.5px] border-ext-border bg-ext-surface px-2 py-0.5 text-[9.5px] font-black uppercase tracking-wider text-ext-text shadow-[2px_2px_0_#1A1A1A] opacity-0 transition-opacity group-hover:opacity-100"
+      style:font-family="'Space Grotesk', system-ui, sans-serif"
     >{tooltip}</span>
   </button>
 {/if}

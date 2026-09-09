@@ -60,10 +60,17 @@ export function setupAiExporterBackground(): void {
   );
 }
 
-/** Creates a blob: URL for text content (no 2 MB data-URL limit, no deprecated btoa/unescape). */
+/**
+ * Creates a blob: URL for text content (no 2 MB data-URL limit, no deprecated
+ * btoa/unescape). Falls back to a data: URL because Chrome MV3 service workers
+ * don't expose URL.createObjectURL; fine for typical chat exports (< 2 MB).
+ */
 function toObjectUrl(content: string, mimeType: string): string {
-  const blob = new Blob([content], { type: mimeType });
-  return URL.createObjectURL(blob);
+  if (typeof URL.createObjectURL === "function") {
+    const blob = new Blob([content], { type: mimeType });
+    return URL.createObjectURL(blob);
+  }
+  return `data:${mimeType};charset=utf-8,${encodeURIComponent(content)}`;
 }
 
 /** Revokes an object URL after the browser has had time to consume it. */

@@ -105,8 +105,12 @@
       await sendMessage(AI_EXPORTER_ACTIONS.EXPORT_FILE, { conversation: convo, format });
       await loadHistory();
       showStatus(format === "pdf" ? "Print dialog opened!" : `Exported as ${format.toUpperCase()}!`);
-    } catch {
-      showStatus("Export failed", true);
+    } catch (err) {
+      console.warn("[AiExporter] Export failed:", err);
+      showStatus(
+        err instanceof Error && err.message ? `Export failed: ${err.message}` : "Export failed",
+        true,
+      );
     } finally {
       isLoading = false;
     }
@@ -185,8 +189,8 @@
 <div class="flex flex-col gap-2 p-2">
   {#if status}
     <div
-      class="rounded-md border px-2 py-1.5 text-[11px] font-medium
-        {status.isError ? 'border-red-300 bg-red-50 text-red-700' : 'border-emerald-300 bg-emerald-50 text-emerald-700'}"
+      class="rounded-md border-[1.5px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#1A1A1A]
+        {status.isError ? 'bg-ext-danger text-white border-[#A82624]' : 'bg-ext-success text-white border-[#1E6B38]'}"
     >
       {status.text}
     </div>
@@ -196,7 +200,7 @@
     <Card title="Active AI Session">
       {#snippet headerAction()}<Badge text="Not Detected" variant="neutral" />{/snippet}
       <div class="flex flex-col items-center gap-2 py-2 text-center">
-        <p class="text-xs text-slate-500">
+        <p class="text-xs font-medium text-ext-text-secondary">
           Navigate to ChatGPT, Claude, Gemini, or DeepSeek to export your conversations.
         </p>
         <Button size="sm" variant="secondary" disabled={isLoading} onclick={() => detectActiveTabChat(false)}
@@ -211,11 +215,11 @@
         />{/snippet}
       <div class="flex flex-col gap-2">
         <div class="flex flex-col gap-1">
-          <h4 class="truncate text-sm font-semibold text-slate-800" title={convo.title}>{convo.title}</h4>
-          <div class="flex items-center gap-1.5 text-[11px] text-slate-500">
+          <h4 class="truncate text-sm font-bold text-ext-text" title={convo.title}>{convo.title}</h4>
+          <div class="flex items-center gap-1.5 text-[11px] text-ext-text-secondary">
             <Badge text={`${convo.messages.length} messages`} variant="primary" />
             {#if convo.totalWords}
-              <span class="text-slate-400">•</span><span>{convo.totalWords.toLocaleString()} words</span>
+              <span class="text-ext-muted">•</span><span class="font-semibold">{convo.totalWords.toLocaleString()} words</span>
             {/if}
           </div>
         </div>
@@ -237,42 +241,41 @@
   {/if}
 
   <Card title="Caveman Mode">
-    {#snippet headerAction()}<Badge text={caveman.enabled ? "ON" : "OFF"} variant={caveman.enabled ? "warning" : "neutral"} />{/snippet}
-    <div class="flex flex-col gap-2">
-      <div class="flex items-center justify-between gap-2">
-        <div class="flex flex-col">
-          <span class="text-xs font-medium text-slate-700">Terse Response Mode</span>
-          <span class="text-[11px] text-slate-500">Strip fluff, pleasantries &amp; hedging. Retain 100% technical code &amp; substance.</span>
+    {#snippet headerAction()}<Badge text={caveman.enabled ? "ON" : "OFF"} variant={caveman.enabled ? "warning" : "neutral"} />{/snippet}      <div class="flex flex-col gap-2">
+        <div class="flex items-center justify-between gap-2">
+          <div class="flex flex-col">
+            <span class="text-xs font-bold text-ext-text">Terse Response Mode</span>
+            <span class="text-[11px] text-ext-text-secondary">Strip fluff, pleasantries &amp; hedging. Retain 100% technical code &amp; substance.</span>
+          </div>
+          <label class="relative inline-flex shrink-0 cursor-pointer items-center">
+            <input
+              type="checkbox"
+              class="peer sr-only"
+              checked={caveman.enabled}
+              onchange={(e) => handleToggleCaveman((e.target as HTMLInputElement).checked)}
+            />
+            <span
+              class="h-4.5 w-8 rounded-sm border-[1.5px] bg-[#D4CEC2] transition-colors focus-within:ring-2 focus-within:ring-ext-primary/40 after:absolute after:left-0.5 after:top-[1.5px] after:h-3.25 after:w-3.25 after:rounded-[3px] after:bg-white after:shadow-[1px_1px_0_rgba(26,26,26,0.2)] after:transition-transform after:content-[''] peer-checked:border-[#1E6B38] peer-checked:bg-ext-success peer-checked:after:translate-x-[13px]"
+            ></span>
+          </label>
         </div>
-        <label class="relative inline-flex shrink-0 cursor-pointer items-center">
-          <input
-            type="checkbox"
-            class="peer sr-only"
-            checked={caveman.enabled}
-            onchange={(e) => handleToggleCaveman((e.target as HTMLInputElement).checked)}
-          />
-          <span
-            class="h-4 w-8 rounded-full bg-slate-300 transition-colors after:absolute after:left-0.5 after:top-0.5 after:h-3 after:w-3 after:rounded-full after:bg-white after:shadow after:transition-transform after:content-[''] peer-checked:after:translate-x-4"
-          ></span>
-        </label>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="shrink-0 text-[11px] font-medium text-slate-600">Intensity:</span>
-        <div class="flex gap-1">
-          {#each CAVEMAN_LEVELS as lvl}
-            <button
-              type="button"
-              class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase transition-colors
-                {caveman.level === lvl
-                  ? 'bg-ext-primary text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
-              onclick={() => handleSetLevel(lvl as CavemanLevel)}
-            >{lvl}</button>
-          {/each}
+        <div class="flex items-center gap-2">
+          <span class="shrink-0 text-[11px] font-bold uppercase tracking-wider text-ext-text-secondary">Intensity:</span>
+          <div class="flex gap-1">
+            {#each CAVEMAN_LEVELS as lvl}
+              <button
+                type="button"
+                class="rounded-sm border-[1.5px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all active:translate-x-px active:translate-y-px
+                  {caveman.level === lvl
+                    ? 'border-ext-primary bg-ext-primary text-white shadow-[1px_1px_0_#1A1A1A] active:shadow-none'
+                    : 'border-ext-border bg-ext-surface text-ext-text-secondary hover:bg-[#EDE7DA]'}"
+                onclick={() => handleSetLevel(lvl as CavemanLevel)}
+              >{lvl}</button>
+            {/each}
+          </div>
         </div>
+        <div class="text-[11px] font-medium italic text-ext-muted">{cavemanHint}</div>
       </div>
-      <div class="text-[11px] italic text-slate-400">{cavemanHint}</div>
-    </div>
   </Card>
 
   <SectionHeader title="Export History">
@@ -297,14 +300,14 @@
           minute: "2-digit",
         })}
         {@const platformName = AI_PLATFORMS[item.platform]?.name || item.platform}
-        <div class="flex items-center gap-2 rounded-md border border-slate-100 bg-white px-2 py-1.5 hover:bg-slate-50">
-          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-slate-100 text-slate-500">
+        <div class="flex items-center gap-2 rounded-lg border-[1.5px] border-ext-border bg-ext-surface px-2 py-1.5 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]">
+          <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] border border-[#D4CEC2] bg-[#EDE7DA] text-ext-text-secondary">
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
               ><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" /></svg>
           </span>
           <div class="min-w-0 flex-1">
-            <div class="truncate text-xs font-medium text-slate-700">{item.title}</div>
-            <div class="truncate text-[11px] text-slate-400">
+            <div class="truncate text-xs font-bold text-ext-text">{item.title}</div>
+            <div class="truncate text-[11px] font-medium text-ext-muted">
               {platformName} • {item.format.toUpperCase()} • {dateStr}
             </div>
           </div>
@@ -312,20 +315,20 @@
             {#if item.content}
               <button
                 type="button"
-                class="inline-flex h-5.5 w-5.5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                class="inline-flex h-5.5 w-5.5 items-center justify-center rounded-sm border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text"
                 title="Re-download"
                 aria-label="Re-download"
                 onclick={() => handleDownloadHistory(item.id)}><Icon name="download" size={14} /></button>
               <button
                 type="button"
-                class="inline-flex h-5.5 w-5.5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-800"
+                class="inline-flex h-5.5 w-5.5 items-center justify-center rounded-sm border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text"
                 title="Copy Content"
                 aria-label="Copy Content"
                 onclick={() => handleCopyHistory(item.id)}><Icon name="copy" size={14} /></button>
             {/if}
             <button
               type="button"
-              class="inline-flex h-5.5 w-5.5 items-center justify-center rounded text-slate-500 transition-colors hover:bg-red-50 hover:text-red-600"
+              class="inline-flex h-5.5 w-5.5 items-center justify-center rounded-sm border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-ext-danger hover:border-[#A82624] hover:text-white"
               title="Delete"
               aria-label="Delete"
               onclick={() => handleDeleteHistory(item.id)}><Icon name="trash" size={14} /></button>

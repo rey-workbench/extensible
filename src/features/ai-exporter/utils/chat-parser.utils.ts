@@ -45,6 +45,7 @@ export class ChatParserUtils {
 
     if (messages.length === 0) {
       // Fallback try generic if specialized parser yielded 0
+      console.warn(`[AiExporter] No messages parsed on "${platform}" — falling back to generic.`);
       messages = this.parseGeneric(doc);
     }
 

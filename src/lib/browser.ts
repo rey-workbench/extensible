@@ -20,23 +20,25 @@ export async function setBadge(text: string, color = "#10b981"): Promise<void> {
   }
 }
 
+/** Inline PNG so notifications work without a packaged icon file. */
+const NOTIFICATION_ICON =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
 export function showNotification(options: {
   title: string;
   message: string;
   iconUrl?: string;
 }): void {
   if (!browser.notifications) return;
-  const iconUrl =
-    options.iconUrl ||
-    (typeof chrome !== "undefined" && chrome.runtime?.getURL
-      ? chrome.runtime.getURL("/icon/128.png")
-      : "");
-  browser.notifications.create({
-    type: "basic",
-    iconUrl,
-    title: options.title,
-    message: options.message,
-  });
+  // Best-effort: never let a rejected notification crash the background watcher.
+  browser.notifications
+    .create({
+      type: "basic",
+      iconUrl: options.iconUrl || NOTIFICATION_ICON,
+      title: options.title,
+      message: options.message,
+    })
+    .catch(() => {});
 }
 
 /**

@@ -37,21 +37,25 @@
   }: Props = $props();
 
   const base =
-    "inline-flex items-center justify-center gap-1.5 rounded select-none transition-colors cursor-pointer " +
-    "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-500 " +
-    "disabled:pointer-events-none disabled:opacity-55";
+    "inline-flex items-center justify-center gap-1.5 rounded-[6px] select-none transition-all cursor-pointer font-semibold tracking-wide " +
+    "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#1B4DDB] " +
+    "disabled:pointer-events-none disabled:opacity-50";
   const variants: Record<Variant, string> = {
     primary:
-      "border-ext-primary-border bg-linear-to-b from-ext-primary-light to-ext-primary-mid text-white shadow-sm " +
-      "hover:from-ext-primary-hover hover:to-ext-primary-hover-dark",
+      "bg-ext-primary text-white border-[1.5px] border-ext-primary-dark shadow-[2px_2px_0_#1A1A1A] " +
+      "hover:bg-ext-primary-dark active:bg-[#0A2D7E] active:shadow-[1px_1px_0_#1A1A1A] active:translate-x-px active:translate-y-px",
     secondary:
-      "border border-slate-300 bg-white text-slate-800 shadow-sm hover:bg-slate-100 hover:border-slate-400",
-    danger: "border border-red-300 bg-red-100 text-red-800 hover:bg-red-200 hover:text-red-900",
-    ghost: "border border-transparent bg-transparent text-slate-500 hover:bg-slate-100 hover:text-slate-800",    outline: "border-ext-primary bg-transparent text-ext-primary hover:bg-blue-50",
+      "border-[1.5px] border-ext-border bg-ext-surface text-ext-text shadow-[2px_2px_0_#1A1A1A] " +
+      "hover:bg-[#EDE7DA] active:bg-[#E4DDD0] active:shadow-[1px_1px_0_#1A1A1A] active:translate-x-px active:translate-y-px",
+    danger:
+      "bg-ext-danger text-white border-[1.5px] border-[#A82624] shadow-[2px_2px_0_#1A1A1A] " +
+      "hover:bg-[#B82A28] active:bg-[#9A2321] active:shadow-[1px_1px_0_#1A1A1A] active:translate-x-px active:translate-y-px",
+    ghost: "border-[1.5px] border-transparent bg-transparent text-ext-text-secondary hover:bg-[#EDE7DA] hover:text-ext-text",
+    outline: "border-[1.5px] border-ext-primary bg-transparent text-ext-primary hover:bg-ext-primary/10",
   };
   const sizes: Record<Size, string> = {
-    sm: "h-5.5 px-2 py-0.5 text-[11px]",
-    md: "h-7 px-3 py-1.5 text-xs",
+    sm: "h-6 px-2.5 py-0.5 text-[11px] uppercase",
+    md: "h-7.5 px-3 py-1 text-xs uppercase",
   };
 
   const classes = $derived([base, variants[variant], sizes[size], cls].filter(Boolean).join(" "));

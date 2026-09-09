@@ -26,8 +26,20 @@ export class AiExporterComposerView {
     if (initialSettings) {
       this.currentSettings = initialSettings;
     }
+    this.loadFont();
     this.renderToolbar();
     this.startComposerWatcher();
+  }
+
+  /** Load Space Grotesk (Bauhaus typeface) into the host page — scoped to AI chat pages. */
+  private loadFont(): void {
+    if (document.getElementById("aio-space-grotesk-font")) return;
+    const link = document.createElement("link");
+    link.id = "aio-space-grotesk-font";
+    link.rel = "stylesheet";
+    link.href =
+      "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap";
+    document.head.appendChild(link);
   }
 
   public updateSettings(settings: CavemanSettings): void {
@@ -49,22 +61,31 @@ export class AiExporterComposerView {
     const badgeClass = enabled && levelValid ? `aio-lvl-${level}` : "";
 
     this.container.innerHTML = `
-      <div class="aio-composer-bar flex h-7 select-none items-center gap-0.5 whitespace-nowrap rounded-full border border-white/10 bg-slate-900/70 px-1.5 shadow-[0_2px_8px_rgba(0,0,0,0.25)] backdrop-blur-xl transition-colors ${enabled ? "aio-caveman-on border-orange-400/35 bg-[#281c14]/85 shadow-[0_0_10px_rgba(249,115,22,0.15),0_2px_8px_rgba(0,0,0,0.25)]" : ""}">
+      <div class="aio-composer-bar flex h-7 select-none items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 transition-all"
+        style="font-family: 'Space Grotesk', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; ${
+          enabled
+            ? "background: #FDF3E3; border: 1.5px solid #C48C1E; box-shadow: 2px 2px 0 #1A1A1A;"
+            : "background: #FFFDF7; border: 1.5px solid #2B2B2B; box-shadow: 2px 2px 0 #1A1A1A;"
+        }">
         <!-- Caveman Toggle Button -->
-        <button type="button" class="aio-bar-btn aio-caveman-toggle-btn flex h-5.5 cursor-pointer items-center gap-1 rounded-full border-0 bg-transparent px-1.5 text-[11.5px] font-medium text-slate-300 outline-none transition-all hover:bg-white/10 hover:text-white" title="Caveman Mode: ${statusText} (Click to cycle level)">
-          ${renderIcon("flame", 13, "aio-flame-icon")}
-          <span class="aio-bar-btn-text text-[11px] font-medium tracking-[0.1px]">Caveman</span>
-          <span class="aio-bar-badge aio-lvl-badge ${badgeClass} rounded-full px-1.5 py-px text-[8.5px] font-bold uppercase leading-none tracking-[0.4px] transition-colors ${enabled ? "text-orange-200" : "bg-white/10 text-slate-400"}">${statusText}</span>
+        <button type="button" class="aio-bar-btn aio-caveman-toggle-btn flex h-5.5 cursor-pointer items-center gap-1 rounded-[4px] border-0 bg-transparent px-1.5 text-[11.5px] font-bold outline-none transition-all hover:bg-[#EDE7DA]" style="color: #1A1A1A;" title="Caveman Mode: ${statusText} (Click to cycle level)">
+          ${renderIcon("flame", 13, `aio-flame-icon ${enabled ? "text-[#C48C1E]" : "text-[#A89B8C]"}`)}
+          <span class="aio-bar-btn-text text-[11px] font-bold tracking-[0.1px]" style="color: #1A1A1A;">Caveman</span>
+          <span class="aio-bar-badge aio-lvl-badge ${badgeClass} rounded-[3px] px-1.5 py-px text-[8.5px] font-bold uppercase leading-none tracking-[0.4px] transition-colors ${
+            enabled
+              ? "border border-[#C48C1E] bg-[#E8A727] text-[#1A1A1A]"
+              : "border border-[#D4CEC2] bg-[#EDE7DA] text-[#6B5E50]"
+          }">${statusText}</span>
         </button>
 
-        <div class="aio-bar-divider mx-0.5 h-3 w-px bg-white/10"></div>
+        <div class="aio-bar-divider mx-0.5 h-3.5 w-px bg-[#2B2B2B]"></div>
 
         <!-- Export Menu Button -->
         <div class="aio-export-wrapper inline-flex">
-          <button type="button" class="aio-bar-btn aio-export-trigger-btn flex h-5.5 cursor-pointer items-center gap-1 rounded-full border-0 bg-transparent px-1.5 text-[11.5px] font-medium text-slate-300 outline-none transition-all hover:bg-white/10 hover:text-white" title="Export Conversation">
+          <button type="button" class="aio-bar-btn aio-export-trigger-btn flex h-5.5 cursor-pointer items-center gap-1 rounded-[4px] border-0 bg-transparent px-1.5 text-[11.5px] font-bold outline-none transition-all hover:bg-[#EDE7DA]" style="color: #1A1A1A;" title="Export Conversation">
             ${renderIcon("download", 13)}
-            <span class="aio-bar-btn-text text-[11px] font-medium tracking-[0.1px]">Export</span>
-            <span class="aio-export-caret text-[8px] opacity-55 transition-transform">▾</span>
+            <span class="aio-bar-btn-text text-[11px] font-bold tracking-[0.1px]" style="color: #1A1A1A;">Export</span>
+            <span class="aio-export-caret text-[9px] opacity-75 transition-transform" style="color: #1A1A1A;">▾</span>
           </button>
         </div>
       </div>
@@ -99,34 +120,36 @@ export class AiExporterComposerView {
     this.menuEl = document.createElement("div");
     this.menuEl.id = "aio-composer-menu-root";
     this.menuEl.className =
-      "aio-composer-menu fixed z-2147483647 flex-col overflow-hidden rounded-xl border border-white/15 bg-slate-950/95 p-1.5 shadow-[0_16px_36px_rgba(0,0,0,0.65),0_2px_8px_rgba(0,0,0,0.4)] backdrop-blur-xl [font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif]";
+      "aio-composer-menu fixed z-2147483647 flex-col overflow-hidden rounded-lg border-[1.5px] border-solid border-[#2B2B2B] bg-[#FFFDF7] p-1.5 shadow-[3px_3px_0_#1A1A1A] [font-family:'Space_Grotesk',system-ui,'Segoe_UI',Roboto,'Helvetica_Neue',Arial,sans-serif]";
     this.menuEl.style.display = "none";
     this.menuEl.innerHTML = `
-      <div class="aio-composer-menu-header flex items-center justify-between px-2.5 pb-1 pt-1.5 text-[9.5px] font-bold uppercase tracking-[0.6px] text-slate-500">
+      <div class="aio-composer-menu-header flex items-center justify-between rounded-[5px] px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-[#1B4DDB]" style="background: #EDE7DA;">
         <span>Export Conversation</span>
-        <button type="button" class="aio-composer-menu-close flex h-4.5 w-4.5 cursor-pointer items-center justify-center rounded border-0 bg-transparent p-0 text-[13px] leading-none text-slate-500 transition-colors hover:bg-white/10 hover:text-slate-100" title="Close menu">✕</button>
+        <button type="button" class="aio-composer-menu-close flex h-4.5 w-4.5 cursor-pointer items-center justify-center rounded-[4px] border-[1.5px] border-solid border-[#2B2B2B] bg-[#FFFDF7] p-0 text-[11px] leading-none text-[#A89B8C] transition-all hover:bg-[#EDE7DA] hover:text-[#1A1A1A]" title="Close menu">✕</button>
       </div>
-      <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-medium text-slate-200 outline-none transition-all hover:bg-white/10 hover:text-white" data-format="markdown">
-        ${renderIcon("markdown", 13)}
-        <span>Markdown (.md)</span>
-      </button>
-      <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-medium text-slate-200 outline-none transition-all hover:bg-white/10 hover:text-white" data-format="pdf">
-        ${renderIcon("pdf", 13)}
-        <span>Print to PDF</span>
-      </button>
-      <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-medium text-slate-200 outline-none transition-all hover:bg-white/10 hover:text-white" data-format="json">
-        ${renderIcon("json", 13)}
-        <span>JSON (.json)</span>
-      </button>
-      <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-medium text-slate-200 outline-none transition-all hover:bg-white/10 hover:text-white" data-format="html">
-        ${renderIcon("html", 13)}
-        <span>HTML Document</span>
-      </button>
-      <div class="aio-composer-menu-divider my-1 h-px bg-white/10"></div>
-      <button type="button" class="aio-composer-menu-item aio-composer-copy-btn flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-medium text-slate-200 outline-none transition-all hover:bg-white/10 hover:text-white">
-        ${renderIcon("copy", 13)}
-        <span>Copy to Clipboard</span>
-      </button>
+      <div class="pt-1 flex flex-col gap-0.5">
+        <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-[5px] border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-semibold text-[#1A1A1A] outline-none transition-all hover:bg-[#EDE7DA] hover:text-[#1A1A1A]" data-format="markdown">
+          ${renderIcon("markdown", 13, "text-[#1B4DDB]")}
+          <span>Markdown (.md)</span>
+        </button>
+        <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-[5px] border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-semibold text-[#1A1A1A] outline-none transition-all hover:bg-[#EDE7DA] hover:text-[#1A1A1A]" data-format="pdf">
+          ${renderIcon("pdf", 13, "text-[#D63230]")}
+          <span>Print to PDF</span>
+        </button>
+        <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-[5px] border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-semibold text-[#1A1A1A] outline-none transition-all hover:bg-[#EDE7DA] hover:text-[#1A1A1A]" data-format="json">
+          ${renderIcon("json", 13, "text-[#C48C1E]")}
+          <span>JSON (.json)</span>
+        </button>
+        <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-[5px] border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-semibold text-[#1A1A1A] outline-none transition-all hover:bg-[#EDE7DA] hover:text-[#1A1A1A]" data-format="html">
+          ${renderIcon("html", 13, "text-[#1B4DDB]")}
+          <span>HTML Document</span>
+        </button>
+        <div class="aio-composer-menu-divider my-1 h-px bg-[#2B2B2B]/20"></div>
+        <button type="button" class="aio-composer-menu-item aio-composer-copy-btn flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-medium text-[#1c2130] outline-none transition-all hover:bg-[#f1f2f7] hover:text-[#1c2130]">
+          ${renderIcon("copy", 13, "text-[#A89B8C]")}
+          <span>Copy to Clipboard</span>
+        </button>
+      </div>
     `;
     document.body.appendChild(this.menuEl);
     this.bindMenuEvents();
@@ -233,8 +256,9 @@ export class AiExporterComposerView {
           try {
             await this.callbacks.onExport(format);
             this.showToast(format === "pdf" ? "Print dialog opened!" : "Exported!");
-          } catch (_err) {
-            this.showToast("Export failed", true);
+          } catch (err) {
+            console.warn("[AiExporter] Export failed:", err);
+            this.showToast(formatExportError(err), true);
           }
         }
       });
@@ -248,8 +272,12 @@ export class AiExporterComposerView {
       try {
         await this.callbacks.onCopy();
         this.showToast("Copied to clipboard!");
-      } catch (_err) {
-        this.showToast("Copy failed", true);
+      } catch (err) {
+        console.warn("[AiExporter] Copy failed:", err);
+        this.showToast(
+          err instanceof Error && err.message ? `Copy failed: ${err.message}` : "Copy failed",
+          true
+        );
       }
     });
   }
@@ -306,9 +334,9 @@ export class AiExporterComposerView {
 
   private updateCavemanButtonUi(): void {
     if (!this.container) return;
-    const bar = this.container.querySelector(".aio-composer-bar");
+    const bar = this.container.querySelector<HTMLElement>(".aio-composer-bar");
     const icon = this.container.querySelector<SVGElement>(".aio-flame-icon");
-    const badge = this.container.querySelector(".aio-lvl-badge");
+    const badge = this.container.querySelector<HTMLElement>(".aio-lvl-badge");
     const btn = this.container.querySelector<HTMLButtonElement>(".aio-caveman-toggle-btn");
 
     const { enabled, level } = this.currentSettings;
@@ -317,41 +345,27 @@ export class AiExporterComposerView {
 
     if (bar) {
       if (enabled) {
-        bar.classList.add(
-          "aio-caveman-on",
-          "border-orange-400/35",
-          "bg-[#281c14]/85",
-          "shadow-[0_0_10px_rgba(249,115,22,0.15),0_2px_8px_rgba(0,0,0,0.25)]"
-        );
-        bar.classList.remove(
-          "border-white/10",
-          "bg-slate-900/70",
-          "shadow-[0_2px_8px_rgba(0,0,0,0.25)]"
-        );
+        bar.style.background = "#FDF3E3";
+        bar.style.border = "1.5px solid #C48C1E";
+        bar.style.boxShadow = "2px 2px 0 #1A1A1A";
+        bar.classList.add("aio-caveman-on");
       } else {
-        bar.classList.remove(
-          "aio-caveman-on",
-          "border-orange-400/35",
-          "bg-[#281c14]/85",
-          "shadow-[0_0_10px_rgba(249,115,22,0.15),0_2px_8px_rgba(0,0,0,0.25)]"
-        );
-        bar.classList.add(
-          "border-white/10",
-          "bg-slate-900/70",
-          "shadow-[0_2px_8px_rgba(0,0,0,0.25)]"
-        );
+        bar.style.background = "#FFFDF7";
+        bar.style.border = "1.5px solid #2B2B2B";
+        bar.style.boxShadow = "2px 2px 0 #1A1A1A";
+        bar.classList.remove("aio-caveman-on");
       }
     }
     if (icon) {
-      icon.style.color = enabled ? "#f97316" : "#94a3b8";
+      icon.style.color = enabled ? "#C48C1E" : "#A89B8C";
     }
     if (badge) {
       badge.textContent = statusText;
-      badge.className = `aio-bar-badge aio-lvl-badge rounded-full px-1.5 py-px text-[8.5px] font-bold uppercase leading-none tracking-[0.4px] transition-colors ${
-        enabled ? `aio-lvl-${level} text-orange-200` : "bg-white/10 text-slate-400"
-      }`;
-      if (enabled && levelValid) {
-        badge.classList.add(`aio-lvl-${level}`);
+      if (enabled) {
+        badge.className = `aio-bar-badge aio-lvl-badge rounded-[3px] px-1.5 py-px text-[8.5px] font-bold uppercase leading-none tracking-[0.4px] transition-colors border border-[#C48C1E] bg-[#E8A727] text-[#1A1A1A] aio-lvl-${level}`;
+      } else {
+        badge.className =
+          "aio-bar-badge aio-lvl-badge rounded-[3px] px-1.5 py-px text-[8.5px] font-bold uppercase leading-none tracking-[0.4px] transition-colors border border-[#D4CEC2] bg-[#EDE7DA] text-[#6B5E50]";
       }
     }
     if (btn) {
@@ -424,9 +438,13 @@ export class AiExporterComposerView {
     if (!this.container) return;
     const rect = this.container.getBoundingClientRect();
     const toast = document.createElement("div");
-    toast.className = `aio-composer-toast fixed whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[11.5px] font-medium text-slate-100 shadow-[0_8px_24px_rgba(0,0,0,0.45)] backdrop-blur-xl transition-all pointer-events-none ${
-      isError ? "border-red-400/40 text-red-300" : "border-white/15 bg-slate-950/95"
-    }`;
+    toast.className =
+      "aio-composer-toast fixed whitespace-nowrap rounded-md border-[1.5px] border-solid px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow-[3px_3px_0_#1A1A1A] transition-all pointer-events-none";
+    toast.style.fontFamily =
+      "'Space Grotesk', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+    toast.style.background = isError ? "#D63230" : "#FFFDF7";
+    toast.style.borderColor = isError ? "#A82624" : "#2B2B2B";
+    toast.style.color = isError ? "#ffffff" : "#1A1A1A";
     toast.textContent = message;
 
     toast.style.zIndex = "2147483647";
@@ -454,10 +472,17 @@ export class AiExporterComposerView {
     window.removeEventListener("keydown", this.onKeyDown, true);
     this.backdropEl?.remove();
     this.backdropEl = null;
+    document.getElementById("aio-space-grotesk-font")?.remove();
     this.container?.remove();
     this.container = null;
     this.menuEl?.remove();
     this.menuEl = null;
     this.isOpen = false;
   }
+}
+
+/** Human-readable export failure reason — the toast shouldn't swallow the real cause. */
+function formatExportError(err: unknown): string {
+  if (err instanceof Error && err.message) return `Export failed: ${err.message}`;
+  return "Export failed";
 }
