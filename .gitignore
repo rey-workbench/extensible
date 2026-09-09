@@ -4,6 +4,8 @@ node_modules
 # Build artifacts
 dist/
 build/
+.output/
+.wxt/
 
 # IDE / Editor
 .vscode/
@@ -28,3 +30,7 @@ pnpm-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+wxt-bestpractice.md
+
+# svelte-check generated proxies
+.svelte-check/

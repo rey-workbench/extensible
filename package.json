@@ -1,45 +1,65 @@
 {
   "name": "my-aio-extension",
   "version": "1.0.0",
-  "description": "Modular OOP MVC Chrome Extension Suite with TempMail autofill and inbox reader",
+  "description": "Modular Chrome Extension Suite (WXT + Svelte 5) with TempMail autofill, inbox reader and AI chat export",
   "type": "module",
+  "packageManager": "pnpm@10.29.3",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "dev": "node scripts/dev.js",
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "compile": "wxt prepare",
     "icons": "node scripts/generate_icons.js",
     "typecheck": "tsc --noEmit",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint": "biome check src test scripts",
     "lint:fix": "biome check --write src test scripts",
     "format": "biome format --write src test scripts",
-    "build": "node scripts/build.js",
     "test": "npx -y tsx test/verify_model.ts"
   },
   "keywords": [
     "chrome-extension",
+    "wxt",
+    "svelte",
     "tempmail",
     "autofill",
     "inbox",
-    "oop",
-    "mvc"
+    "mv3"
   ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "2.5.12",
+    "@tailwindcss/vite": "^4.3.3",
     "@types/chrome": "^0.2.9",
     "@types/node": "^26.5.0",
-    "esbuild": "^0.28.2",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "@wxt-dev/module-svelte": "^2.0.5",
     "knip": "^6.34.0",
-    "typescript": "^7.0.2"
+    "svelte": "^5.28.0",
+    "svelte-check": "^4.1.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vite": "^8.2.2",
+    "wxt": "^0.21.4"
   },
   "knip": {
     "entry": [
-      "src/background/main.ts",
-      "src/content/main.ts",
-      "src/popup/main.ts"
+      "src/entrypoints/background/index.ts",
+      "src/entrypoints/content/index.ts",
+      "src/entrypoints/popup/main.ts"
     ],
     "project": [
-      "src/**/*.ts"
+      "src/**/*.{ts,svelte}",
+      "!src/entrypoints/**"
     ],
+    "ignoreDependencies": ["tailwindcss"],
     "esbuild": false
   }
 }

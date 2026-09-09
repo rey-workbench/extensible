@@ -6,8 +6,16 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["src/**", "test/**", "scripts/**"]
+    "includes": ["src/**", "!src/styles/**", "entrypoints/**", "test/**", "scripts/**"],
+    "ignoreUnknown": true
   },
+  "overrides": [
+    {
+      "includes": ["**/*.svelte"],
+      "linter": { "enabled": false },
+      "formatter": { "enabled": false }
+    }
+  ],
   "formatter": {
     "enabled": true,
     "indentStyle": "space",

@@ -6,7 +6,6 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "typeRoots": ["./node_modules/@types"],
     "types": ["chrome", "node"],
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "strict": true,
@@ -18,7 +17,8 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": true
+    "noEmit": true,
+    "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*", "test/**/*", "scripts/**/*"]
+  "include": ["src/**/*", "entrypoints/**/*", "test/**/*", "scripts/**/*", ".wxt/types/**/*"]
 }

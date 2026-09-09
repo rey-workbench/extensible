@@ -1,0 +1,36 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens (brand palette). Tailwind v4 emits these as :root CSS custom
+ * properties and generates utility classes: bg-ext-primary, from-ext-primary-light,
+ * border-ext-primary-border, etc.
+ */
+@theme {
+  --color-ext-primary: #21407a;
+  --color-ext-primary-light: #6c8cb8;
+  --color-ext-primary-mid: #466795;
+  --color-ext-primary-border: #2d476e;
+  --color-ext-primary-hover: #5577a7;
+  --color-ext-primary-hover-dark: #1b3566;
+  --color-ext-bg: #ffffff;
+  --color-ext-header: #ffffff;
+  --color-ext-bar: #466795;
+}
+
+@layer base {
+  html,
+  body {
+    font-family:
+      Arial, "Helvetica Neue", Helvetica, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: #1e293b;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+.ext-gradient-bar {
+  background: linear-gradient(180deg, #6c8cb8 0%, #466795 50%, #3a5b88 100%);
+  border-top: 1px solid #7d9dc6;
+  border-bottom: 1px solid #2d476e;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.45);
+}

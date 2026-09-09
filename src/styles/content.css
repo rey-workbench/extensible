@@ -1,0 +1,9 @@
+/*
+ * Content-script stylesheet.
+ *
+ * Uses Tailwind's theme + utilities layers WITHOUT preflight so we never
+ * reset the host page's styles. Only the classes used by in-page components
+ * (TempMail badge etc.) are emitted.
+ */
+@import "tailwindcss/theme.css";
+@import "tailwindcss/utilities.css";

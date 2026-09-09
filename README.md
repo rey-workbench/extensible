@@ -44,21 +44,26 @@ The `Extensible` framework is built for growth. Upcoming modules in the pipeline
 ## Development
 
 Built for developers who care about code quality:
-- **TypeScript Strict**: 100% type coverage.
-- **Esbuild**: Ultra-fast bundling, spitting out lean, minified assets.
-- **Zero-Dependency Core UI**: No React, no Vue. Hand-crafted, highly optimized DOM manipulation for sub-millisecond render times.
+- **TypeScript Strict**: 100% type coverage (`tsc --noEmit` + Svelte 5 `vite-plugin-svelte`).
+- **Vite + Svelte 5**: Reactive UI with runes (`$state`/`$derived`/`$effect`), HMR for popup via Vite.
+- **pnpm**: Fast, strict dependency management (Node >=20, `pnpm@10`).
+- **Hybrid Bundle**: Vite for popup (Svelte), esbuild for MV3 background/content single-file service workers.
 
 ### Getting Started
 
 ```bash
-# Install dependencies
-npm install
+# Install dependencies (requires Node >=20 and pnpm 10)
+corepack enable
+pnpm install
 
 # Run typecheck
-npm run typecheck
+pnpm typecheck
 
 # Build the extension
-npm run build
+pnpm build
+
+# Dev with auto-reload (background polling 127.0.0.1:3210 + Vite HMR for popup)
+pnpm dev
 ```
 
 Then, load the `dist/` directory as an Unpacked Extension in Chrome (`chrome://extensions/`).
