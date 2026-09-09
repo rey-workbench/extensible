@@ -8,8 +8,10 @@
     "node": ">=20"
   },
   "scripts": {
+    "postinstall": "wxt prepare",
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
+    "dev:edge": "wxt -b edge",
     "build": "wxt build",
     "build:chrome": "wxt build -b chrome",
     "build:firefox": "wxt build -b firefox",
@@ -26,7 +28,7 @@
     "pack:all": "pnpm run zip:all && node scripts/pack.js all",
     "compile": "wxt prepare",
     "icons": "node scripts/generate_icons.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "wxt prepare && tsc --noEmit",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "lint": "biome check src test scripts",
     "lint:fix": "biome check --write src test scripts",

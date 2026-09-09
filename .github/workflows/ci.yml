@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Prepare WXT types
+        run: pnpm run compile
+
       - name: Lint
         run: pnpm run lint
 
@@ -63,6 +66,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Prepare WXT types
+        run: pnpm run compile
 
       - name: Build Extension (${{ matrix.browser }})
         run: pnpm wxt build -b ${{ matrix.browser }}
