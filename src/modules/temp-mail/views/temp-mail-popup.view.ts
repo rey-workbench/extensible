@@ -20,7 +20,7 @@ import {
  */
 export class TempMailPopupView {
   private _countdownInterval: NodeJS.Timeout | null = null;
-  private readonly _eventHandlers: Record<string, (data?: any) => void> = {};
+  private readonly _eventHandlers: Record<string, (data?: unknown) => void> = {};
 
   private emailInput!: HTMLInputElement;
   private copyBtn!: HTMLButtonElement;
@@ -48,11 +48,11 @@ export class TempMailPopupView {
 
   constructor(public readonly container: HTMLElement) {}
 
-  on(event: string, handler: (data?: any) => void): void {
+  on(event: string, handler: (data?: unknown) => void): void {
     this._eventHandlers[event] = handler;
   }
 
-  private _emit(event: string, data?: any): void {
+  private _emit(event: string, data?: unknown): void {
     if (this._eventHandlers[event]) {
       this._eventHandlers[event](data);
     }

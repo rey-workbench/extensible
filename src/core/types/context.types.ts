@@ -8,8 +8,14 @@ export interface ContextOptions {
   mount?: HTMLElement | null;
 }
 
+/** Class constructor usable as a DI token. */
+export type Token = abstract new (...args: never[]) => unknown;
+
+/** Any value usable as a DI token: a class constructor or a string/symbol key. */
+export type TokenKey = Token | string | symbol;
+
 export interface ClassConstructor<T = unknown> {
-  new (...args: any[]): T;
-  inject?: any[];
+  new (...args: never[]): T;
+  inject?: readonly TokenKey[];
   contextType?: ExecutionContext;
 }

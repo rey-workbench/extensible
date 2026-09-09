@@ -3,13 +3,28 @@ import type {
   ContextOptions,
   ExecutionContext,
   ModuleDefinition,
+  Provider,
   RegisteredModule,
+  TokenKey,
 } from "@/core/types/index";
 
 interface ProviderBinding {
-  readonly token: any;
-  readonly providerClass: any;
-  readonly useValue?: any;
+  readonly token: TokenKey;
+  readonly providerClass: unknown;
+  readonly useValue?: unknown;
+}
+
+interface LifecycleHookable {
+  onModuleInit?: () => unknown;
+  onModuleDestroy?: () => unknown;
+}
+
+function tokensMatch(a: TokenKey, b: TokenKey): boolean {
+  if (a === b) return true;
+  // SAFETY: only class constructors carry a `name`; strings/symbols fall back to identity
+  const aName = (a as { name?: string }).name;
+  const bName = (b as { name?: string }).name;
+  return aName !== undefined && aName !== "" && aName === bName;
 }
 
 /**
@@ -17,10 +32,10 @@ interface ProviderBinding {
  * Supports two-phase binding, lazy on-demand resolution, and circular dependency detection.
  */
 export class Container {
-  private readonly _providers = new Map<any, any>();
-  private readonly _definitions = new Map<any, ProviderBinding>();
-  private readonly _modules = new Map<any, RegisteredModule>();
-  private readonly _resolvingStack = new Set<any>();
+  private readonly _providers = new Map<TokenKey, unknown>();
+  private readonly _definitions = new Map<TokenKey, ProviderBinding>();
+  private readonly _modules = new Map<TokenKey, RegisteredModule>();
+  private readonly _resolvingStack = new Set<TokenKey>();
   private _contextOptions: ContextOptions = {};
 
   async registerModule(
@@ -28,7 +43,7 @@ export class Container {
     contextOptions: ContextOptions = {}
   ): Promise<RegisteredModule> {
     this._contextOptions = contextOptions;
-    const moduleClass = moduleDef.module || moduleDef;
+    const moduleClass: TokenKey = moduleDef.module ?? moduleDef.id ?? "module";
     if (this._modules.has(moduleClass)) {
       return this._modules.get(moduleClass)!;
     }
@@ -50,26 +65,26 @@ export class Container {
 
     // Phase 3: Eagerly resolve provider singletons (order-independent)
     for (const provider of providers) {
-      const token =
-        typeof provider === "object" && provider !== null && "provide" in provider
-          ? provider.provide
-          : provider;
+      const token = typeof provider === "function" ? provider : provider.provide;
       this.get(token);
     }
 
     // Phase 4: Instantiate context-matching controllers
     const currentContext = contextOptions.context || "all";
-    const activeControllers: any[] = [];
+    const activeControllers: object[] = [];
 
     for (const controller of controllers) {
       if (this._isContextMatch(controller.contextType, currentContext)) {
         const instance = await this._instantiate(controller, contextOptions);
-        activeControllers.push(instance);
+        activeControllers.push(instance as object);
       }
     }
 
     const registered: RegisteredModule = {
-      id: moduleDef.id || (typeof moduleClass === "function" ? moduleClass.name : "module"),
+      id:
+        moduleDef.id ||
+        (typeof moduleClass === "string" ? moduleClass : (moduleClass as { name?: string }).name) ||
+        "module",
       name: moduleDef.name || moduleDef.id || "Module",
       description: moduleDef.description || "",
       icon: moduleDef.icon || "",
@@ -83,21 +98,23 @@ export class Container {
     return registered;
   }
 
-  private _bindProvider(provider: any): void {
-    let token = provider;
-    let providerClass = provider;
-    let useValue: any;
-
-    if (typeof provider === "object" && provider !== null && "provide" in provider) {
-      token = provider.provide;
-      useValue = provider.useValue;
-      providerClass = provider.useClass || provider.provide;
+  private _bindProvider(provider: Provider): void {
+    if (typeof provider === "function") {
+      this._definitions.set(provider, { token: provider, providerClass: provider });
+      return;
     }
 
-    this._definitions.set(token, { token, providerClass, useValue });
-    if (useValue !== undefined) {
-      this._providers.set(token, useValue);
+    const token = provider.provide;
+    if ("useValue" in provider) {
+      const useValue = provider.useValue;
+      this._definitions.set(token, { token, providerClass: provider.provide, useValue });
+      if (useValue !== undefined) {
+        this._providers.set(token, useValue);
+      }
+      return;
     }
+
+    this._definitions.set(token, { token, providerClass: provider.useClass });
   }
 
   private _isContextMatch(
@@ -111,13 +128,13 @@ export class Container {
     return current === "all" || targetCtx === "all" || targetCtx === current;
   }
 
-  get<T>(token: any): T {
+  get<T>(token: TokenKey): T {
     // 1. Check existing instance
     if (this._providers.has(token)) {
       return this._providers.get(token) as T;
     }
     for (const [key, instance] of this._providers.entries()) {
-      if (key?.name === token?.name || key === token) {
+      if (tokensMatch(key, token)) {
         return instance as T;
       }
     }
@@ -128,25 +145,27 @@ export class Container {
       return this._resolveDefinition(def) as T;
     }
 
-    throw new Error(`[DI Container] Provider '${token?.name || token}' not found`);
+    throw new Error(
+      `[DI Container] Provider '${(token as { name?: string }).name ?? String(token)}' not found`
+    );
   }
 
-  private _findDefinition(token: any): ProviderBinding | undefined {
+  private _findDefinition(token: TokenKey): ProviderBinding | undefined {
     if (this._definitions.has(token)) {
       return this._definitions.get(token);
     }
     for (const [key, def] of this._definitions.entries()) {
-      if (key?.name === token?.name || key === token) {
+      if (tokensMatch(key, token)) {
         return def;
       }
     }
     return undefined;
   }
 
-  private _resolveDefinition(def: ProviderBinding): any {
+  private _resolveDefinition(def: ProviderBinding): unknown {
     if (this._resolvingStack.has(def.token)) {
       const cycle = [...this._resolvingStack, def.token]
-        .map((t) => t?.name || String(t))
+        .map((t) => (typeof t === "function" ? t.name : String(t)))
         .join(" -> ");
       throw new Error(`[DI Container] Circular dependency detected: ${cycle}`);
     }
@@ -183,14 +202,16 @@ export class Container {
 
   async init(): Promise<void> {
     for (const [, instance] of this._providers) {
-      if (typeof instance?.onModuleInit === "function") {
-        await instance.onModuleInit();
+      const hookable = instance as LifecycleHookable | null | undefined;
+      if (typeof hookable?.onModuleInit === "function") {
+        await hookable.onModuleInit();
       }
     }
     for (const [, module] of this._modules) {
       for (const ctrl of module.controllers) {
-        if (typeof ctrl?.onModuleInit === "function") {
-          await ctrl.onModuleInit();
+        const hookable = ctrl as LifecycleHookable | null | undefined;
+        if (typeof hookable?.onModuleInit === "function") {
+          await hookable.onModuleInit();
         }
       }
     }
@@ -199,14 +220,16 @@ export class Container {
   async destroy(): Promise<void> {
     for (const [, module] of this._modules) {
       for (const ctrl of module.controllers) {
-        if (typeof ctrl?.onModuleDestroy === "function") {
-          await ctrl.onModuleDestroy();
+        const hookable = ctrl as LifecycleHookable | null | undefined;
+        if (typeof hookable?.onModuleDestroy === "function") {
+          await hookable.onModuleDestroy();
         }
       }
     }
     for (const [, instance] of this._providers) {
-      if (typeof instance?.onModuleDestroy === "function") {
-        await instance.onModuleDestroy();
+      const hookable = instance as LifecycleHookable | null | undefined;
+      if (typeof hookable?.onModuleDestroy === "function") {
+        await hookable.onModuleDestroy();
       }
     }
     this._providers.clear();
@@ -215,13 +238,14 @@ export class Container {
     this._resolvingStack.clear();
   }
 
-  private _instantiate(TargetClass: any, contextOptions: ContextOptions): any {
+  private _instantiate(TargetClass: unknown, contextOptions: ContextOptions): unknown {
     if (typeof TargetClass !== "function") {
       return TargetClass;
     }
 
-    const injectTokens = TargetClass.inject || [];
-    const dependencies: any[] = [];
+    const ctor = TargetClass as ClassConstructor;
+    const injectTokens = ctor.inject || [];
+    const dependencies: unknown[] = [];
 
     for (const depToken of injectTokens) {
       if (depToken === "CONTEXT_OPTIONS") {
@@ -231,6 +255,8 @@ export class Container {
       }
     }
 
-    return new TargetClass(...dependencies);
+    // SAFETY: constructor shape is validated by ClassConstructor contract
+    const Instantiable = TargetClass as new (...args: unknown[]) => object;
+    return new Instantiable(...dependencies);
   }
 }

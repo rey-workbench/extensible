@@ -2,7 +2,13 @@ import { MessageRouterService } from "@/core/index";
 import { AiExporterService } from "../ai-exporter.service";
 import { AI_EXPORTER_ACTIONS } from "../constants/ai-exporter.constants";
 import { ExportChatDto } from "../dto/export-chat.dto";
-import type { ExportFormat, ExportHistoryItem, ExportResult } from "../types/ai-exporter.types";
+import type {
+  CavemanSettings,
+  ChatConversation,
+  ExportFormat,
+  ExportHistoryItem,
+  ExportResult,
+} from "../types/ai-exporter.types";
 
 export class AiExporterBackgroundController {
   public static readonly contextType = "background" as const;
@@ -17,7 +23,7 @@ export class AiExporterBackgroundController {
     this.router.subscribe(
       AI_EXPORTER_ACTIONS.EXPORT_FILE,
       async (payload: {
-        conversation: any;
+        conversation: ChatConversation;
         format?: ExportFormat;
         filename?: string;
       }): Promise<ExportResult> => {
@@ -144,8 +150,11 @@ export class AiExporterBackgroundController {
       return await this.service.getCavemanSettings();
     });
 
-    this.router.subscribe(AI_EXPORTER_ACTIONS.SET_CAVEMAN_SETTINGS, async (payload: any) => {
-      return await this.service.updateCavemanSettings(payload || {});
-    });
+    this.router.subscribe(
+      AI_EXPORTER_ACTIONS.SET_CAVEMAN_SETTINGS,
+      async (payload: Partial<CavemanSettings>) => {
+        return await this.service.updateCavemanSettings(payload || {});
+      }
+    );
   }
 }

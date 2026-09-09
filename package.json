@@ -6,6 +6,9 @@
   "scripts": {
     "icons": "node scripts/generate_icons.js",
     "typecheck": "tsc --noEmit",
+    "lint": "biome check src test scripts",
+    "lint:fix": "biome check --write src test scripts",
+    "format": "biome format --write src test scripts",
     "build": "node scripts/build.js",
     "test": "npx -y tsx test/verify_model.ts"
   },

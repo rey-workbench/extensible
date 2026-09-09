@@ -265,7 +265,9 @@ export class ChatParserUtils {
     const unwanted = clone.querySelectorAll(
       'button, svg, [role="button"], .copy-code-button, [aria-hidden="true"], [class*="action-bar"], [class*="copy-button"], [class*="feedback"], [data-testid*="copy"]'
     );
-    unwanted.forEach((el) => el.remove());
+    unwanted.forEach((el) => {
+      el.remove();
+    });
 
     // 2. Pre-process code blocks before generic text extraction
     const pres = clone.querySelectorAll("pre");

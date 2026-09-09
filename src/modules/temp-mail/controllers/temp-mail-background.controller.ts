@@ -10,7 +10,7 @@ import {
   TEMPMAIL_EVENTS,
 } from "@/modules/temp-mail/constants/index";
 import { TempMailService } from "@/modules/temp-mail/temp-mail.service";
-import type { EmailMessage } from "@/modules/temp-mail/types/index";
+import type { EmailMessage, TempMailSettings } from "@/modules/temp-mail/types/index";
 
 /**
  * Controller handling Background Service Worker message patterns, alarms, and context menus.
@@ -86,9 +86,12 @@ export class TempMailBackgroundController {
       }
     );
 
-    this.router.subscribe(TEMPMAIL_ACTIONS.UPDATE_SETTINGS, async (payload: any) => {
-      return await this.tempMailService.updateSettings(payload);
-    });
+    this.router.subscribe(
+      TEMPMAIL_ACTIONS.UPDATE_SETTINGS,
+      async (payload: Partial<TempMailSettings>) => {
+        return await this.tempMailService.updateSettings(payload || {});
+      }
+    );
 
     this.router.subscribe(TEMPMAIL_ACTIONS.AUTOFILL_ACTIVE_TAB, async () => {
       return await this._fillCurrentActiveTab();

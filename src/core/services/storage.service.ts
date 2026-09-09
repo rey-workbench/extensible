@@ -5,7 +5,10 @@
 export class StorageService {
   private readonly namespace: string;
   private readonly _memory = new Map<string, unknown>();
-  private readonly _watchers = new Map<string, Set<(newValue: any, oldValue: any) => void>>();
+  private readonly _watchers = new Map<
+    string,
+    Set<(newValue: unknown, oldValue: unknown) => void>
+  >();
 
   constructor(namespace: string = "aio") {
     this.namespace = namespace;
@@ -94,17 +97,19 @@ export class StorageService {
       this._watchers.set(fullKey, new Set());
     }
     const set = this._watchers.get(fullKey)!;
-    set.add(callback);
+    // SAFETY: watcher callbacks are registered via watch<T>, value shape is enforced there
+    const wrapped = callback as unknown as (newValue: unknown, oldValue: unknown) => void;
+    set.add(wrapped);
 
     return () => {
-      set.delete(callback);
+      set.delete(wrapped);
       if (set.size === 0) {
         this._watchers.delete(fullKey);
       }
     };
   }
 
-  private _notifyWatchers(fullKey: string, newValue: any, oldValue: any): void {
+  private _notifyWatchers(fullKey: string, newValue: unknown, oldValue: unknown): void {
     const watchers = this._watchers.get(fullKey);
     if (watchers) {
       for (const cb of watchers) {

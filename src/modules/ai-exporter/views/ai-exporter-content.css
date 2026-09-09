@@ -5,6 +5,7 @@
 .aio-composer-bar-root {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   box-sizing: border-box;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -40,8 +41,8 @@
   height: 28px !important;
   padding: 2px 4px !important;
   background: rgba(30, 41, 59, 0.72) !important;
-  backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
   border: 1px solid rgba(255, 255, 255, 0.1) !important;
   border-radius: 9999px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
@@ -172,26 +173,27 @@
   position: fixed !important;
   min-width: 185px !important;
   background: rgba(15, 23, 42, 0.94) !important;
-  backdrop-filter: blur(20px) !important;
   -webkit-backdrop-filter: blur(20px) !important;
+  backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
   border-radius: 12px !important;
   box-shadow:
     0 16px 36px rgba(0, 0, 0, 0.65),
     0 2px 8px rgba(0, 0, 0, 0.4) !important;
-  display: flex !important;
+  display: none !important;
   flex-direction: column !important;
   padding: 6px !important;
   overflow: hidden !important;
   z-index: 2147483647 !important;
-  animation: aio-menu-pop 0.16s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  -webkit-user-select: none !important;
   user-select: none !important;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }
 
-.aio-composer-menu * {
-  box-sizing: border-box !important;
+.aio-composer-menu.open {
+  display: flex !important;
+  animation: aio-menu-pop 0.16s cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 @keyframes aio-menu-pop {
@@ -205,13 +207,54 @@
   }
 }
 
+/* Fullscreen Transparent Backdrop to Guarantee Click-Outside Dismissal */
+.aio-menu-backdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: transparent !important;
+  z-index: 2147483646 !important;
+  cursor: default !important;
+  display: none !important;
+}
+
+.aio-menu-backdrop.open {
+  display: block !important;
+}
+
 .aio-composer-menu-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
   padding: 6px 10px 4px 10px !important;
   font-size: 9.5px !important;
   font-weight: 700 !important;
   color: #64748b !important;
   text-transform: uppercase !important;
   letter-spacing: 0.6px !important;
+}
+
+.aio-composer-menu-close {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 18px !important;
+  height: 18px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  color: #64748b !important;
+  font-size: 13px !important;
+  line-height: 1 !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  transition: all 0.12s ease !important;
+}
+
+.aio-composer-menu-close:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #f1f5f9 !important;
 }
 
 .aio-composer-menu-item {
@@ -263,8 +306,8 @@
   position: fixed !important;
   padding: 6px 14px !important;
   background: rgba(15, 23, 42, 0.94) !important;
-  backdrop-filter: blur(12px) !important;
   -webkit-backdrop-filter: blur(12px) !important;
+  backdrop-filter: blur(12px) !important;
   color: #f8fafc !important;
   border: 1px solid rgba(255, 255, 255, 0.14) !important;
   border-radius: 9999px !important;

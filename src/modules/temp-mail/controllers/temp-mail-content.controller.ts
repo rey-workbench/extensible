@@ -1,6 +1,10 @@
 import { type ExecutionContext, MessageRouterService, StorageService } from "@/core/index";
 import { TEMPMAIL_ACTIONS, TEMPMAIL_STORAGE_KEYS } from "@/modules/temp-mail/constants/index";
-import type { TempMailSettings } from "@/modules/temp-mail/types/index";
+import type {
+  TempEmail,
+  TempMailCurrentState,
+  TempMailSettings,
+} from "@/modules/temp-mail/types/index";
 import { TempMailUtils } from "@/modules/temp-mail/utils/index";
 import { TempMailContentView } from "@/modules/temp-mail/views/temp-mail-content.view";
 
@@ -110,10 +114,15 @@ export class TempMailContentController {
   private _attachToInput(input: HTMLInputElement): void {
     if (this.settings.showFloatingButton && !this.view.hasButton(input)) {
       this.view.attachButton(input, async () => {
-        const res = await this.router.send<any>(TEMPMAIL_ACTIONS.GET_CURRENT, {
-          autoGenerate: true,
-        });
-        return res?.address || res?.email?.address || null;
+        const res = await this.router.send<TempMailCurrentState | TempEmail | null>(
+          TEMPMAIL_ACTIONS.GET_CURRENT,
+          {
+            autoGenerate: true,
+          }
+        );
+        // Handler returns bare TempEmail on auto-generate, state object otherwise
+        if (!res) return null;
+        return "email" in res ? (res.email?.address ?? null) : (res.address ?? null);
       });
     }
 
@@ -122,12 +131,15 @@ export class TempMailContentController {
         "focus",
         async () => {
           if (!input.value) {
-            const res = await this.router.send<any>(TEMPMAIL_ACTIONS.GET_CURRENT, {
-              autoGenerate: true,
-            });
-            const email = res?.address || res?.email?.address;
-            if (email && !input.value) {
-              this.view.fillInput(input, email);
+            const res = await this.router.send<TempMailCurrentState | TempEmail | null>(
+              TEMPMAIL_ACTIONS.GET_CURRENT,
+              {
+                autoGenerate: true,
+              }
+            );
+            const email = !res ? null : "email" in res ? res.email : res;
+            if (email?.address && !input.value) {
+              this.view.fillInput(input, email.address);
             }
           }
         },

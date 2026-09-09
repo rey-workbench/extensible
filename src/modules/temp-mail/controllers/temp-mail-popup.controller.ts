@@ -1,6 +1,10 @@
 import { type ExecutionContext, ExtensionUtils, MessageRouterService } from "@/core/index";
 import { TEMPMAIL_ACTIONS } from "@/modules/temp-mail/constants/index";
-import type { TempEmail } from "@/modules/temp-mail/types/index";
+import type {
+  EmailMessage,
+  TempEmail,
+  TempMailCurrentState,
+} from "@/modules/temp-mail/types/index";
 import { TempMailPopupView } from "@/modules/temp-mail/views/temp-mail-popup.view";
 
 /**
@@ -76,7 +80,7 @@ export class TempMailPopupController {
     });
 
     this.view.on("open_email", (email) => {
-      this.view?.openModal(email);
+      this.view?.openModal(email as EmailMessage);
     });
 
     this.view.on("delete_email", async (messageId) => {
@@ -107,9 +111,18 @@ export class TempMailPopupController {
     if (!this.view) return;
     try {
       this.view.setRefreshing(true);
-      const res = await this.router.send<any>(TEMPMAIL_ACTIONS.GET_CURRENT, { autoGenerate: true });
-      const email = res?.email || res;
-      const remainingSeconds = res?.remainingSeconds ?? (email?.durationMinutes ?? 0) * 60;
+      const res = await this.router.send<TempMailCurrentState | TempEmail>(
+        TEMPMAIL_ACTIONS.GET_CURRENT,
+        {
+          autoGenerate: true,
+        }
+      );
+      // Handler returns bare TempEmail on auto-generate, state object otherwise
+      const email = res && "email" in res ? res.email : res;
+      const remainingSeconds =
+        res && "remainingSeconds" in res
+          ? res.remainingSeconds
+          : (email?.durationMinutes ?? 0) * 60;
 
       this.view.updateEmailCard(email, remainingSeconds);
       await this.refreshInbox(false);
@@ -124,7 +137,9 @@ export class TempMailPopupController {
     if (!this.view) return;
     try {
       if (showFeedback) this.view.setRefreshing(true);
-      const res = await this.router.send<any>(TEMPMAIL_ACTIONS.GET_INBOX, { refresh: true });
+      const res = await this.router.send<{ emails: EmailMessage[] }>(TEMPMAIL_ACTIONS.GET_INBOX, {
+        refresh: true,
+      });
       if (res && Array.isArray(res.emails)) {
         this.view.renderInbox(res.emails);
       }

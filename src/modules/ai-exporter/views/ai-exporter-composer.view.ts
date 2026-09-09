@@ -12,6 +12,7 @@ export interface AiExporterComposerViewCallbacks {
 export class AiExporterComposerView {
   private container: HTMLElement | null = null;
   private menuEl: HTMLElement | null = null;
+  private backdropEl: HTMLElement | null = null;
   private isOpen = false;
   private observer: MutationObserver | null = null;
   private currentSettings: CavemanSettings = { enabled: false, level: "full", sites: {} };
@@ -77,13 +78,32 @@ export class AiExporterComposerView {
   private renderMenu(): void {
     const existing = document.getElementById("aio-composer-menu-root");
     if (existing) existing.remove();
+    const existingBackdrop = document.getElementById("aio-composer-backdrop-root");
+    if (existingBackdrop) existingBackdrop.remove();
+
+    this.backdropEl = document.createElement("div");
+    this.backdropEl.id = "aio-composer-backdrop-root";
+    this.backdropEl.className = "aio-menu-backdrop";
+    this.backdropEl.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.closeMenu();
+    });
+    this.backdropEl.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.closeMenu();
+    });
+    document.body.appendChild(this.backdropEl);
 
     this.menuEl = document.createElement("div");
     this.menuEl.id = "aio-composer-menu-root";
     this.menuEl.className = "aio-composer-menu";
-    this.menuEl.style.display = "none";
     this.menuEl.innerHTML = `
-      <div class="aio-composer-menu-header">Export Conversation</div>
+      <div class="aio-composer-menu-header">
+        <span>Export Conversation</span>
+        <button type="button" class="aio-composer-menu-close" title="Close menu">✕</button>
+      </div>
       <button type="button" class="aio-composer-menu-item" data-format="markdown">
         ${renderIcon("markdown", 13)}
         <span>Markdown (.md)</span>
@@ -177,21 +197,28 @@ export class AiExporterComposerView {
   private bindMenuEvents(): void {
     if (!this.menuEl) return;
 
+    const closeBtn = this.menuEl.querySelector(".aio-composer-menu-close");
+    closeBtn?.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.closeMenu();
+    });
+
     const formatButtons = this.menuEl.querySelectorAll<HTMLButtonElement>(
       ".aio-composer-menu-item[data-format]"
     );
     formatButtons.forEach((btn) => {
       btn.addEventListener("click", async (e) => {
+        e.preventDefault();
         e.stopPropagation();
         const format = btn.getAttribute("data-format") as ExportFormat;
+        this.closeMenu();
         if (format) {
           try {
             await this.callbacks.onExport(format);
             this.showToast(format === "pdf" ? "Print dialog opened!" : "Exported!");
           } catch (_err) {
             this.showToast("Export failed", true);
-          } finally {
-            this.closeMenu();
           }
         }
       });
@@ -199,26 +226,28 @@ export class AiExporterComposerView {
 
     const copyBtn = this.menuEl.querySelector(".aio-composer-copy-btn");
     copyBtn?.addEventListener("click", async (e) => {
+      e.preventDefault();
       e.stopPropagation();
+      this.closeMenu();
       try {
         await this.callbacks.onCopy();
         this.showToast("Copied to clipboard!");
       } catch (_err) {
         this.showToast("Copy failed", true);
-      } finally {
-        this.closeMenu();
       }
     });
   }
 
-  private onDocClick = (e: MouseEvent): void => {
-    if (
-      this.isOpen &&
-      !this.container?.contains(e.target as Node) &&
-      !this.menuEl?.contains(e.target as Node)
-    ) {
-      this.closeMenu();
-    }
+  private onDocPointerDown = (e: Event): void => {
+    if (!this.isOpen) return;
+    const target = e.target as Node | null;
+    if (!target) return;
+
+    if (this.menuEl?.contains(target)) return;
+    const trigger = this.container?.querySelector(".aio-export-trigger-btn");
+    if (trigger?.contains(target)) return;
+
+    this.closeMenu();
   };
 
   private onWindowScrollOrResize = (): void => {
@@ -229,6 +258,8 @@ export class AiExporterComposerView {
 
   private onKeyDown = (e: KeyboardEvent): void => {
     if (e.key === "Escape" && this.isOpen) {
+      e.preventDefault();
+      e.stopPropagation();
       this.closeMenu();
     }
   };
@@ -251,10 +282,10 @@ export class AiExporterComposerView {
       this.toggleMenu();
     });
 
-    document.addEventListener("click", this.onDocClick);
-    window.addEventListener("scroll", this.onWindowScrollOrResize, { passive: true });
-    window.addEventListener("resize", this.onWindowScrollOrResize, { passive: true });
-    document.addEventListener("keydown", this.onKeyDown);
+    window.addEventListener("pointerdown", this.onDocPointerDown, true);
+    window.addEventListener("scroll", this.onWindowScrollOrResize, true);
+    window.addEventListener("resize", this.onWindowScrollOrResize, true);
+    window.addEventListener("keydown", this.onKeyDown, true);
   }
 
   private updateCavemanButtonUi(): void {
@@ -288,7 +319,7 @@ export class AiExporterComposerView {
   }
 
   public openMenu(): void {
-    if (!this.menuEl || !document.body.contains(this.menuEl)) {
+    if (!this.menuEl || !document.body.contains(this.menuEl) || !this.backdropEl) {
       this.renderMenu();
     }
     if (!this.menuEl || !this.container) return;
@@ -297,19 +328,32 @@ export class AiExporterComposerView {
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return;
 
-    this.menuEl.style.display = "flex";
-    this.menuEl.style.position = "fixed";
-    this.menuEl.style.zIndex = "2147483647";
+    this.backdropEl?.classList.add("open");
+    this.menuEl.classList.add("open");
 
-    // Position fixed floating above trigger button, right aligned
-    const bottom = Math.max(12, window.innerHeight - rect.top + 8);
-    const right = Math.max(12, window.innerWidth - rect.right);
+    const menuHeight = this.menuEl.offsetHeight || 220;
+    const menuWidth = this.menuEl.offsetWidth || 185;
 
-    this.menuEl.style.bottom = `${bottom}px`;
-    this.menuEl.style.right = `${right}px`;
-    this.menuEl.style.left = "auto";
-    this.menuEl.style.top = "auto";
+    // Position floating above trigger button, aligned to trigger left
+    let top = rect.top - menuHeight - 8;
+    if (top < 10) {
+      top = rect.bottom + 8;
+    }
+
+    let left = rect.left;
+    if (left + menuWidth > window.innerWidth - 12) {
+      left = window.innerWidth - menuWidth - 12;
+    }
+    if (left < 12) {
+      left = 12;
+    }
+
+    this.menuEl.style.top = `${Math.round(top)}px`;
+    this.menuEl.style.left = `${Math.round(left)}px`;
+    this.menuEl.style.bottom = "auto";
+    this.menuEl.style.right = "auto";
 
     this.isOpen = true;
 
@@ -318,8 +362,9 @@ export class AiExporterComposerView {
   }
 
   public closeMenu(): void {
+    this.backdropEl?.classList.remove("open");
     if (this.menuEl) {
-      this.menuEl.style.display = "none";
+      this.menuEl.classList.remove("open");
       this.isOpen = false;
     }
     const caret = this.container?.querySelector<HTMLElement>(".aio-export-caret");
@@ -354,10 +399,12 @@ export class AiExporterComposerView {
   public unmount(): void {
     this.observer?.disconnect();
     this.observer = null;
-    document.removeEventListener("click", this.onDocClick);
-    window.removeEventListener("scroll", this.onWindowScrollOrResize);
-    window.removeEventListener("resize", this.onWindowScrollOrResize);
-    document.removeEventListener("keydown", this.onKeyDown);
+    window.removeEventListener("pointerdown", this.onDocPointerDown, true);
+    window.removeEventListener("scroll", this.onWindowScrollOrResize, true);
+    window.removeEventListener("resize", this.onWindowScrollOrResize, true);
+    window.removeEventListener("keydown", this.onKeyDown, true);
+    this.backdropEl?.remove();
+    this.backdropEl = null;
     this.container?.remove();
     this.container = null;
     this.menuEl?.remove();

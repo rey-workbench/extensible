@@ -89,8 +89,8 @@ await assert.rejects(
 );
 
 // Test 1c: Reactive StorageService Watcher
-let watchedNew: any = null;
-let watchedOld: any = null;
+let watchedNew: string | null = null;
+let watchedOld: string | null = null;
 const unwatch = storage.watch<string>("reactive_key", (newV, oldV) => {
   watchedNew = newV;
   watchedOld = oldV;

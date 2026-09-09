@@ -1,7 +1,7 @@
 import type { ApiResponse } from "@/core/types/api.types";
 import { ExtensionUtils } from "@/core/utils/extension.utils";
 
-export type MessageHandler<P = any, R = any> = (
+export type MessageHandler<P = unknown, R = unknown> = (
   payload: P,
   sender: chrome.runtime.MessageSender
 ) => Promise<R> | R;
@@ -15,14 +15,15 @@ export class MessageRouterService {
   private _isListening = false;
   private _listenerRef:
     | ((
-        message: any,
+        message: unknown,
         sender: chrome.runtime.MessageSender,
-        sendResponse: (response?: any) => void
+        sendResponse: (response?: unknown) => void
       ) => boolean)
     | null = null;
 
-  subscribe<P = any, R = any>(pattern: string, handler: MessageHandler<P, R>): void {
-    this._handlers.set(pattern, handler as MessageHandler);
+  subscribe<P = unknown, R = unknown>(pattern: string, handler: MessageHandler<P, R>): void {
+    // SAFETY: handlers are keyed by pattern; payload is validated by each subscriber's DTO
+    this._handlers.set(pattern, handler as unknown as MessageHandler);
   }
 
   unsubscribe(pattern: string): void {
@@ -43,7 +44,8 @@ export class MessageRouterService {
     }
 
     this._isListening = true;
-    this._listenerRef = (message, sender, sendResponse) => {
+    this._listenerRef = (rawMessage, sender, sendResponse) => {
+      const message = rawMessage as { action?: unknown; payload?: unknown } | null;
       if (!message || typeof message.action !== "string") {
         return false;
       }
@@ -152,7 +154,7 @@ export class MessageRouterService {
    * Dispatch a message directly to the currently active browser tab.
    * Returns null if no active tab or content script is available.
    */
-  async sendToActiveTab<T = any>(action: string, payload: any = null): Promise<T | null> {
+  async sendToActiveTab<T = unknown>(action: string, payload: unknown = null): Promise<T | null> {
     const tab = await ExtensionUtils.getActiveTab();
     if (!tab?.id) return null;
     return this.sendToTab<T>(tab.id, action, payload);

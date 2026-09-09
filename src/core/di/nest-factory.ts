@@ -4,6 +4,7 @@ import type {
   ContextOptions,
   ModuleDefinition,
   RegisteredModule,
+  TokenKey,
 } from "@/core/types/index";
 
 /**
@@ -15,7 +16,7 @@ export class NestApplicationContext {
     public readonly options: ContextOptions = {}
   ) {}
 
-  get<T>(token: any): T {
+  get<T>(token: TokenKey): T {
     return this.container.get<T>(token);
   }
 

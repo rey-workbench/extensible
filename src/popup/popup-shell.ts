@@ -47,15 +47,21 @@ export class PopupShell {
     return this.root.querySelector(selector) as T | null;
   }
 
+  private _isPopupCapable(controller: object): boolean {
+    const ctor = controller.constructor as { contextType?: string };
+    return (
+      ctor.contextType === "popup" ||
+      typeof (controller as PopupViewController).mount === "function"
+    );
+  }
+
   init(): void {
     const allModules = this.app.getModules();
     this.modules = allModules.filter(
       (m) =>
         m.controllers &&
         m.controllers.length > 0 &&
-        m.controllers.some(
-          (c) => c.constructor.contextType === "popup" || typeof c.mount === "function"
-        )
+        m.controllers.some((c) => this._isPopupCapable(c))
     );
 
     // Initialize all modules as enabled by default
@@ -195,12 +201,9 @@ export class PopupShell {
     this.detailView?.classList.add("active");
 
     const ctrl =
-      (moduleInfo.controllers.find(
-        (c) =>
-          c &&
-          (c.constructor.contextType === "popup" ||
-            typeof (c as PopupViewController).mount === "function")
-      ) as PopupViewController | undefined) ?? null;
+      (moduleInfo.controllers.find((c) => this._isPopupCapable(c)) as
+        | PopupViewController
+        | undefined) ?? null;
 
     if (ctrl) {
       this.activeController = ctrl;
