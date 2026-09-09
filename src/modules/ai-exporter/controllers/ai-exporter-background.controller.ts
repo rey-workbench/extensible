@@ -1,14 +1,8 @@
 import { MessageRouterService } from "@/core/index";
 import { AiExporterService } from "../ai-exporter.service";
 import { AI_EXPORTER_ACTIONS } from "../constants/ai-exporter.constants";
-import { ExportChatDto } from "../dto/export-chat.dto";
-import type {
-  CavemanSettings,
-  ChatConversation,
-  ExportFormat,
-  ExportHistoryItem,
-  ExportResult,
-} from "../types/ai-exporter.types";
+import { ExportChatDto, type ExportPayload } from "../dto/export-chat.dto";
+import type { CavemanSettings, ExportHistoryItem, ExportResult } from "../types/ai-exporter.types";
 
 export class AiExporterBackgroundController {
   public static readonly contextType = "background" as const;
@@ -22,44 +16,17 @@ export class AiExporterBackgroundController {
   public onModuleInit(): void {
     this.router.subscribe(
       AI_EXPORTER_ACTIONS.EXPORT_FILE,
-      async (payload: {
-        conversation: ChatConversation;
-        format?: ExportFormat;
-        filename?: string;
-      }): Promise<ExportResult> => {
+      async (payload: ExportPayload): Promise<ExportResult> => {
         const dto = new ExportChatDto(payload);
         const formatted = this.service.formatConversation(dto.conversation, dto.format);
         const filename =
           dto.filename || this.service.generateFilename(dto.conversation, formatted.extension);
 
-        // If format is PDF, open printable tab with auto-print
+        // PDF goes to a printable tab; everything else downloads directly
         if (dto.format === "pdf") {
-          if (typeof chrome !== "undefined" && chrome.tabs?.create) {
-            const base64Content = btoa(unescape(encodeURIComponent(formatted.content)));
-            const dataUrl = `data:text/html;base64,${base64Content}`;
-            await chrome.tabs.create({ url: dataUrl });
-          }
-        } else if (typeof chrome !== "undefined" && chrome.downloads?.download) {
-          // Download via Chrome Downloads API if available
-          const base64Content = btoa(unescape(encodeURIComponent(formatted.content)));
-          const dataUrl = `data:${formatted.mimeType};base64,${base64Content}`;
-
-          await new Promise<number>((resolve, reject) => {
-            chrome.downloads.download(
-              {
-                url: dataUrl,
-                filename,
-                saveAs: false,
-              },
-              (downloadId) => {
-                if (chrome.runtime.lastError) {
-                  reject(new Error(chrome.runtime.lastError.message));
-                } else {
-                  resolve(downloadId);
-                }
-              }
-            );
-          });
+          await this.openAsTab(formatted.content);
+        } else {
+          await this.downloadAsFile(formatted.content, filename, formatted.mimeType);
         }
 
         // Record in history (including cached content for re-download / copy)
@@ -75,11 +42,7 @@ export class AiExporterBackgroundController {
         };
         await this.service.recordHistory(historyItem);
 
-        return {
-          success: true,
-          filename,
-          format: dto.format,
-        };
+        return { success: true, filename, format: dto.format };
       }
     );
 
@@ -93,36 +56,11 @@ export class AiExporterBackgroundController {
         if (!payload?.content || !payload?.filename) {
           throw new Error("Missing content or filename");
         }
-        const mimeType = payload.mimeType || "text/plain";
-        if (typeof chrome !== "undefined" && chrome.downloads?.download) {
-          const base64Content = btoa(unescape(encodeURIComponent(payload.content)));
-          const dataUrl = `data:${mimeType};base64,${base64Content}`;
-          await new Promise<number>((resolve, reject) => {
-            chrome.downloads.download(
-              { url: dataUrl, filename: payload.filename, saveAs: false },
-              (downloadId) => {
-                if (chrome.runtime.lastError) {
-                  reject(new Error(chrome.runtime.lastError.message));
-                } else {
-                  resolve(downloadId);
-                }
-              }
-            );
-          });
-        }
-        return { success: true };
-      }
-    );
-
-    this.router.subscribe(
-      AI_EXPORTER_ACTIONS.OPEN_PRINT_VIEW,
-      async (payload: { html: string }): Promise<{ success: boolean }> => {
-        if (!payload?.html) throw new Error("Missing HTML content");
-        if (typeof chrome !== "undefined" && chrome.tabs?.create) {
-          const base64Content = btoa(unescape(encodeURIComponent(payload.html)));
-          const dataUrl = `data:text/html;base64,${base64Content}`;
-          await chrome.tabs.create({ url: dataUrl });
-        }
+        await this.downloadAsFile(
+          payload.content,
+          payload.filename,
+          payload.mimeType || "text/plain"
+        );
         return { success: true };
       }
     );
@@ -156,5 +94,34 @@ export class AiExporterBackgroundController {
         return await this.service.updateCavemanSettings(payload || {});
       }
     );
+  }
+
+  /** Encodes text content into a data: URL usable by chrome.downloads / chrome.tabs. */
+  private toDataUrl(content: string, mimeType: string): string {
+    const base64 = btoa(unescape(encodeURIComponent(content)));
+    return `data:${mimeType};base64,${base64}`;
+  }
+
+  /** Downloads text content as a file via the Chrome Downloads API (no-op when unavailable). */
+  private async downloadAsFile(content: string, filename: string, mimeType: string): Promise<void> {
+    if (typeof chrome === "undefined" || !chrome.downloads?.download) return;
+    await new Promise<number>((resolve, reject) => {
+      chrome.downloads.download(
+        { url: this.toDataUrl(content, mimeType), filename, saveAs: false },
+        (downloadId) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(downloadId);
+          }
+        }
+      );
+    });
+  }
+
+  /** Opens HTML content in a new tab (no-op when tabs API unavailable). */
+  private async openAsTab(html: string): Promise<void> {
+    if (typeof chrome === "undefined" || !chrome.tabs?.create) return;
+    await chrome.tabs.create({ url: this.toDataUrl(html, "text/html") });
   }
 }

@@ -1,10 +1,10 @@
 import { type ExecutionContext, MessageRouterService, StorageService } from "@/core/index";
-import { TEMPMAIL_ACTIONS, TEMPMAIL_STORAGE_KEYS } from "@/modules/temp-mail/constants/index";
-import type {
-  TempEmail,
-  TempMailCurrentState,
-  TempMailSettings,
-} from "@/modules/temp-mail/types/index";
+import {
+  DEFAULT_TEMPMAIL_SETTINGS,
+  TEMPMAIL_ACTIONS,
+  TEMPMAIL_STORAGE_KEYS,
+} from "@/modules/temp-mail/constants/index";
+import type { TempMailCurrentState, TempMailSettings } from "@/modules/temp-mail/types/index";
 import { TempMailUtils } from "@/modules/temp-mail/utils/index";
 import { TempMailContentView } from "@/modules/temp-mail/views/temp-mail-content.view";
 
@@ -18,11 +18,7 @@ export class TempMailContentController {
   public readonly view = new TempMailContentView();
   private observer: MutationObserver | null = null;
   private unwatchSettings: (() => void) | null = null;
-  private settings: TempMailSettings = {
-    autoFillOnFocus: false,
-    showFloatingButton: true,
-    defaultDuration: 60,
-  };
+  private settings: TempMailSettings = DEFAULT_TEMPMAIL_SETTINGS;
 
   constructor(
     private readonly router: MessageRouterService,
@@ -111,18 +107,23 @@ export class TempMailContentController {
     }
   }
 
+  /** Fetches current state (auto-generating when no valid address exists). */
+  private async _fetchCurrentState(): Promise<TempMailCurrentState | null> {
+    try {
+      return await this.router.send<TempMailCurrentState>(TEMPMAIL_ACTIONS.GET_CURRENT, {
+        autoGenerate: true,
+      });
+    } catch (err) {
+      console.warn("[TempMailContentController] GET_CURRENT failed:", err);
+      return null;
+    }
+  }
+
   private _attachToInput(input: HTMLInputElement): void {
     if (this.settings.showFloatingButton && !this.view.hasButton(input)) {
       this.view.attachButton(input, async () => {
-        const res = await this.router.send<TempMailCurrentState | TempEmail | null>(
-          TEMPMAIL_ACTIONS.GET_CURRENT,
-          {
-            autoGenerate: true,
-          }
-        );
-        // Handler returns bare TempEmail on auto-generate, state object otherwise
-        if (!res) return null;
-        return "email" in res ? (res.email?.address ?? null) : (res.address ?? null);
+        const state = await this._fetchCurrentState();
+        return state?.email?.address ?? null;
       });
     }
 
@@ -130,17 +131,10 @@ export class TempMailContentController {
       input.addEventListener(
         "focus",
         async () => {
-          if (!input.value) {
-            const res = await this.router.send<TempMailCurrentState | TempEmail | null>(
-              TEMPMAIL_ACTIONS.GET_CURRENT,
-              {
-                autoGenerate: true,
-              }
-            );
-            const email = !res ? null : "email" in res ? res.email : res;
-            if (email?.address && !input.value) {
-              this.view.fillInput(input, email.address);
-            }
+          if (input.value) return;
+          const state = await this._fetchCurrentState();
+          if (state?.email?.address && !input.value) {
+            this.view.fillInput(input, state.email.address);
           }
         },
         { once: true }

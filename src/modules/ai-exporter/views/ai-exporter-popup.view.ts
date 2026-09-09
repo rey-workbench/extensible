@@ -12,6 +12,7 @@ import {
   CAVEMAN_HINTS,
   CAVEMAN_LEVELS,
   type CavemanLevel,
+  DEFAULT_CAVEMAN_SETTINGS,
 } from "../constants/ai-exporter.constants";
 import type {
   CavemanSettings,
@@ -36,7 +37,7 @@ export class AiExporterPopupView {
   private root: HTMLElement | null = null;
   private currentConvo: ChatConversation | null = null;
   private history: ExportHistoryItem[] = [];
-  private cavemanSettings: CavemanSettings = { enabled: false, level: "full", sites: {} };
+  private cavemanSettings: CavemanSettings = DEFAULT_CAVEMAN_SETTINGS;
   private isLoading = false;
   private statusMessage: { text: string; isError?: boolean } | null = null;
 

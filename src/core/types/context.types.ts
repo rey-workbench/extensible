@@ -9,7 +9,7 @@ export interface ContextOptions {
 }
 
 /** Class constructor usable as a DI token. */
-export type Token = abstract new (...args: never[]) => unknown;
+type Token = abstract new (...args: never[]) => unknown;
 
 /** Any value usable as a DI token: a class constructor or a string/symbol key. */
 export type TokenKey = Token | string | symbol;

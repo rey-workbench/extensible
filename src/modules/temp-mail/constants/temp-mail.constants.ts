@@ -1,6 +1,14 @@
 /**
  * Action and event constants specific to the TempMail module.
  */
+import type { TempMailSettings } from "../types/temp-mail.types";
+
+/** Single source of truth for TempMail settings defaults. */
+export const DEFAULT_TEMPMAIL_SETTINGS: TempMailSettings = {
+  autoFillOnFocus: false,
+  showFloatingButton: true,
+  defaultDuration: 60,
+};
 
 export const TEMPMAIL_ACTIONS = {
   GET_CURRENT: "tempmail:get_current",

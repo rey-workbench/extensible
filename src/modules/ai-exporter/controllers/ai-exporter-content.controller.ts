@@ -4,6 +4,8 @@ import {
   AI_EXPORTER_STORAGE_KEYS,
   CAVEMAN_LEVELS,
   type CavemanLevel,
+  DEFAULT_CAVEMAN_SETTINGS,
+  isValidCavemanLevel,
 } from "../constants/ai-exporter.constants";
 import type { CavemanSettings, ChatConversation, ExportFormat } from "../types/ai-exporter.types";
 import { CavemanDirectiveUtils } from "../utils/caveman-directive.utils";
@@ -17,7 +19,7 @@ export class AiExporterContentController {
   public static readonly inject = [MessageRouterService, StorageService] as const;
 
   private view: AiExporterComposerView | null = null;
-  private cavemanSettings: CavemanSettings = { enabled: false, level: "full", sites: {} };
+  private cavemanSettings: CavemanSettings = DEFAULT_CAVEMAN_SETTINGS;
   private unwatchSettings: (() => void) | null = null;
   private bypass = false;
   private keydownListener: ((e: KeyboardEvent) => void) | null = null;
@@ -47,9 +49,9 @@ export class AiExporterContentController {
     try {
       const saved = await this.storage.get<CavemanSettings>(
         AI_EXPORTER_STORAGE_KEYS.CAVEMAN_SETTINGS,
-        { enabled: false, level: "full", sites: {} }
+        DEFAULT_CAVEMAN_SETTINGS
       );
-      this.cavemanSettings = saved || { enabled: false, level: "full", sites: {} };
+      this.cavemanSettings = saved || DEFAULT_CAVEMAN_SETTINGS;
     } catch {
       // Fallback default
     }
@@ -65,23 +67,14 @@ export class AiExporterContentController {
       }
     );
 
-    // 4. Initialize in-composer unified toolbar on supported AI platforms
+    // 4. Initialize in-composer unified toolbar ONLY on supported AI platforms (chatgpt, claude, gemini, deepseek)
     const platform = ChatParserUtils.detectPlatform(window.location.hostname);
-    if (platform !== "generic") {
-      this.initComposerToolbar();
-      this.bindCavemanInterceptors();
-    } else {
-      // Periodic check for web chats
-      const timer = setTimeout(() => {
-        const convo = ChatParserUtils.parseActivePage(document);
-        const editor = ChatComposerUtils.getEditor(document);
-        if ((convo && convo.messages.length > 0) || editor) {
-          this.initComposerToolbar();
-          this.bindCavemanInterceptors();
-        }
-      }, 2500);
-      window.addEventListener("beforeunload", () => clearTimeout(timer), { once: true });
+    if (platform === "generic") {
+      return;
     }
+
+    this.initComposerToolbar();
+    this.bindCavemanInterceptors();
   }
 
   private initComposerToolbar(): void {
@@ -89,23 +82,17 @@ export class AiExporterContentController {
 
     this.view = new AiExporterComposerView({
       onExport: async (format: ExportFormat) => {
-        await ChatParserUtils.hydrateVirtualizedChat(document);
-        const convo = ChatParserUtils.parseActivePage(document);
-        if (!convo || convo.messages.length === 0) {
-          throw new Error("No chat messages detected to export.");
-        }
-
+        const convo = await ChatParserUtils.scrapeConvo(document, {
+          hydrate: true,
+          actionLabel: "export",
+        });
         await this.router.send(AI_EXPORTER_ACTIONS.EXPORT_FILE, {
           conversation: convo,
           format,
         });
       },
       onCopy: async () => {
-        const convo = ChatParserUtils.parseActivePage(document);
-        if (!convo || convo.messages.length === 0) {
-          throw new Error("No chat messages detected to copy.");
-        }
-
+        const convo = await ChatParserUtils.scrapeConvo(document, { actionLabel: "copy" });
         const mdText = MarkdownFormatterUtils.format(convo);
         await navigator.clipboard.writeText(mdText);
       },
@@ -174,6 +161,9 @@ export class AiExporterContentController {
   private handleCavemanInjection(): void {
     if (this.bypass || !this.cavemanSettings.enabled) return;
 
+    const platform = ChatParserUtils.detectPlatform(window.location.hostname);
+    if (platform === "generic") return;
+
     const host = window.location.hostname.replace(/^www\./, "");
     if (this.cavemanSettings.sites[host] === false) return;
 
@@ -198,8 +188,42 @@ export class AiExporterContentController {
       }
     }
 
-    const needsPrimer = !hasPrimerInChat;
-    const wrapped = CavemanDirectiveUtils.wrapText(raw, needsPrimer, this.cavemanSettings.level);
+    // Mirror fallback for stop detection (virtualized DOM may hide earlier turns)
+    let hasStopInChat = CavemanDirectiveUtils.hasStop(convo?.messages);
+    if (!hasStopInChat) {
+      const mainChat =
+        document.querySelector(
+          'main, #chat-history, [class*="conversation"], [class*="chat-container"]'
+        ) || document.body;
+      if (mainChat?.textContent?.includes("[stop caveman mode")) {
+        hasStopInChat = true;
+      }
+    }
+
+    const level = this.cavemanSettings.level;
+    // Unknown/stale level: inject the stop directive — but only when this chat was
+    // actually primed; a never-primed chat has nothing to stop, so skip entirely.
+    if (!isValidCavemanLevel(level) && !hasPrimerInChat) return;
+
+    // Mode OFF but this chat was already primed: inject the stop directive once so
+    // the model actually stops replying tersely (toggle-off alone reaches the chat).
+    const stopNeeded =
+      (!this.cavemanSettings.enabled || !isValidCavemanLevel(level)) &&
+      hasPrimerInChat &&
+      !hasStopInChat;
+    if (stopNeeded) {
+      this.bypass = true;
+      ChatComposerUtils.setText(editor, CavemanDirectiveUtils.wrapStop(raw));
+      setTimeout(() => {
+        this.bypass = false;
+      }, 300);
+      return;
+    }
+
+    // Mode inactive (or stop already sent): leave the message untouched.
+    if (!this.cavemanSettings.enabled || !isValidCavemanLevel(level)) return;
+
+    const wrapped = CavemanDirectiveUtils.wrapText(raw, !hasPrimerInChat, level);
 
     this.bypass = true;
     ChatComposerUtils.setText(editor, wrapped);

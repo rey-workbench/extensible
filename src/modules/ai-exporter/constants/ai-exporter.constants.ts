@@ -1,30 +1,38 @@
 /**
  * Action and event constants specific to the AiExporter module.
  */
+import type { CavemanSettings } from "../types/ai-exporter.types";
 
 export const AI_EXPORTER_ACTIONS = {
-  GET_ACTIVE_CHAT: "ai_exporter:get_active_chat",
   SCRAPE_DOM: "ai_exporter:scrape_dom",
   EXPORT_FILE: "ai_exporter:export_file",
   DOWNLOAD_CONTENT: "ai_exporter:download_content",
-  OPEN_PRINT_VIEW: "ai_exporter:open_print_view",
-  COPY_CLIPBOARD: "ai_exporter:copy_clipboard",
   GET_HISTORY: "ai_exporter:get_history",
   DELETE_HISTORY_ITEM: "ai_exporter:delete_history_item",
   CLEAR_HISTORY: "ai_exporter:clear_history",
-  GET_PLATFORM_INFO: "ai_exporter:get_platform_info",
   GET_CAVEMAN_SETTINGS: "ai_exporter:get_caveman_settings",
   SET_CAVEMAN_SETTINGS: "ai_exporter:set_caveman_settings",
 } as const;
 
 export const AI_EXPORTER_STORAGE_KEYS = {
   HISTORY: "ai_exporter_history",
-  SETTINGS: "ai_exporter_settings",
   CAVEMAN_SETTINGS: "ai_exporter_caveman",
 } as const;
 
+/** Single source of truth for Caveman defaults — reused by service, controllers, and views. */
+export const DEFAULT_CAVEMAN_SETTINGS: CavemanSettings = {
+  enabled: false,
+  level: "full",
+  sites: {},
+};
+
 export const CAVEMAN_LEVELS = ["lite", "full", "ultra"] as const;
 export type CavemanLevel = (typeof CAVEMAN_LEVELS)[number];
+
+/** Runtime guard: is this value a real Caveman level (storage may contain stale/garbage data)? */
+export function isValidCavemanLevel(level: unknown): level is CavemanLevel {
+  return typeof level === "string" && (CAVEMAN_LEVELS as readonly string[]).includes(level);
+}
 
 export const CAVEMAN_HINTS: Record<CavemanLevel, string> = {
   lite: "Lite: No filler, no pleasantries, keeps full sentences.",

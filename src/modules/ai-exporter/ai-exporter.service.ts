@@ -1,6 +1,10 @@
 import { StorageService } from "@/core/services/storage.service";
 import { slugify } from "@/core/utils/string.utils";
-import { AI_EXPORTER_STORAGE_KEYS } from "./constants/ai-exporter.constants";
+import {
+  AI_EXPORTER_STORAGE_KEYS,
+  DEFAULT_CAVEMAN_SETTINGS,
+  isValidCavemanLevel,
+} from "./constants/ai-exporter.constants";
 import type {
   CavemanSettings,
   ChatConversation,
@@ -56,22 +60,20 @@ export class AiExporterService {
    * Retrieves Caveman mode configuration.
    */
   public async getCavemanSettings(): Promise<CavemanSettings> {
-    const defaultSettings: CavemanSettings = {
-      enabled: false,
-      level: "full",
-      sites: {},
-    };
     const settings = await this.storage.get<CavemanSettings>(
       AI_EXPORTER_STORAGE_KEYS.CAVEMAN_SETTINGS,
-      defaultSettings
+      DEFAULT_CAVEMAN_SETTINGS
     );
-    return settings || defaultSettings;
+    return settings || DEFAULT_CAVEMAN_SETTINGS;
   }
 
   /**
    * Updates Caveman mode configuration.
    */
   public async updateCavemanSettings(partial: Partial<CavemanSettings>): Promise<CavemanSettings> {
+    if (partial.level !== undefined && !isValidCavemanLevel(partial.level)) {
+      throw new Error(`Invalid caveman level: '${String(partial.level)}'`);
+    }
     const current = await this.getCavemanSettings();
     const updated: CavemanSettings = {
       ...current,
@@ -86,44 +88,55 @@ export class AiExporterService {
   }
 
   /**
+   * Single mapping format → (mime, extension, content builder). Export filename/mime
+   * decisions elsewhere must read from here instead of re-implementing the table.
+   */
+  private static readonly FORMAT_META: Record<
+    ExportFormat,
+    { mimeType: string; extension: string; build: (convo: ChatConversation) => string }
+  > = {
+    markdown: {
+      mimeType: "text/markdown",
+      extension: ".md",
+      build: (c) => MarkdownFormatterUtils.format(c),
+    },
+    json: {
+      mimeType: "application/json",
+      extension: ".json",
+      build: (c) => JsonFormatterUtils.format(c),
+    },
+    html: {
+      mimeType: "text/html",
+      extension: ".html",
+      build: (c) => HtmlFormatterUtils.format(c),
+    },
+    pdf: {
+      mimeType: "text/html",
+      extension: ".html",
+      build: (c) => HtmlFormatterUtils.format(c, { autoPrint: true }),
+    },
+    text: {
+      mimeType: "text/plain",
+      extension: ".txt",
+      build: (c) => MarkdownFormatterUtils.formatPlainText(c),
+    },
+  };
+
+  /** Metadata lookup for a format (mime type + file extension) without building content. */
+  public static formatMeta(format: ExportFormat): { mimeType: string; extension: string } {
+    const meta = AiExporterService.FORMAT_META[format] ?? AiExporterService.FORMAT_META.markdown;
+    return { mimeType: meta.mimeType, extension: meta.extension };
+  }
+
+  /**
    * Formats the conversation into requested string representation along with metadata.
    */
   public formatConversation(
     convo: ChatConversation,
     format: ExportFormat
   ): { content: string; mimeType: string; extension: string } {
-    switch (format) {
-      case "json":
-        return {
-          content: JsonFormatterUtils.format(convo),
-          mimeType: "application/json",
-          extension: ".json",
-        };
-      case "pdf":
-        return {
-          content: HtmlFormatterUtils.format(convo, { autoPrint: true }),
-          mimeType: "text/html",
-          extension: ".html",
-        };
-      case "html":
-        return {
-          content: HtmlFormatterUtils.format(convo),
-          mimeType: "text/html",
-          extension: ".html",
-        };
-      case "text":
-        return {
-          content: MarkdownFormatterUtils.formatPlainText(convo),
-          mimeType: "text/plain",
-          extension: ".txt",
-        };
-      default:
-        return {
-          content: MarkdownFormatterUtils.format(convo),
-          mimeType: "text/markdown",
-          extension: ".md",
-        };
-    }
+    const meta = AiExporterService.FORMAT_META[format] ?? AiExporterService.FORMAT_META.markdown;
+    return { content: meta.build(convo), mimeType: meta.mimeType, extension: meta.extension };
   }
 
   /**

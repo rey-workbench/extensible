@@ -1,4 +1,5 @@
 import { renderIcon } from "@/shared/index";
+import { DEFAULT_CAVEMAN_SETTINGS, isValidCavemanLevel } from "../constants/ai-exporter.constants";
 import type { CavemanSettings, ExportFormat } from "../types/ai-exporter.types";
 import { ChatComposerUtils } from "../utils/chat-composer.utils";
 
@@ -15,7 +16,8 @@ export class AiExporterComposerView {
   private backdropEl: HTMLElement | null = null;
   private isOpen = false;
   private observer: MutationObserver | null = null;
-  private currentSettings: CavemanSettings = { enabled: false, level: "full", sites: {} };
+  private currentSettings: CavemanSettings = DEFAULT_CAVEMAN_SETTINGS;
+  private alignScheduled = false;
 
   constructor(private readonly callbacks: AiExporterComposerViewCallbacks) {}
 
@@ -42,17 +44,16 @@ export class AiExporterComposerView {
     this.container.className = "aio-composer-bar-root";
 
     const { enabled, level } = this.currentSettings;
-    const flameColor = enabled ? "#f97316" : "#94a3b8";
-    const statusText = enabled ? level.toUpperCase() : "OFF";
-    const badgeClass = enabled ? `aio-lvl-${level}` : "";
+    // Invalid/stale level surfaces as STOP — next send injects the stop directive
+    const levelValid = isValidCavemanLevel(level);
+    const statusText = enabled ? (levelValid ? level.toUpperCase() : "STOP") : "OFF";
+    const badgeClass = enabled && levelValid ? `aio-lvl-${level}` : "";
 
     this.container.innerHTML = `
       <div class="aio-composer-bar ${enabled ? "aio-caveman-on" : ""}">
         <!-- Caveman Toggle Button -->
         <button type="button" class="aio-bar-btn aio-caveman-toggle-btn" title="Caveman Mode: ${statusText} (Click to cycle level)">
-          <svg class="aio-flame-icon" viewBox="0 0 24 24" width="13" height="13" fill="${flameColor}">
-            <path d="M12 23c-4.97 0-9-4.03-9-9 0-3.32 1.8-6.19 4.47-7.68.27-.15.61-.13.86.06.25.18.36.49.28.79-.44 1.76-.04 3.71 1.09 5.09.17.21.43.32.7.3.27-.02.51-.17.63-.41.86-1.74 2.38-3.05 4.19-3.76.3-.12.64-.04.86.2.22.24.26.59.1.87-1.12 1.95-1.16 4.35-.12 6.34.14.26.4.42.7.42.06 0 .12 0 .18-.02.35-.08.6-.37.6-.73 0-2.3 1.15-4.46 3.09-5.78.28-.19.65-.18.91.03.26.21.35.56.23.88C20.67 13.91 21 15.42 21 17c0 3.31-2.69 6-6 6z"/>
-          </svg>
+          ${renderIcon("flame", 13, "aio-flame-icon")}
           <span class="aio-bar-btn-text">Caveman</span>
           <span class="aio-bar-badge aio-lvl-badge ${badgeClass}">${statusText}</span>
         </button>
@@ -70,7 +71,7 @@ export class AiExporterComposerView {
       </div>
     `;
 
-    this.attachToBestContainer();
+    this.positionDock();
     this.renderMenu();
     this.bindEvents();
   }
@@ -130,65 +131,81 @@ export class AiExporterComposerView {
     this.bindMenuEvents();
   }
 
-  private attachToBestContainer(): void {
+  /**
+   * Positions the toolbar as a viewport-fixed overlay anchored to the composer box.
+   * Nothing is inserted into the host's flex rows, so host layout churn (Gemini/ChatGPT
+   * re-renders) can never displace, wrap, or clip the bar. Same inputs → same position.
+   */
+  private positionDock(): void {
     if (!this.container) return;
 
-    const actionsRow = ChatComposerUtils.getActionsRow(document);
-    const sendBtn = ChatComposerUtils.getSendButton(document);
-
-    if (actionsRow) {
-      this.container.classList.remove("aio-fallback-dock");
-      this.container.classList.add("aio-docked-in-form");
-
-      // Place right before sendBtn or its group if inside actionsRow
-      if (sendBtn && actionsRow.contains(sendBtn)) {
-        let insertRef: Node = sendBtn;
-        if (
-          sendBtn.parentElement &&
-          sendBtn.parentElement !== actionsRow &&
-          actionsRow.contains(sendBtn.parentElement)
-        ) {
-          insertRef = sendBtn.parentElement;
-        }
-        if (insertRef.parentNode === actionsRow && this.container.nextSibling !== insertRef) {
-          actionsRow.insertBefore(this.container, insertRef);
-          return;
-        }
-      }
-
-      if (!actionsRow.contains(this.container)) {
-        actionsRow.appendChild(this.container);
-      }
-      return;
-    }
-
     const composerBox = ChatComposerUtils.getComposerBox(document);
-    if (composerBox) {
-      this.container.classList.remove("aio-fallback-dock");
-      this.container.classList.add("aio-docked-in-form");
-      if (!composerBox.contains(this.container)) {
-        composerBox.appendChild(this.container);
-      }
+    const editor = ChatComposerUtils.getEditor(document);
+
+    if (!composerBox || composerBox === editor || (editor && editor.contains(composerBox))) {
+      this.applyFallbackDock();
       return;
     }
 
-    // Floating fallback until composer renders
-    this.container.classList.remove("aio-docked-in-form");
-    this.container.classList.add("aio-fallback-dock");
+    this.container.classList.remove("aio-fallback-dock");
+    this.container.classList.add("aio-composer-floating");
     if (!document.body.contains(this.container)) {
       document.body.appendChild(this.container);
     }
+    this.alignDockTo(composerBox);
+  }
+
+  /** Places the floating bar just above the composer (or below when no headroom). */
+  private alignDockTo(composerBox: HTMLElement): void {
+    if (!this.container) return;
+    const rect = composerBox.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return;
+
+    const width = this.container.offsetWidth || 170;
+    const height = this.container.offsetHeight || 30;
+
+    let left = rect.left + 6;
+    left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
+
+    let top = rect.top - height - 6;
+    if (top < 8) top = rect.bottom + 6;
+
+    this.container.style.left = `${Math.round(left)}px`;
+    this.container.style.top = `${Math.round(top)}px`;
+  }
+
+  private applyFallbackDock(): void {
+    if (!this.container) return;
+    this.container.classList.remove("aio-composer-floating");
+    this.container.classList.add("aio-fallback-dock");
+    this.container.style.left = "";
+    this.container.style.top = "";
+    if (!document.body.contains(this.container)) {
+      document.body.appendChild(this.container);
+    }
+  }
+
+  /** rAF-coalesced re-align — safe to call on every mutation/scroll/resize. */
+  private scheduleDockAlign(): void {
+    if (this.alignScheduled) return;
+    this.alignScheduled = true;
+    requestAnimationFrame(() => {
+      this.alignScheduled = false;
+      if (!this.container) return;
+      const composerBox = ChatComposerUtils.getComposerBox(document);
+      if (composerBox && this.container.classList.contains("aio-composer-floating")) {
+        this.alignDockTo(composerBox);
+      } else {
+        this.positionDock();
+      }
+    });
   }
 
   private startComposerWatcher(): void {
     if (this.observer) return;
 
     this.observer = new MutationObserver(() => {
-      // If detached or still in fallback while composerBox has appeared, re-attach
-      const composerBox = ChatComposerUtils.getComposerBox(document);
-      if (composerBox && (!this.container || !composerBox.contains(this.container))) {
-        this.attachToBestContainer();
-      }
+      this.scheduleDockAlign();
     });
 
     this.observer.observe(document.body, { childList: true, subtree: true });
@@ -251,6 +268,7 @@ export class AiExporterComposerView {
   };
 
   private onWindowScrollOrResize = (): void => {
+    this.scheduleDockAlign();
     if (this.isOpen) {
       this.closeMenu();
     }
@@ -297,17 +315,18 @@ export class AiExporterComposerView {
 
     const { enabled, level } = this.currentSettings;
     const flameColor = enabled ? "#f97316" : "#94a3b8";
-    const statusText = enabled ? level.toUpperCase() : "OFF";
+    const levelValid = isValidCavemanLevel(level);
+    const statusText = enabled ? (levelValid ? level.toUpperCase() : "STOP") : "OFF";
 
     if (bar) {
       enabled ? bar.classList.add("aio-caveman-on") : bar.classList.remove("aio-caveman-on");
     }
     if (icon) {
-      icon.setAttribute("fill", flameColor);
+      icon.style.color = flameColor;
     }
     if (badge) {
       badge.textContent = statusText;
-      badge.className = `aio-bar-badge aio-lvl-badge ${enabled ? `aio-lvl-${level}` : ""}`;
+      badge.className = `aio-bar-badge aio-lvl-badge ${enabled && levelValid ? `aio-lvl-${level}` : ""}`;
     }
     if (btn) {
       btn.title = `Caveman Mode: ${statusText} (Click to cycle level)`;

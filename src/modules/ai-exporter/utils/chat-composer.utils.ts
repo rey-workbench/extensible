@@ -12,13 +12,19 @@ export class ChatComposerUtils {
   ];
 
   private static readonly SEND_SELECTORS: readonly string[] = [
+    "#composer-submit-button",
     'button[data-testid="send-button"]',
-    'button[aria-label="Send prompt"]',
-    'button[aria-label*="Send"]',
-    'button[aria-label*="send"]',
+    'button[data-testid*="send" i]',
+    'button[aria-label*="Send" i]',
+    'button[aria-label*="send" i]',
+    'button[aria-label*="Kirim" i]',
+    'button[aria-label*="kirim" i]',
+    'button[aria-label*="Prompt" i]',
+    'button[aria-label*="prompt" i]',
     ".send-button",
     'div[class*="send-button"]',
     'button[class*="send"]',
+    'button[type="submit"]',
   ];
 
   /**
@@ -39,22 +45,37 @@ export class ChatComposerUtils {
     const editor = this.getEditor(root);
     if (!editor) return null;
 
-    // 1. Try closest semantic container
-    const form = editor.closest(
-      'form, fieldset, [class*="composer"], [class*="chat-input-area"], [class*="input-area"]'
-    );
+    // 1. Primary: Enclosing form element
+    const form = editor.closest("form");
     if (form && form instanceof HTMLElement) return form;
 
-    // 2. Ascend up to 5 parents to locate the shared wrapper with action buttons
+    // 2. Semantic composer wrappers (explicit containers, exclude ProseMirror)
+    const unified = editor.closest<HTMLElement>(
+      '[data-type="unified-composer"], [data-composer-grid], [data-composer-surface], [class*="chat-input-area"], [class*="input-area"]'
+    );
+    if (unified) return unified;
+
+    // 3. Ascend parents looking for one that holds external action buttons
     let current: HTMLElement | null = editor.parentElement;
-    for (let i = 0; i < 5 && current; i++) {
-      if (current.querySelector("button") && current.clientWidth > 150) {
-        return current;
+    for (let i = 0; i < 8 && current && current !== document.body; i++) {
+      const isEditorContainer =
+        current.classList.contains("ProseMirror") ||
+        current.className.includes("prosemirror") ||
+        current.className.includes("editor") ||
+        current.className.includes("fallbackTextarea");
+
+      if (!isEditorContainer) {
+        const hasButton = current.querySelector(
+          'button:not(.aio-bar-btn):not(.aio-composer-menu-item), [role="button"]:not(.aio-bar-btn)'
+        );
+        if (hasButton && current.clientWidth > 150) {
+          return current;
+        }
       }
       current = current.parentElement;
     }
 
-    return editor.parentElement;
+    return editor.closest("form") || editor.parentElement;
   }
 
   /**
@@ -72,58 +93,6 @@ export class ChatComposerUtils {
     for (const sel of this.SEND_SELECTORS) {
       const btn = root.querySelector<HTMLElement>(sel);
       if (btn && this.isVisible(btn)) return btn;
-    }
-
-    return null;
-  }
-
-  /**
-   * Finds the actions/toolbar row inside the composer to dock cleanly without covering text.
-   */
-  public static getActionsRow(root: Document | HTMLElement = document): HTMLElement | null {
-    const sendBtn = this.getSendButton(root);
-    if (sendBtn?.parentElement) {
-      const parent = sendBtn.parentElement;
-      const grandparent = parent.parentElement;
-
-      // 1. If grandparent is a horizontal container (e.g. ChatGPT bottom bar)
-      if (grandparent && grandparent instanceof HTMLElement && grandparent.clientWidth > 100) {
-        const style = window.getComputedStyle(grandparent);
-        if (style.display.includes("flex") || style.display.includes("grid")) {
-          // Look for left-side actions container first (beside + or search tools)
-          const leftActions = grandparent.querySelector<HTMLElement>(
-            'div[class*="leading"], div[class*="start"], div[class*="left"], div:first-child'
-          );
-          if (
-            leftActions &&
-            leftActions !== parent &&
-            leftActions.clientWidth > 10 &&
-            !leftActions.contains(sendBtn)
-          ) {
-            return leftActions;
-          }
-          return grandparent;
-        }
-      }
-
-      // 2. Direct parent of send button
-      if (parent instanceof HTMLElement && parent.clientWidth > 20) {
-        return parent;
-      }
-    }
-
-    const editor = this.getEditor(root);
-    const composerBox = this.getComposerBox(root);
-    if (!composerBox) return null;
-
-    // 3. Search for known actions/bottom row classes
-    const candidates = composerBox.querySelectorAll<HTMLElement>(
-      'div[class*="actions"], div[class*="trailing"], div[class*="bottom"], div[class*="tools"], div[class*="toolbar"], [class*="footer"]'
-    );
-    for (const cand of candidates) {
-      if (cand !== editor && !cand.contains(editor) && cand.clientHeight > 15) {
-        return cand;
-      }
     }
 
     return null;

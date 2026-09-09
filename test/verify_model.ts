@@ -326,6 +326,42 @@ const wrappedReminder = CavemanDirectiveUtils.wrapText("Explain recursion", fals
 assert.ok(wrappedReminder.startsWith("[stay in caveman mode — FULL]"));
 assert.ok(wrappedReminder.includes("Explain recursion"));
 
+// Invalid/stale level must inject the stop directive, never resume terse mode
+const stopWrapped = CavemanDirectiveUtils.wrapText("Explain recursion", false, "bogus" as never);
+assert.ok(
+  stopWrapped.startsWith("[stop caveman mode"),
+  "Unknown level must inject the stop directive"
+);
+assert.ok(stopWrapped.includes("Explain recursion"));
+assert.ok(
+  CavemanDirectiveUtils.buildStop().includes("normal"),
+  "Stop directive resumes normal replies"
+);
+assert.strictEqual(CavemanDirectiveUtils.isPrefixed("[stop caveman mode] Please clarify"), true);
+assert.strictEqual(
+  CavemanDirectiveUtils.isStopPrefixed("[stop caveman mode] Please clarify"),
+  true
+);
+assert.strictEqual(CavemanDirectiveUtils.isStopPrefixed("normal text"), false);
+
+// Stop flow: hasPrimer/hasStop detection + wrapStop for toggle-off in a primed chat
+assert.strictEqual(
+  CavemanDirectiveUtils.hasStop([{ role: "user", content: "[stop caveman mode] Resume normal" }]),
+  true
+);
+assert.strictEqual(
+  CavemanDirectiveUtils.hasStop([{ role: "user", content: "[stay in caveman mode — LITE]" }]),
+  false
+);
+assert.strictEqual(CavemanDirectiveUtils.hasStop(null), false);
+const stopOff = CavemanDirectiveUtils.wrapStop("Continue explaining");
+assert.ok(stopOff.startsWith("[stop caveman mode"), "wrapStop must prepend the stop directive");
+assert.strictEqual(
+  CavemanDirectiveUtils.wrapStop("[stop caveman mode] already stopped"),
+  "[stop caveman mode] already stopped",
+  "wrapStop must be idempotent"
+);
+
 // Caveman Settings in AiExporterService
 let cavemanSettings = await aiService.getCavemanSettings();
 assert.strictEqual(cavemanSettings.enabled, false);

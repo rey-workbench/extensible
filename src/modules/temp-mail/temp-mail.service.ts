@@ -1,5 +1,6 @@
 import { EventBusService, StorageService, TimeUtils } from "@/core/index";
 import {
+  DEFAULT_TEMPMAIL_SETTINGS,
   TEMPMAIL_CONFIG,
   TEMPMAIL_EVENTS,
   TEMPMAIL_STORAGE_KEYS,
@@ -21,11 +22,7 @@ export class TempMailService {
   private readonly apiBase = TEMPMAIL_CONFIG.API_BASE;
   public currentEmail: TempEmail | null = null;
   public emails: EmailMessage[] = [];
-  public settings: TempMailSettings = {
-    autoFillOnFocus: false,
-    showFloatingButton: true,
-    defaultDuration: TEMPMAIL_CONFIG.DEFAULT_DURATION,
-  };
+  public settings: TempMailSettings = DEFAULT_TEMPMAIL_SETTINGS;
   private isInitialized = false;
 
   constructor(

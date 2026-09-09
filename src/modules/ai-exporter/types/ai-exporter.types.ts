@@ -1,7 +1,5 @@
 import type { CavemanLevel, SupportedAiPlatform } from "../constants/ai-exporter.constants";
 
-export type { CavemanLevel, SupportedAiPlatform };
-
 export type MessageRole = "user" | "assistant" | "system";
 
 export interface ChatMessage {

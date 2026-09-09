@@ -1,12 +1,17 @@
 import { MessageRouterService, slugify } from "@/core/index";
 import { AiExporterService } from "../ai-exporter.service";
-import { AI_EXPORTER_ACTIONS, type CavemanLevel } from "../constants/ai-exporter.constants";
+import {
+  AI_EXPORTER_ACTIONS,
+  type CavemanLevel,
+  DEFAULT_CAVEMAN_SETTINGS,
+} from "../constants/ai-exporter.constants";
 import type {
   CavemanSettings,
   ChatConversation,
   ExportFormat,
   ExportHistoryItem,
 } from "../types/ai-exporter.types";
+import { ChatParserUtils } from "../utils/chat-parser.utils";
 import { MarkdownFormatterUtils } from "../utils/markdown-formatter.utils";
 import { AiExporterPopupView } from "../views/ai-exporter-popup.view";
 
@@ -17,7 +22,7 @@ export class AiExporterPopupController {
   private view: AiExporterPopupView | null = null;
   private currentConvo: ChatConversation | null = null;
   private history: ExportHistoryItem[] = [];
-  private cavemanSettings: CavemanSettings = { enabled: false, level: "full", sites: {} };
+  private cavemanSettings: CavemanSettings = DEFAULT_CAVEMAN_SETTINGS;
 
   constructor(
     private readonly router: MessageRouterService,
@@ -73,34 +78,74 @@ export class AiExporterPopupController {
   }
 
   public async detectActiveTabChat(deepHydrate = false): Promise<void> {
+    // 1. If running inside web page (e.g. Side Notch Drawer in Content Script context)
+    const isExtensionPopup =
+      typeof location !== "undefined" && location.protocol === "chrome-extension:";
+
+    if (!isExtensionPopup && typeof document !== "undefined") {
+      try {
+        if (deepHydrate) {
+          await ChatParserUtils.hydrateVirtualizedChat(document);
+        }
+        const convo = ChatParserUtils.parseActivePage(document);
+        this.currentConvo = convo;
+        this.view?.updateState(this.currentConvo, this.history, this.cavemanSettings);
+        return;
+      } catch (err) {
+        console.warn("[AiExporterPopupController] Direct DOM scrape error:", err);
+      }
+    }
+
+    // 2. If running inside extension popup window (chrome-extension://)
     if (typeof chrome === "undefined" || !chrome.tabs?.query) return;
 
     try {
       const [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
       if (!activeTab?.id) return;
 
-      // Request content script on the active tab to scrape current DOM
-      const response = await new Promise<{ conversation: ChatConversation | null }>((resolve) => {
-        chrome.tabs.sendMessage(
-          // SAFETY: activeTab.id is checked above
-          activeTab.id as number,
-          { action: AI_EXPORTER_ACTIONS.SCRAPE_DOM, payload: { hydrate: deepHydrate } },
-          (res) => {
-            if (chrome.runtime.lastError) {
-              resolve({ conversation: null });
-            } else {
-              resolve(res || { conversation: null });
-            }
-          }
-        );
-      });
+      let convo: ChatConversation | null = null;
 
-      this.currentConvo = response?.conversation ?? null;
+      try {
+        convo = await this.requestConvo(activeTab.id, deepHydrate);
+      } catch {
+        // Content script might not be injected yet or was disconnected on reload.
+        // Try injecting dist/content.js via chrome.scripting if available
+        if (chrome.scripting?.executeScript && activeTab.id) {
+          try {
+            await chrome.scripting.executeScript({
+              target: { tabId: activeTab.id },
+              files: ["dist/content.js"],
+            });
+            await new Promise((r) => setTimeout(r, 200));
+            convo = await this.requestConvo(activeTab.id, deepHydrate);
+          } catch {
+            // Restricted tab (e.g. chrome://)
+          }
+        }
+      }
+
+      this.currentConvo = convo;
       this.view?.updateState(this.currentConvo, this.history, this.cavemanSettings);
     } catch {
       this.currentConvo = null;
       this.view?.updateState(null, this.history, this.cavemanSettings);
     }
+  }
+
+  /** Sends SCRAPE_DOM to a tab and normalizes bare vs ApiResponse-wrapped responses. */
+  private async requestConvo(
+    tabId: number,
+    deepHydrate: boolean
+  ): Promise<ChatConversation | null> {
+    const res = await this.router.sendToTab<unknown>(tabId, AI_EXPORTER_ACTIONS.SCRAPE_DOM, {
+      hydrate: deepHydrate,
+    });
+    // SAFETY: res might be the data object itself or ApiResponse-wrapped
+    const r = res as {
+      conversation?: ChatConversation | null;
+      data?: { conversation?: ChatConversation | null };
+    } | null;
+    return r?.conversation ?? r?.data?.conversation ?? null;
   }
 
   public async loadHistory(): Promise<void> {
@@ -138,14 +183,9 @@ export class AiExporterPopupController {
     const item = this.history.find((x) => x.id === id);
     if (!item?.content) throw new Error("No cached content available to download.");
 
-    const ext = item.format === "markdown" ? ".md" : item.format === "json" ? ".json" : ".html";
-    const filename = `${item.platform}_${slugify(item.title).slice(0, 40) || "chat"}_${item.exportedAt}${ext}`;
-    const mimeType =
-      item.format === "json"
-        ? "application/json"
-        : item.format === "markdown"
-          ? "text/markdown"
-          : "text/html";
+    // Mime/extension come from the canonical FORMAT_META table on the service
+    const { mimeType, extension } = AiExporterService.formatMeta(item.format);
+    const filename = `${item.platform}_${slugify(item.title).slice(0, 40) || "chat"}_${item.exportedAt}${extension}`;
 
     await this.router.send(AI_EXPORTER_ACTIONS.DOWNLOAD_CONTENT, {
       content: item.content,

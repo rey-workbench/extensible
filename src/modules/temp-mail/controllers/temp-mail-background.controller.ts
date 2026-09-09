@@ -10,7 +10,11 @@ import {
   TEMPMAIL_EVENTS,
 } from "@/modules/temp-mail/constants/index";
 import { TempMailService } from "@/modules/temp-mail/temp-mail.service";
-import type { EmailMessage, TempMailSettings } from "@/modules/temp-mail/types/index";
+import type {
+  EmailMessage,
+  TempMailCurrentState,
+  TempMailSettings,
+} from "@/modules/temp-mail/types/index";
 
 /**
  * Controller handling Background Service Worker message patterns, alarms, and context menus.
@@ -44,17 +48,15 @@ export class TempMailBackgroundController {
   private _registerRoutes(): void {
     this.router.subscribe(
       TEMPMAIL_ACTIONS.GET_CURRENT,
-      async (payload: { autoGenerate?: boolean; duration?: number }) => {
+      async (payload: {
+        autoGenerate?: boolean;
+        duration?: number;
+      }): Promise<TempMailCurrentState> => {
         await this.tempMailService.onModuleInit();
         if (!this.tempMailService.hasValidEmail() && payload?.autoGenerate) {
-          return await this.tempMailService.generateEmail({ duration: payload?.duration });
+          await this.tempMailService.generateEmail({ duration: payload?.duration });
         }
-        return {
-          email: this.tempMailService.currentEmail,
-          remainingSeconds: this.tempMailService.getRemainingSeconds(),
-          hasValidEmail: this.tempMailService.hasValidEmail(),
-          unreadCount: this.tempMailService.emails.filter((e) => !e.is_read).length,
-        };
+        return this.tempMailService.getCurrentState();
       }
     );
 
@@ -191,7 +193,7 @@ export class TempMailBackgroundController {
       return;
     }
 
-    const unread = this.tempMailService.emails.filter((e) => !e.is_read).length;
+    const unread = this.tempMailService.unreadCount;
     if (unread > 0) {
       await ExtensionUtils.setBadge(String(unread), "#10b981");
     } else {

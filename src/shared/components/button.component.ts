@@ -1,7 +1,7 @@
 import { escapeHtml } from "@/core/index";
 
-export type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "outline";
-export type ButtonSize = "sm" | "md";
+type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "outline";
+type ButtonSize = "sm" | "md";
 
 export interface ButtonOptions {
   id?: string;

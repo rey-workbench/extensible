@@ -1,4 +1,5 @@
-import { escapeHtml } from "@/core/index";
+import { escapeHtml } from "@/core";
+import { renderIcon } from "./icons";
 
 export interface ModalOptions {
   id: string;
@@ -7,8 +8,6 @@ export interface ModalOptions {
   footerHtml?: string;
   className?: string;
 }
-
-const CLOSE_ICON = `<svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>`;
 
 export function renderModal(options: ModalOptions): string {
   const titleId = `${options.id}Title`;
@@ -21,7 +20,7 @@ export function renderModal(options: ModalOptions): string {
         <div class="ext-modal-header">
           <h3 class="ext-modal-title" id="${escapeHtml(titleId)}">${escapeHtml(options.title)}</h3>
           <button type="button" class="ext-icon-btn ext-modal-close" id="${escapeHtml(closeBtnId)}" title="Close" aria-label="Close">
-            ${CLOSE_ICON}
+            ${renderIcon("close", 16)}
           </button>
         </div>
         <div class="ext-modal-body" id="${escapeHtml(bodyId)}">

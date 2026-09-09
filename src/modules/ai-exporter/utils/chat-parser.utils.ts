@@ -20,7 +20,8 @@ export class ChatParserUtils {
    * Scrapes chat messages from the current DOM based on detected or specified platform.
    */
   public static parseActivePage(doc: Document = document): ChatConversation | null {
-    const platform = this.detectPlatform(window.location.hostname);
+    const hostname = doc.defaultView?.location?.hostname || window.location.hostname;
+    const platform = this.detectPlatform(hostname);
     let messages: ChatMessage[] = [];
 
     switch (platform) {
@@ -60,11 +61,30 @@ export class ChatParserUtils {
       id: `chat_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       title,
       platform,
-      url: window.location.href,
+      url: doc.defaultView?.location?.href || window.location.href,
       createdAt: Date.now(),
       messages,
       totalWords,
     };
+  }
+
+  /**
+   * One-shot scrape: optional virtualized-list hydration, parse, and validation.
+   * Shared by content controller, popup controller, and popup callbacks.
+   * @throws Error when no messages are detected (message names the action via `actionLabel`).
+   */
+  public static async scrapeConvo(
+    doc: Document,
+    options: { hydrate?: boolean; actionLabel?: string } = {}
+  ): Promise<ChatConversation> {
+    if (options.hydrate) {
+      await this.hydrateVirtualizedChat(doc);
+    }
+    const convo = this.parseActivePage(doc);
+    if (!convo || convo.messages.length === 0) {
+      throw new Error(`No chat messages detected to ${options.actionLabel ?? "export"}.`);
+    }
+    return convo;
   }
 
   /**
@@ -156,27 +176,61 @@ export class ChatParserUtils {
    */
   public static parseGemini(doc: Document): ChatMessage[] {
     const messages: ChatMessage[] = [];
-    const queryContainers = doc.querySelectorAll(
-      "user-query, model-response, message-content, div.conversation-container > *"
-    );
 
-    queryContainers.forEach((el, index) => {
-      const tagName = el.tagName.toLowerCase();
-      const isUser = tagName.includes("user") || el.classList.contains("user-query");
-      const role: MessageRole = isUser ? "user" : "assistant";
-      const text = this.cleanElementText(el);
+    // 1. Primary: Gemini web components (user-query and model-response)
+    const turns = doc.querySelectorAll("user-query, model-response");
+    if (turns.length > 0) {
+      turns.forEach((el, index) => {
+        const tagName = el.tagName.toLowerCase();
+        const isUser = tagName === "user-query";
+        const role: MessageRole = isUser ? "user" : "assistant";
+        const contentEl = !isUser ? el.querySelector("message-content") || el : el;
+        const text = this.cleanElementText(contentEl);
 
-      if (text) {
-        messages.push({
-          id: `msg_gemini_${index}`,
-          role,
-          content: text,
-          timestamp: Date.now(),
-        });
+        if (text) {
+          messages.push({
+            id: `msg_gemini_${index}`,
+            role,
+            content: text,
+            timestamp: Date.now(),
+          });
+        }
+      });
+
+      if (messages.length > 0) {
+        return messages;
       }
-    });
+    }
 
-    return messages;
+    // 2. Secondary fallback: query & response containers by class or data attributes
+    const secondaryTurns = doc.querySelectorAll(
+      'div[class*="user-query"], div[class*="model-response"], [data-test-id*="user-query"], [data-test-id*="model-response"], .user-query-container, .model-response-container'
+    );
+    if (secondaryTurns.length > 0) {
+      secondaryTurns.forEach((el, index) => {
+        const isUser =
+          /user/i.test(el.className) ||
+          el.getAttribute("data-test-id")?.includes("user") ||
+          el.tagName.toLowerCase().includes("user");
+        const role: MessageRole = isUser ? "user" : "assistant";
+        const text = this.cleanElementText(el);
+
+        if (text) {
+          messages.push({
+            id: `msg_gemini_sec_${index}`,
+            role,
+            content: text,
+            timestamp: Date.now(),
+          });
+        }
+      });
+
+      if (messages.length > 0) {
+        return messages;
+      }
+    }
+
+    return this.parseGeneric(doc);
   }
 
   /**
@@ -263,7 +317,7 @@ export class ChatParserUtils {
 
     // 1. Strip unneeded UI controls (buttons, toolbars, copy icons, SVGs, action bars)
     const unwanted = clone.querySelectorAll(
-      'button, svg, [role="button"], .copy-code-button, [aria-hidden="true"], [class*="action-bar"], [class*="copy-button"], [class*="feedback"], [data-testid*="copy"]'
+      'button, svg, [role="button"], .copy-code-button, [aria-hidden="true"], [class*="action-bar"], [class*="copy-button"], [class*="feedback"], [data-testid*="copy"], [class*="response-footer"], [class*="bottom-actions"], [class*="actions-container"], sources-list, [class*="sources-list"], [class*="citation"], mat-icon'
     );
     unwanted.forEach((el) => {
       el.remove();

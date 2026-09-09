@@ -1,8 +1,13 @@
-import type { CavemanLevel } from "../constants/ai-exporter.constants";
+import { type CavemanLevel, isValidCavemanLevel } from "../constants/ai-exporter.constants";
 
 export class CavemanDirectiveUtils {
   private static readonly PRIMER_PREFIX = "[Caveman mode is ON";
   private static readonly REMINDER_PREFIX = "[stay in caveman mode";
+  private static readonly STOP_PREFIX = "[stop caveman mode";
+
+  private static readonly STOP_DIRECTIVE =
+    "[stop caveman mode] Resume normal, complete replies: full sentences, standard tone. " +
+    "The previous terse-mode instruction no longer applies. Continue the conversation normally.]";
 
   private static readonly BASE_PRIMER =
     '[Caveman mode is ON for this whole conversation, until I say "stop caveman". ' +
@@ -38,11 +43,32 @@ export class CavemanDirectiveUtils {
   }
 
   /**
+   * Build the stop directive that cancels caveman mode in an ongoing conversation.
+   * Used when the stored level is not a known enum value (stale/corrupted settings).
+   */
+  public static buildStop(): string {
+    return this.STOP_DIRECTIVE;
+  }
+
+  /**
    * Checks if user input already starts with a caveman directive to avoid double injection.
    */
   public static isPrefixed(text: string | null | undefined): boolean {
     const t = String(text ?? "").trimStart();
-    return t.startsWith(this.PRIMER_PREFIX) || t.startsWith(this.REMINDER_PREFIX);
+    return (
+      t.startsWith(this.PRIMER_PREFIX) ||
+      t.startsWith(this.REMINDER_PREFIX) ||
+      t.startsWith(this.STOP_PREFIX)
+    );
+  }
+
+  /**
+   * Checks if the input already starts with the stop directive (avoids re-injecting it).
+   */
+  public static isStopPrefixed(text: string | null | undefined): boolean {
+    return String(text ?? "")
+      .trimStart()
+      .startsWith(this.STOP_PREFIX);
   }
 
   /**
@@ -58,6 +84,24 @@ export class CavemanDirectiveUtils {
   }
 
   /**
+   * Checks if the chat history already contains the stop directive (caveman cancelled).
+   */
+  public static hasStop(history?: readonly { role?: string; content?: string }[] | null): boolean {
+    if (!history || history.length === 0) return false;
+    return history.some(
+      (m) => typeof m.content === "string" && m.content.includes(this.STOP_PREFIX)
+    );
+  }
+
+  /**
+   * Prepends the stop directive to the input (cancels caveman in an ongoing chat).
+   */
+  public static wrapStop(text: string): string {
+    if (this.isStopPrefixed(text)) return text;
+    return `${this.buildStop()}\n\n${text}`;
+  }
+
+  /**
    * Determines whether the full primer must be injected.
    * Returns true if history is empty OR if no previous message in the conversation has the primer.
    */
@@ -68,10 +112,14 @@ export class CavemanDirectiveUtils {
   }
 
   /**
-   * Prepends either primer or reminder to text based on whether primer is needed.
+   * Prepends either primer, reminder, or the stop directive to the input.
+   * An unknown/invalid level forces the stop directive instead of silently resuming terse mode.
    */
   public static wrapText(text: string, needsPrimer: boolean, level: CavemanLevel = "full"): string {
     if (this.isPrefixed(text)) return text;
+    if (!isValidCavemanLevel(level)) {
+      return `${this.buildStop()}\n\n${text}`;
+    }
     const directive = needsPrimer ? this.buildPrimer(level) : this.buildReminder(level);
     return `${directive}\n\n${text}`;
   }

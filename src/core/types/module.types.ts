@@ -3,12 +3,12 @@
  */
 import type { ClassConstructor, TokenKey } from "@/core/types/context.types";
 
-export interface ClassProvider<T = unknown> {
+interface ClassProvider<T = unknown> {
   provide: TokenKey;
   useClass: ClassConstructor<T>;
 }
 
-export interface ValueProvider<T = unknown> {
+interface ValueProvider<T = unknown> {
   provide: TokenKey;
   useValue: T;
 }

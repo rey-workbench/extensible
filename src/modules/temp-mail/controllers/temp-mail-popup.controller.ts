@@ -111,20 +111,13 @@ export class TempMailPopupController {
     if (!this.view) return;
     try {
       this.view.setRefreshing(true);
-      const res = await this.router.send<TempMailCurrentState | TempEmail>(
-        TEMPMAIL_ACTIONS.GET_CURRENT,
-        {
-          autoGenerate: true,
-        }
-      );
-      // Handler returns bare TempEmail on auto-generate, state object otherwise
-      const email = res && "email" in res ? res.email : res;
-      const remainingSeconds =
-        res && "remainingSeconds" in res
-          ? res.remainingSeconds
-          : (email?.durationMinutes ?? 0) * 60;
+      const state = await this.router.send<TempMailCurrentState>(TEMPMAIL_ACTIONS.GET_CURRENT, {
+        autoGenerate: true,
+      });
 
-      this.view.updateEmailCard(email, remainingSeconds);
+      if (state?.email) {
+        this.view.updateEmailCard(state.email, state.remainingSeconds);
+      }
       await this.refreshInbox(false);
     } catch (err) {
       this.handleActionError(err, "Refresh state");

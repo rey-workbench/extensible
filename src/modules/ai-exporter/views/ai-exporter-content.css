@@ -13,16 +13,17 @@
   box-sizing: border-box;
 }
 
-/* When docked inside the host chat form/composer toolbar */
-.aio-composer-bar-root.aio-docked-in-form {
-  position: relative !important;
+/* Floating overlay anchored just above the composer box (does not join host flex rows,
+   so host re-renders can never displace, wrap, or clip the bar) */
+.aio-composer-bar-root.aio-composer-floating {
+  position: fixed !important;
   display: inline-flex !important;
   align-items: center !important;
-  margin: 0 4px !important;
+  margin: 0 !important;
   padding: 0 !important;
-  vertical-align: middle !important;
-  z-index: 50 !important;
+  z-index: 2147483641 !important;
   flex-shrink: 0 !important;
+  pointer-events: auto !important;
 }
 
 /* Fallback floating dock if form is not found */
@@ -39,7 +40,7 @@
   align-items: center !important;
   gap: 2px !important;
   height: 28px !important;
-  padding: 2px 4px !important;
+  padding: 2px 5px !important;
   background: rgba(30, 41, 59, 0.72) !important;
   -webkit-backdrop-filter: blur(12px) !important;
   backdrop-filter: blur(12px) !important;
@@ -47,6 +48,8 @@
   border-radius: 9999px !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .aio-composer-bar:hover {
@@ -136,9 +139,14 @@
 }
 
 .aio-flame-icon {
+  color: #94a3b8 !important;
   transition:
-    fill 0.2s ease,
+    color 0.2s ease,
     transform 0.2s ease !important;
+}
+
+.aio-caveman-on .aio-flame-icon {
+  color: #f97316 !important;
 }
 
 .aio-caveman-on .aio-flame-icon {

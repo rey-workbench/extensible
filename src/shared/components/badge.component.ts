@@ -1,6 +1,6 @@
 import { escapeHtml } from "@/core/index";
 
-export type BadgeVariant = "primary" | "success" | "danger" | "warning" | "neutral";
+type BadgeVariant = "primary" | "success" | "danger" | "warning" | "neutral";
 
 export interface BadgeOptions {
   id?: string;
