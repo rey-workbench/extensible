@@ -20,5 +20,12 @@
     "noEmit": true,
     "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*", "entrypoints/**/*", "test/**/*", "scripts/**/*", ".wxt/types/**/*"]
+  "include": [
+    "src/**/*",
+    "entrypoints/**/*",
+    "test/**/*",
+    "scripts/**/*",
+    ".wxt/types/**/*",
+    "wxt.config.ts"
+  ]
 }
