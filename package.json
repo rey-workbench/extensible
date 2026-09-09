@@ -1,7 +1,7 @@
 {
-  "name": "my-aio-extension",
+  "name": "extensible",
   "version": "1.1.0",
-  "description": "Modular Chrome Extension Suite (WXT + Svelte 5) with TempMail autofill, inbox reader and AI chat export",
+  "description": "Modular Web Extension Suite (WXT + Svelte 5) with TempMail autofill, inbox reader and AI chat export",
   "type": "module",
   "packageManager": "pnpm@10.29.3",
   "engines": {

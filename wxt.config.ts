@@ -8,6 +8,10 @@ export default defineConfig({
   suppressWarnings: {
     firefoxDataCollection: true,
   },
+  zip: {
+    artifactTemplate: "{{name}}-{{version}}-{{browser}}.zip",
+    sourcesTemplate: "{{name}}-{{version}}-sources.zip",
+  },
   vite: () => ({
     plugins: [tailwindcss()],
     build: {
@@ -38,7 +42,7 @@ export default defineConfig({
     host_permissions: ["https://api.tempmail.ing/*", "http://127.0.0.1/*"],
     browser_specific_settings: {
       gecko: {
-        id: "extensible@my-aio-extension.local",
+        id: "extensible@extension.local",
         strict_min_version: "109.0",
       },
     },
