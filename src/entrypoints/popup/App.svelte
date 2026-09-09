@@ -105,11 +105,11 @@
     >
       <!-- Brand -->
       <div class="flex items-center gap-2">
-        <span
-          class="flex h-5.5 w-5.5 items-center justify-center rounded-[5px] border-[1.5px] border-ext-primary-dark bg-ext-primary text-white shadow-[1px_1px_0_#1A1A1A]"
-        >
-          <Icon name="puzzle" size={13} />
-        </span>
+        <img
+          src="/icon/icon-48.png"
+          alt="Extensible Logo"
+          class="h-6 w-6 rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface object-contain shadow-[1.5px_1.5px_0_#1A1A1A]"
+        />
         <span class="text-[13px] font-bold uppercase tracking-wider text-ext-text">
           Extensible
         </span>

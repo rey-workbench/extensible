@@ -76,7 +76,7 @@
 {#if !hidden}
   <button
     type="button"
-    class="group flex items-center justify-center rounded-[4px] text-ext-danger transition-transform hover:scale-105 active:translate-x-px active:translate-y-px"
+    class="group flex items-center justify-center rounded-sm text-ext-danger transition-transform hover:scale-105 active:translate-x-px active:translate-y-px"
     class:aio-loading={phase === "loading"}
     style:top="{top}px"
     style:left="{left}px"
@@ -110,7 +110,7 @@
       <Icon name="mail" size={13} class="text-ext-danger" />
     {/if}
     <span
-      class="pointer-events-none absolute bottom-full right-0 mb-1.5 whitespace-nowrap rounded-[4px] border-[1.5px] border-ext-border bg-ext-surface px-2 py-0.5 text-[9.5px] font-black uppercase tracking-wider text-ext-text shadow-[2px_2px_0_#1A1A1A] opacity-0 transition-opacity group-hover:opacity-100"
+      class="pointer-events-none absolute bottom-full right-0 mb-1.5 whitespace-nowrap rounded-sm border-[1.5px] border-ext-border bg-ext-surface px-2 py-0.5 text-[9.5px] font-black uppercase tracking-wider text-ext-text shadow-[2px_2px_0_#1A1A1A] opacity-0 transition-opacity group-hover:opacity-100"
       style:font-family="'Space Grotesk', system-ui, sans-serif"
     >{tooltip}</span>
   </button>

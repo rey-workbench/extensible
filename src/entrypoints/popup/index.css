@@ -6,8 +6,9 @@ body {
   padding: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  background-color: #F5F0E8;
-  font-family: "Space Grotesk", system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f5f0e8;
+  font-family:
+    "Space Grotesk", system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -21,10 +22,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #A89B8C;
+  background: #a89b8c;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #8A7D6F;
+  background: #8a7d6f;
 }

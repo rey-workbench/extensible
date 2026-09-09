@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
+  import { browser } from "wxt/browser";
   import Icon from "@/components/Icon.svelte";
   import { TEMPMAIL_ACTIONS } from "@/features/temp-mail/constants/temp-mail.constants";
   import type { TempEmail, TempMailCurrentState } from "@/features/temp-mail/types/temp-mail.types";
@@ -12,6 +13,9 @@
   } from "@/lib/feature-settings";
   import { sendMessage } from "@/lib/messaging";
   import globalCss from "@/styles/global.css?inline";
+
+  const logo48 = browser.runtime.getURL("/icon/icon-48.png");
+  const logo32 = browser.runtime.getURL("/icon/icon-32.png");
 
   interface Props {
     /** The shadow root the drawer is mounted into (Tailwind utilities are injected here). */
@@ -245,14 +249,14 @@
         <!-- Top Row: Brand + Master Switch + Full Panel Button -->
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span
-              class="flex h-6 w-6 items-center justify-center rounded-[5px] border-[1.5px] border-ext-primary-dark bg-ext-primary text-white shadow-[1px_1px_0_#1A1A1A]"
-            >
-              <Icon name="puzzle" size={13} />
-            </span>
+            <img
+              src={logo48}
+              alt="Extensible Logo"
+              class="h-6 w-6 rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface object-contain shadow-[1.5px_1.5px_0_#1A1A1A]"
+            />
             <div class="flex flex-col leading-tight">
-              <span class="text-[12px] font-bold uppercase tracking-wider text-ext-text">Extensible</span>
-              <span class="text-[9px] font-bold uppercase tracking-wider text-ext-muted">Extension manager</span>
+              <span class="text-[12.5px] font-black uppercase tracking-tight text-ext-text">Extensible</span>
+              <span class="text-[8.5px] font-bold uppercase tracking-wider text-ext-text-secondary">Quick Access</span>
             </div>
           </div>
 
@@ -279,7 +283,7 @@
             <!-- Expand Full Drawer Button -->
             <button
               type="button"
-              class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px active:shadow-none"
+              class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
               title="Open Full Extensions Panel"
               onclick={(e) => {
                 e.stopPropagation();
@@ -331,7 +335,7 @@
                 <!-- Generate / Refresh Button -->
                 <button
                   type="button"
-                  class="flex h-5 w-5 cursor-pointer items-center justify-center rounded-[4px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+                  class="flex h-5 w-5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
                   title="Generate New Address"
                   onclick={handleQuickGenerate}
                 >
@@ -345,7 +349,7 @@
                 <!-- Copy Button -->
                 <button
                   type="button"
-                  class="flex h-5 cursor-pointer items-center gap-1 rounded-[4px] border-[1.5px] border-ext-border bg-ext-surface px-2 text-[9px] font-bold uppercase tracking-wide text-ext-text-secondary transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+                  class="flex h-5 cursor-pointer items-center gap-1 rounded-sm border-[1.5px] border-ext-border bg-ext-surface px-2 text-[9px] font-bold uppercase tracking-wide text-ext-text-secondary transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
                   title="Copy Address"
                   onclick={handleQuickCopy}
                 >
@@ -393,7 +397,7 @@
             <div class="mt-1.5 flex items-center justify-between border-t border-ext-border/25 pt-1.5">
               <button
                 type="button"
-                class="flex cursor-pointer items-center gap-1 rounded-[4px] border-[1.5px] border-[#C48C1E] bg-[#FDF3E3] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#C48C1E] transition-all hover:bg-[#F8E5C4] active:translate-x-px active:translate-y-px"
+                class="flex cursor-pointer items-center gap-1 rounded-sm border-[1.5px] border-[#C48C1E] bg-[#FDF3E3] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#C48C1E] transition-all hover:bg-[#F8E5C4] active:translate-x-px active:translate-y-px"
                 onclick={(e) => {
                   e.stopPropagation();
                   isHovered = false;
@@ -455,7 +459,7 @@
 
         <!-- Center Typography & Tactile Grip Lines -->
         <div class="flex flex-col items-center gap-1.5 py-1">
-          <div class="flex flex-col items-center gap-[3px] opacity-60">
+          <div class="flex flex-col items-center gap-0.75 opacity-60">
             <span class="h-[1.5px] w-3 rounded-full bg-ext-border"></span>
             <span class="h-[1.5px] w-3 rounded-full bg-ext-border"></span>
           </div>
@@ -466,16 +470,20 @@
             EXT
           </span>
 
-          <div class="flex flex-col items-center gap-[3px] opacity-60">
+          <div class="flex flex-col items-center gap-0.75 opacity-60">
             <span class="h-[1.5px] w-3 rounded-full bg-ext-border"></span>
           </div>
         </div>
 
-        <!-- Bottom Bauhaus Blue Block with White Puzzle Icon -->
+        <!-- Bottom Bauhaus Anchor Block with New Logo -->
         <div
-          class="flex h-8 w-full items-center justify-center border-t-2 border-ext-border bg-ext-primary text-white transition-colors group-hover/handle:bg-ext-primary-dark"
+          class="flex h-8 w-full items-center justify-center border-t-2 border-ext-border bg-ext-surface p-1 transition-colors group-hover/handle:bg-[#EDE7DA]"
         >
-          <Icon name="puzzle" size={13} />
+          <img
+            src={logo32}
+            alt="Extensible Logo"
+            class="h-5 w-5 object-contain"
+          />
         </div>
       </button>
     {/if}
@@ -507,11 +515,11 @@
       >
         <!-- Brand -->
         <div class="flex items-center gap-2">
-          <span
-            class="flex h-5.5 w-5.5 items-center justify-center rounded-[5px] border-[1.5px] border-ext-primary-dark bg-ext-primary text-white shadow-[1px_1px_0_#1A1A1A]"
-          >
-            <Icon name="puzzle" size={13} />
-          </span>
+          <img
+            src={logo48}
+            alt="Extensible Logo"
+            class="h-6 w-6 rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface object-contain shadow-[1.5px_1.5px_0_#1A1A1A]"
+          />
           <span
             class="text-[13px] font-bold uppercase tracking-wider text-ext-text"
           >
@@ -611,9 +619,13 @@
             class="flex flex-col items-center gap-2 px-3 py-10 text-center"
           >
             <span
-              class="flex h-10 w-10 items-center justify-center rounded-md border-[1.5px] border-[#D4CEC2] bg-[#EDE7DA] text-ext-muted"
+              class="flex h-10 w-10 items-center justify-center rounded-md border-2 border-ext-border bg-[#EDE7DA] p-1.5 shadow-[2px_2px_0_#1A1A1A]"
             >
-              <Icon name="puzzle" size={18} />
+              <img
+                src={logo48}
+                alt="Extensible"
+                class="h-full w-full object-contain"
+              />
             </span>
             <div class="text-[12.5px] font-bold text-ext-text">
               {query ? "No matches" : "No extensions"}

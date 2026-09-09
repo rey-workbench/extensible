@@ -11,9 +11,19 @@
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox",
     "build": "wxt build",
+    "build:chrome": "wxt build -b chrome",
     "build:firefox": "wxt build -b firefox",
+    "build:edge": "wxt build -b edge",
+    "build:all": "wxt build -b chrome && wxt build -b firefox && wxt build -b edge",
     "zip": "wxt zip",
+    "zip:chrome": "wxt zip -b chrome",
     "zip:firefox": "wxt zip -b firefox",
+    "zip:edge": "wxt zip -b edge",
+    "zip:all": "wxt zip -b chrome && wxt zip -b firefox && wxt zip -b edge",
+    "pack": "pnpm run zip:all && node scripts/pack.js all",
+    "pack:crx": "node scripts/pack.js crx",
+    "pack:xpi": "node scripts/pack.js xpi",
+    "pack:all": "pnpm run zip:all && node scripts/pack.js all",
     "compile": "wxt prepare",
     "icons": "node scripts/generate_icons.js",
     "typecheck": "tsc --noEmit",
@@ -41,6 +51,7 @@
     "@types/node": "^26.5.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "@wxt-dev/module-svelte": "^2.0.5",
+    "crx3": "^2.0.0",
     "knip": "^6.34.0",
     "svelte": "^5.28.0",
     "svelte-check": "^4.1.5",
@@ -59,7 +70,9 @@
       "src/**/*.{ts,svelte}",
       "!src/entrypoints/**"
     ],
-    "ignoreDependencies": ["tailwindcss"],
+    "ignoreDependencies": [
+      "tailwindcss"
+    ],
     "esbuild": false
   }
 }

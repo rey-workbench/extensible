@@ -255,7 +255,7 @@
               onchange={(e) => handleToggleCaveman((e.target as HTMLInputElement).checked)}
             />
             <span
-              class="h-4.5 w-8 rounded-sm border-[1.5px] bg-[#D4CEC2] transition-colors focus-within:ring-2 focus-within:ring-ext-primary/40 after:absolute after:left-0.5 after:top-[1.5px] after:h-3.25 after:w-3.25 after:rounded-[3px] after:bg-white after:shadow-[1px_1px_0_rgba(26,26,26,0.2)] after:transition-transform after:content-[''] peer-checked:border-[#1E6B38] peer-checked:bg-ext-success peer-checked:after:translate-x-[13px]"
+              class="h-4.5 w-8 rounded-sm border-[1.5px] bg-[#D4CEC2] transition-colors focus-within:ring-2 focus-within:ring-ext-primary/40 after:absolute after:left-0.5 after:top-[1.5px] after:h-3.25 after:w-3.25 after:rounded-[3px] after:bg-white after:shadow-[1px_1px_0_rgba(26,26,26,0.2)] after:transition-transform after:content-[''] peer-checked:border-[#1E6B38] peer-checked:after:translate-x-3.25"
             ></span>
           </label>
         </div>
@@ -267,7 +267,7 @@
                 type="button"
                 class="rounded-sm border-[1.5px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all active:translate-x-px active:translate-y-px
                   {caveman.level === lvl
-                    ? 'border-ext-primary bg-ext-primary text-white shadow-[1px_1px_0_#1A1A1A] active:shadow-none'
+                    ? 'border-ext-primary bg-ext-primary text-white shadow-[1px_1px_0_#1A1A1A]'
                     : 'border-ext-border bg-ext-surface text-ext-text-secondary hover:bg-[#EDE7DA]'}"
                 onclick={() => handleSetLevel(lvl as CavemanLevel)}
               >{lvl}</button>
