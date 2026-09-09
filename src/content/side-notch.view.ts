@@ -41,7 +41,7 @@ export class SideNotchView {
         :host {
           all: initial;
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          z-index: 2147483645;
+          z-index: var(--z-aio-notch, 2147483645);
           position: fixed;
         }
 
@@ -63,7 +63,7 @@ export class SideNotchView {
           justify-content: center;
           box-shadow: -4px 0 16px rgba(0, 0, 0, 0.35);
           transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-          z-index: 2147483646;
+          z-index: var(--z-aio-backdrop, 2147483646);
           user-select: none;
         }
 
@@ -105,7 +105,7 @@ export class SideNotchView {
           opacity: 0;
           pointer-events: none;
           transition: opacity 0.3s ease;
-          z-index: 2147483646;
+          z-index: var(--z-aio-backdrop, 2147483646);
         }
 
         .backdrop.visible {
@@ -126,7 +126,7 @@ export class SideNotchView {
           box-shadow: -8px 0 25px rgba(0, 0, 0, 0.15);
           transform: translateX(100%);
           transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-          z-index: 2147483647;
+          z-index: var(--z-aio-overlay, 2147483647);
           display: flex;
           flex-direction: column;
           box-sizing: border-box;

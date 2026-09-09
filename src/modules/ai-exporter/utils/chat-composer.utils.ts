@@ -127,7 +127,10 @@ export class ChatComposerUtils {
       return;
     }
 
-    // ContentEditable handling (ProseMirror, Quill, Lexical)
+    // ContentEditable handling (ProseMirror, Quill, Lexical).
+    // execCommand("insertText") is deprecated but still the only way to keep
+    // ProseMirror's transaction history correct; fallback below covers modern
+    // engines where the API is absent.
     if (document.queryCommandSupported?.("insertText")) {
       const sel = window.getSelection();
       if (sel) {
@@ -141,8 +144,18 @@ export class ChatComposerUtils {
       }
     }
 
-    // Fallback innerText
-    editor.innerText = text;
+    // Fallback — preserves line breaks for contenteditable without execCommand support.
+    // Using textContent avoids collapsing whitespace differently from innerText.
+    editor.textContent = text;
+    // Place caret at end so the user can keep typing.
+    try {
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    } catch {}
     editor.dispatchEvent(new Event("input", { bubbles: true }));
   }
 

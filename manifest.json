@@ -39,6 +39,7 @@
     "downloads"
   ],
   "host_permissions": [
-    "https://api.tempmail.ing/*"
+    "https://api.tempmail.ing/*",
+    "http://127.0.0.1/*"
   ]
 }

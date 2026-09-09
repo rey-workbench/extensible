@@ -21,7 +21,7 @@
   align-items: center !important;
   margin: 0 !important;
   padding: 0 !important;
-  z-index: 2147483641 !important;
+  z-index: var(--z-aio-floating, 2147483641) !important;
   flex-shrink: 0 !important;
   pointer-events: auto !important;
 }
@@ -31,7 +31,7 @@
   position: fixed !important;
   bottom: 24px !important;
   right: 24px !important;
-  z-index: 2147483640 !important;
+  z-index: var(--z-aio-base, 2147483640) !important;
 }
 
 /* Modern pill container */
@@ -192,7 +192,7 @@
   flex-direction: column !important;
   padding: 6px !important;
   overflow: hidden !important;
-  z-index: 2147483647 !important;
+  z-index: var(--z-aio-overlay, 2147483647) !important;
   -webkit-user-select: none !important;
   user-select: none !important;
   font-family:
@@ -222,7 +222,7 @@
   width: 100vw !important;
   height: 100vh !important;
   background: transparent !important;
-  z-index: 2147483646 !important;
+  z-index: var(--z-aio-backdrop, 2147483646) !important;
   cursor: default !important;
   display: none !important;
 }
@@ -326,7 +326,7 @@
   opacity: 0 !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45) !important;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  z-index: 2147483647 !important;
+  z-index: var(--z-aio-overlay, 2147483647) !important;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
 }

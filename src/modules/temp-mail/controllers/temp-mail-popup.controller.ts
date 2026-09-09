@@ -1,5 +1,10 @@
-import { type ExecutionContext, ExtensionUtils, MessageRouterService } from "@/core/index";
-import { TEMPMAIL_ACTIONS } from "@/modules/temp-mail/constants/index";
+import {
+  type ExecutionContext,
+  ExtensionUtils,
+  MessageRouterService,
+  StorageService,
+} from "@/core/index";
+import { TEMPMAIL_ACTIONS, TEMPMAIL_STORAGE_KEYS } from "@/modules/temp-mail/constants/index";
 import type {
   EmailMessage,
   TempEmail,
@@ -13,22 +18,43 @@ import { TempMailPopupView } from "@/modules/temp-mail/views/temp-mail-popup.vie
  */
 export class TempMailPopupController {
   public static readonly contextType: ExecutionContext = "popup";
-  public static readonly inject = [MessageRouterService] as const;
+  public static readonly inject = [MessageRouterService, StorageService] as const;
 
   public view: TempMailPopupView | null = null;
-  private _pollInterval: NodeJS.Timeout | null = null;
+  private _pollInterval: ReturnType<typeof setInterval> | null = null;
+  private _inboxWatcher: (() => void) | null = null;
+  private _refreshInFlight = false;
 
-  constructor(private readonly router: MessageRouterService) {}
+  constructor(
+    private readonly router: MessageRouterService,
+    private readonly storage: StorageService
+  ) {}
 
   async mount(container: HTMLElement): Promise<void> {
     this.view = new TempMailPopupView(container);
     this.view.renderLayout();
     this._bindViewEvents();
+    this._bindInboxWatcher();
     await this.refreshState();
 
-    this._pollInterval = setInterval(async () => {
-      await this.refreshInbox(false);
-    }, 5000);
+    // Background already polls every 15s via alarm. Popup only needs a
+    // lightweight fallback poll while visible — interval widened to 10s
+    // and guarded against overlap so we don't double-hit the API.
+    this._pollInterval = setInterval(() => {
+      void this.refreshInbox(false);
+    }, 10_000);
+  }
+
+  private _bindInboxWatcher(): void {
+    if (this._inboxWatcher) return;
+    this._inboxWatcher = this.storage.watch<EmailMessage[]>(
+      TEMPMAIL_STORAGE_KEYS.INBOX_CACHE,
+      (newInbox) => {
+        if (Array.isArray(newInbox)) {
+          this.view?.renderInbox(newInbox);
+        }
+      }
+    );
   }
 
   unmount(): void {
@@ -36,6 +62,11 @@ export class TempMailPopupController {
       clearInterval(this._pollInterval);
       this._pollInterval = null;
     }
+    if (this._inboxWatcher) {
+      this._inboxWatcher();
+      this._inboxWatcher = null;
+    }
+    this._refreshInFlight = false;
     if (this.view) {
       this.view.stopCountdown();
       this.view = null;
@@ -127,7 +158,8 @@ export class TempMailPopupController {
   }
 
   async refreshInbox(showFeedback = false): Promise<void> {
-    if (!this.view) return;
+    if (!this.view || this._refreshInFlight) return;
+    this._refreshInFlight = true;
     try {
       if (showFeedback) this.view.setRefreshing(true);
       const res = await this.router.send<{ emails: EmailMessage[] }>(TEMPMAIL_ACTIONS.GET_INBOX, {
@@ -142,6 +174,7 @@ export class TempMailPopupController {
     } catch (err) {
       this.handleActionError(err, "Refresh inbox");
     } finally {
+      this._refreshInFlight = false;
       if (showFeedback) this.view?.setRefreshing(false);
     }
   }

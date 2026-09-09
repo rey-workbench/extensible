@@ -96,32 +96,37 @@ export class AiExporterBackgroundController {
     );
   }
 
-  /** Encodes text content into a data: URL usable by chrome.downloads / chrome.tabs. */
-  private toDataUrl(content: string, mimeType: string): string {
-    const base64 = btoa(unescape(encodeURIComponent(content)));
-    return `data:${mimeType};base64,${base64}`;
+  /** Creates a blob: URL for text content (no 2 MB data-URL limit, no deprecated btoa/unescape). */
+  private toObjectUrl(content: string, mimeType: string): string {
+    const blob = new Blob([content], { type: mimeType });
+    return URL.createObjectURL(blob);
   }
 
   /** Downloads text content as a file via the Chrome Downloads API (no-op when unavailable). */
   private async downloadAsFile(content: string, filename: string, mimeType: string): Promise<void> {
     if (typeof chrome === "undefined" || !chrome.downloads?.download) return;
-    await new Promise<number>((resolve, reject) => {
-      chrome.downloads.download(
-        { url: this.toDataUrl(content, mimeType), filename, saveAs: false },
-        (downloadId) => {
+    const url = this.toObjectUrl(content, mimeType);
+    try {
+      await new Promise<number>((resolve, reject) => {
+        chrome.downloads.download({ url, filename, saveAs: false }, (downloadId) => {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
           } else {
             resolve(downloadId);
           }
-        }
-      );
-    });
+        });
+      });
+    } finally {
+      // Revoke after the download has been handed off to the browser.
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    }
   }
 
   /** Opens HTML content in a new tab (no-op when tabs API unavailable). */
   private async openAsTab(html: string): Promise<void> {
     if (typeof chrome === "undefined" || !chrome.tabs?.create) return;
-    await chrome.tabs.create({ url: this.toDataUrl(html, "text/html") });
+    const url = this.toObjectUrl(html, "text/html");
+    await chrome.tabs.create({ url });
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   }
 }

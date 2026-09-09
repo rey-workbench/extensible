@@ -20,6 +20,14 @@
   --ext-radius-sm: 4px;
   --ext-radius-md: 6px;
   --ext-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  /* Overlay depth — kept just below the UA max so host content can never
+     paint over the extension UI. Pin here; don't scatter magic numbers. */
+  --z-aio-base: 2147483640;
+  --z-aio-floating: 2147483641;
+  --z-aio-notch: 2147483645;
+  --z-aio-backdrop: 2147483646;
+  --z-aio-overlay: 2147483647;
 }
 
 /* Shared Compatibility Tokens - Strictly Scoped so host web pages are never polluted */

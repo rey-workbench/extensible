@@ -22,6 +22,7 @@ export class AiExporterContentController {
   private cavemanSettings: CavemanSettings = DEFAULT_CAVEMAN_SETTINGS;
   private unwatchSettings: (() => void) | null = null;
   private bypass = false;
+  private bypassTimer: ReturnType<typeof setTimeout> | null = null;
   private keydownListener: ((e: KeyboardEvent) => void) | null = null;
   private clickListener: ((e: MouseEvent) => void) | null = null;
 
@@ -159,7 +160,9 @@ export class AiExporterContentController {
   }
 
   private handleCavemanInjection(): void {
-    if (this.bypass || !this.cavemanSettings.enabled) return;
+    // NOTE: no `enabled` guard here — the OFF state must still run far enough to
+    // inject the stop directive into primed chats. Enabled/disabled is decided below.
+    if (this.bypass) return;
 
     const platform = ChatParserUtils.detectPlatform(window.location.hostname);
     if (platform === "generic") return;
@@ -173,66 +176,65 @@ export class AiExporterContentController {
     const raw = ChatComposerUtils.getText(editor);
     if (!raw.trim() || CavemanDirectiveUtils.isPrefixed(raw)) return;
 
+    const modeActive =
+      this.cavemanSettings.enabled && isValidCavemanLevel(this.cavemanSettings.level);
+
+    // Chat-level caveman state via one cheap DOM text scan (works even when the
+    // virtualized list hides earlier turns that carried the directives).
+    const mainChat =
+      document.querySelector(
+        'main, #chat-history, [class*="conversation"], [class*="chat-container"]'
+      ) || document.body;
+    const chatText = mainChat?.textContent ?? "";
+
+    // Fast path: mode inactive and visible DOM shows no primer → nothing to do.
+    // Avoids the expensive parseActivePage on every send for non-caveman usage.
+    if (!modeActive && !chatText.includes("[Caveman mode is ON")) return;
+
     const convo = ChatParserUtils.parseActivePage(document);
+    const hasPrimerInChat =
+      CavemanDirectiveUtils.hasPrimer(convo?.messages) || chatText.includes("[Caveman mode is ON");
+    const hasStopInChat =
+      CavemanDirectiveUtils.hasStop(convo?.messages) || chatText.includes("[stop caveman mode");
 
-    // If chat has no messages OR previous bubbles don't have Caveman mode, send full primer!
-    let hasPrimerInChat = CavemanDirectiveUtils.hasPrimer(convo?.messages);
-    if (!hasPrimerInChat) {
-      // Secondary check in DOM text in case virtualized DOM hasn't rendered offscreen items
-      const mainChat =
-        document.querySelector(
-          'main, #chat-history, [class*="conversation"], [class*="chat-container"]'
-        ) || document.body;
-      if (mainChat?.textContent?.includes("[Caveman mode is ON")) {
-        hasPrimerInChat = true;
+    // Mode inactive (OFF or invalid level) on a never-primed chat: nothing to stop.
+    if (!modeActive && !hasPrimerInChat) return;
+
+    if (!modeActive) {
+      // Primed chat + mode now off: inject the stop directive ONCE so the model
+      // actually exits terse mode (toggle-off alone never reaches the chat).
+      if (!hasStopInChat) {
+        this.setBypassThenWrite(editor, CavemanDirectiveUtils.wrapStop(raw));
       }
-    }
-
-    // Mirror fallback for stop detection (virtualized DOM may hide earlier turns)
-    let hasStopInChat = CavemanDirectiveUtils.hasStop(convo?.messages);
-    if (!hasStopInChat) {
-      const mainChat =
-        document.querySelector(
-          'main, #chat-history, [class*="conversation"], [class*="chat-container"]'
-        ) || document.body;
-      if (mainChat?.textContent?.includes("[stop caveman mode")) {
-        hasStopInChat = true;
-      }
-    }
-
-    const level = this.cavemanSettings.level;
-    // Unknown/stale level: inject the stop directive — but only when this chat was
-    // actually primed; a never-primed chat has nothing to stop, so skip entirely.
-    if (!isValidCavemanLevel(level) && !hasPrimerInChat) return;
-
-    // Mode OFF but this chat was already primed: inject the stop directive once so
-    // the model actually stops replying tersely (toggle-off alone reaches the chat).
-    const stopNeeded =
-      (!this.cavemanSettings.enabled || !isValidCavemanLevel(level)) &&
-      hasPrimerInChat &&
-      !hasStopInChat;
-    if (stopNeeded) {
-      this.bypass = true;
-      ChatComposerUtils.setText(editor, CavemanDirectiveUtils.wrapStop(raw));
-      setTimeout(() => {
-        this.bypass = false;
-      }, 300);
       return;
     }
 
-    // Mode inactive (or stop already sent): leave the message untouched.
-    if (!this.cavemanSettings.enabled || !isValidCavemanLevel(level)) return;
+    // Active: full primer when the chat is fresh, short reminder otherwise.
+    const wrapped = CavemanDirectiveUtils.wrapText(
+      raw,
+      !hasPrimerInChat,
+      this.cavemanSettings.level
+    );
 
-    const wrapped = CavemanDirectiveUtils.wrapText(raw, !hasPrimerInChat, level);
+    this.setBypassThenWrite(editor, wrapped);
+  }
 
+  private setBypassThenWrite(editor: HTMLElement, text: string): void {
+    if (this.bypassTimer) clearTimeout(this.bypassTimer);
     this.bypass = true;
-    ChatComposerUtils.setText(editor, wrapped);
-    setTimeout(() => {
+    ChatComposerUtils.setText(editor, text);
+    this.bypassTimer = setTimeout(() => {
       this.bypass = false;
+      this.bypassTimer = null;
     }, 300);
   }
 
   public onModuleDestroy(): void {
+    if (this.bypassTimer) {
+      clearTimeout(this.bypassTimer);
+      this.bypassTimer = null;
+    }
+    this.bypass = false;
     if (this.unwatchSettings) {
       this.unwatchSettings();
       this.unwatchSettings = null;

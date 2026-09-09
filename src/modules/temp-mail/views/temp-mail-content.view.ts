@@ -4,8 +4,16 @@ import { renderIcon } from "@/shared/index";
 /**
  * View responsible for rendering in-field autofill badges and triggering synthetic events.
  */
+interface ButtonBinding {
+  btn: HTMLElement;
+  input: HTMLInputElement;
+  onPosition: () => void;
+  observer: MutationObserver;
+}
+
 export class TempMailContentView {
   private readonly _activeButtons: HTMLElement[] = [];
+  private readonly _bindings: ButtonBinding[] = [];
   private _injected = new WeakSet<HTMLInputElement>();
   private readonly SVG_MAIL_ICON = renderIcon("mail", 16);
   private readonly SVG_SPINNER_ICON = renderIcon("spinner", 16);
@@ -16,9 +24,13 @@ export class TempMailContentView {
   }
 
   detachAll(): void {
-    for (const btn of this._activeButtons) {
-      btn.remove();
+    for (const b of this._bindings) {
+      window.removeEventListener("scroll", b.onPosition);
+      window.removeEventListener("resize", b.onPosition);
+      b.observer.disconnect();
+      b.btn.remove();
     }
+    this._bindings.length = 0;
     this._activeButtons.length = 0;
     this._injected = new WeakSet<HTMLInputElement>();
   }
@@ -48,14 +60,14 @@ export class TempMailContentView {
       btn.style.position = "fixed";
       btn.style.top = `${rect.top + rect.height / 2}px`;
       btn.style.left = `${rect.right - 28 - 8}px`;
-      btn.style.zIndex = "2147483640";
+      btn.style.zIndex = "var(--z-aio-base, 2147483640)";
     };
 
     updatePosition();
     document.body.appendChild(btn);
 
-    window.addEventListener("scroll", updatePosition, { passive: true });
-    window.addEventListener("resize", updatePosition, { passive: true });
+    window.addEventListener("scroll", updatePosition, { passive: true } as AddEventListenerOptions);
+    window.addEventListener("resize", updatePosition, { passive: true } as AddEventListenerOptions);
 
     btn.addEventListener("mousedown", (e) => e.preventDefault());
     btn.addEventListener("click", async (e) => {
@@ -84,13 +96,19 @@ export class TempMailContentView {
 
     const observer = new MutationObserver(() => {
       if (!document.contains(input)) {
-        btn.remove();
         window.removeEventListener("scroll", updatePosition);
         window.removeEventListener("resize", updatePosition);
         observer.disconnect();
+        btn.remove();
+        const idx = this._bindings.findIndex((b) => b.btn === btn);
+        if (idx !== -1) this._bindings.splice(idx, 1);
+        const aIdx = this._activeButtons.indexOf(btn);
+        if (aIdx !== -1) this._activeButtons.splice(aIdx, 1);
+        this._injected.delete(input);
       }
     });
     observer.observe(document.body, { childList: true, subtree: true });
+    this._bindings.push({ btn, input, onPosition: updatePosition, observer });
   }
 
   fillInput(input: HTMLInputElement, email: string): void {

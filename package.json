@@ -4,6 +4,7 @@
   "description": "Modular OOP MVC Chrome Extension Suite with TempMail autofill and inbox reader",
   "type": "module",
   "scripts": {
+    "dev": "node scripts/dev.js",
     "icons": "node scripts/generate_icons.js",
     "typecheck": "tsc --noEmit",
     "lint": "biome check src test scripts",

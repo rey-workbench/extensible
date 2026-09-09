@@ -142,7 +142,7 @@ export class AiExporterComposerView {
     const composerBox = ChatComposerUtils.getComposerBox(document);
     const editor = ChatComposerUtils.getEditor(document);
 
-    if (!composerBox || composerBox === editor || (editor && editor.contains(composerBox))) {
+    if (!composerBox || composerBox === editor || editor?.contains(composerBox)) {
       this.applyFallbackDock();
       return;
     }
@@ -398,7 +398,7 @@ export class AiExporterComposerView {
     toast.textContent = message;
 
     toast.style.position = "fixed";
-    toast.style.zIndex = "2147483647";
+    toast.style.zIndex = "var(--z-aio-overlay, 2147483647)";
     toast.style.bottom = `${Math.max(12, window.innerHeight - rect.top + 8)}px`;
     toast.style.left = `${rect.left + rect.width / 2}px`;
     toast.style.transform = "translateX(-50%) translateY(4px)";
