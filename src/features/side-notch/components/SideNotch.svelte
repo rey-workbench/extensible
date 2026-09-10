@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from "svelte";
   import { browser } from "wxt/browser";
   import Icon from "@/components/Icon.svelte";
+  import Toggle from "@/components/Toggle.svelte";
   import { TEMPMAIL_ACTIONS } from "@/features/temp-mail/constants/temp-mail.constants";
   import type { TempEmail, TempMailCurrentState } from "@/features/temp-mail/types/temp-mail.types";
   import { copyToClipboard } from "@/lib/browser";
@@ -118,6 +119,10 @@
     const style = document.createElement("style");
     style.textContent = `
       ${globalCss}
+      input, textarea, [contenteditable="true"] {
+        -webkit-user-select: text !important;
+        user-select: text !important;
+      }
       .ext-quick-dock {
         position: fixed;
         right: 0;
@@ -187,7 +192,8 @@
     void syncFromStorage();
   }
 
-  function closeDrawer(): void {
+  function closeDrawer(e?: Event): void {
+    e?.stopPropagation();
     isOpen = false;
     view = "list";
   }
@@ -502,11 +508,17 @@
 
   <!-- Slide-out Drawer -->
   <div
-    class="fixed right-0 top-0 z-2147483647 flex h-full w-82.5 max-w-[90vw] flex-col overflow-hidden border-l-[1.5px] border-ext-border bg-ext-bg text-ext-text shadow-[-4px_4px_0_#1A1A1A] transition-transform duration-300 ease-out {isOpen
-      ? 'translate-x-0'
-      : 'translate-x-full'}"
+    class="fixed right-0 top-0 z-2147483647 flex h-full w-82.5 max-w-[90vw] flex-col overflow-hidden border-l-[1.5px] border-ext-border bg-ext-bg text-ext-text shadow-[-4px_4px_0_#1A1A1A] transition-transform duration-300 ease-out"
+    style="transform: translateX({isOpen ? '0%' : '100%'});"
     role="dialog"
     aria-label="Extensible drawer"
+    tabindex="-1"
+    onkeydown={(e) => {
+      e.stopPropagation();
+      if (e.key === "Escape") closeDrawer(e);
+    }}
+    onkeyup={(e) => e.stopPropagation()}
+    onkeypress={(e) => e.stopPropagation()}
   >
     {#if view === "list"}
       <!-- Header -->
@@ -533,23 +545,11 @@
           <span
             class="text-[10.5px] font-bold uppercase tracking-wider text-ext-muted"
           >{masterOn ? "All on" : "All off"}</span>
-          <button
-            type="button"
-            class="relative h-4.5 w-8 cursor-pointer rounded-sm border-[1.5px] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ext-primary/40 focus-visible:ring-offset-1 {masterOn
-              ? 'bg-ext-success border-[#1E6B38]'
-              : 'bg-[#D4CEC2] border-ext-muted'}"
-            title={masterOn
-              ? "Disable all extensions"
-              : "Enable all extensions"}
-            aria-label="Toggle all extensions"
-            onclick={() => toggleAll(!masterOn)}
-          >
-            <span
-              class="absolute top-[1.5px] h-3.25 w-3.25 rounded-[3px] bg-white shadow-[1px_1px_0_rgba(26,26,26,0.2)] transition-all duration-200 {masterOn
-                ? 'left-3.75'
-                : 'left-0.5'}"
-            ></span>
-          </button>
+          <Toggle
+            checked={masterOn}
+            label={masterOn ? "Disable all extensions" : "Enable all extensions"}
+            onchange={(v) => toggleAll(v)}
+          />
 
           <!-- Close Drawer button -->
           <button
@@ -557,9 +557,9 @@
             class="flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
             title="Close panel"
             aria-label="Close panel"
-            onclick={closeDrawer}
+            onclick={(e) => closeDrawer(e)}
           >
-            &times;
+            <Icon name="close" size={12} />
           </button>
         </div>
       </header>
@@ -794,8 +794,10 @@
             type="button"
             class="flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
             title="Close"
-            onclick={closeDrawer}>&times;</button
+            onclick={(e) => closeDrawer(e)}
           >
+            <Icon name="close" size={12} />
+          </button>
         </div>
       </header>
       <div class="min-h-0 flex-1 overflow-y-auto">

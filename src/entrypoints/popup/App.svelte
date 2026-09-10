@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import Badge from "@/components/Badge.svelte";
   import Icon from "@/components/Icon.svelte";
+  import Toggle from "@/components/Toggle.svelte";
   import { type FeatureModule, getToggleableFeatures } from "@/lib/feature-registry";
   import {
     featureEnabledItem,
@@ -115,26 +117,15 @@
         </span>
       </div>
 
-      <!-- Right: Master Toggle -->
       <div class="flex items-center gap-1.5">
         <span
           class="text-[10.5px] font-bold uppercase tracking-wider text-ext-muted"
         >{masterOn ? "All on" : "All off"}</span>
-        <button
-          type="button"
-          class="relative h-4.5 w-8 cursor-pointer rounded-sm border-[1.5px] transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ext-primary/40 focus-visible:ring-offset-1 {masterOn
-            ? 'bg-ext-success border-[#1E6B38]'
-            : 'bg-[#D4CEC2] border-ext-muted'}"
-          title={masterOn ? "Disable all extensions" : "Enable all extensions"}
-          aria-label="Toggle all extensions"
-          onclick={() => toggleAll(!masterOn)}
-        >
-          <span
-            class="absolute top-[1.5px] h-3.25 w-3.25 rounded-[3px] bg-white shadow-[1px_1px_0_rgba(26,26,26,0.2)] transition-all duration-200 {masterOn
-              ? 'left-3.75'
-              : 'left-0.5'}"
-          ></span>
-        </button>
+        <Toggle
+          checked={masterOn}
+          label={masterOn ? "Disable all extensions" : "Enable all extensions"}
+          onchange={(v) => toggleAll(v)}
+        />
       </div>
     </header>
 

@@ -1,12 +1,10 @@
 import "@/features";
 import { getFeatures } from "@/lib/feature-registry";
 import { isFeatureEnabled } from "@/lib/feature-settings";
-import "@/styles/content.css";
 
 export default defineContentScript({
   matches: ["<all_urls>"],
   runAt: "document_idle",
-  cssInjectionMode: "manifest",
   async main() {
     for (const feature of getFeatures()) {
       if (!feature.content) continue;

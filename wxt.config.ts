@@ -31,11 +31,13 @@ export default defineConfig({
       "Extensible modular productivity extension with temporary email generation, instant input autofill, and live inbox OTP reader.",
     permissions: [
       "storage",
+      "unlimitedStorage",
       "alarms",
       "activeTab",
       "contextMenus",
       "clipboardWrite",
       "scripting",
+      "tabs",
       "notifications",
       "downloads",
     ],

@@ -15,6 +15,7 @@
 
   let phase = $state<BadgeState>("idle");
   let rect = $state<DOMRect>(new DOMRect());
+  let isHovered = $state(false);
 
   const tooltip = $derived(
     phase === "loading" ? "Generating..." : phase === "filled" ? "Filled!" : phase === "error" ? "Error" : "Fill Temp Mail"
@@ -76,7 +77,6 @@
 {#if !hidden}
   <button
     type="button"
-    class="group flex items-center justify-center rounded-sm text-ext-danger transition-transform hover:scale-105 active:translate-x-px active:translate-y-px"
     class:aio-loading={phase === "loading"}
     style:top="{top}px"
     style:left="{left}px"
@@ -93,25 +93,55 @@
     style:outline="none"
     style:user-select="none"
     style:box-sizing="border-box"
-    style:transform="translateY(-50%)"
+    style:transform={isHovered ? "translateY(-50%) scale(1.05)" : "translateY(-50%)"}
     style:display="flex"
+    style:align-items="center"
+    style:justify-content="center"
+    style:border-radius="2px"
+    style:transition="transform 0.15s"
+    style:color="#D63230"
     tabindex="-1"
+    onmouseenter={() => (isHovered = true)}
+    onmouseleave={() => (isHovered = false)}
     onmousedown={(e) => e.preventDefault()}
     onclick={handleClick}
     aria-label={tooltip}
   >
     {#if phase === "loading"}
-      <Icon name="spinner" size={13} class="animate-spin text-ext-text" />
+      <Icon name="spinner" size={13} style="color: #1A1A1A; animation: aio-spin 1s linear infinite;" />
     {:else if phase === "filled"}
-      <Icon name="check" size={13} class="text-ext-success" />
+      <Icon name="check" size={13} style="color: #2D8C4E;" />
     {:else if phase === "error"}
-      <Icon name="close" size={13} class="text-ext-danger" />
+      <Icon name="close" size={13} style="color: #D63230;" />
     {:else}
-      <Icon name="mail" size={13} class="text-ext-danger" />
+      <Icon name="mail" size={13} style="color: #D63230;" />
     {/if}
     <span
-      class="pointer-events-none absolute bottom-full right-0 mb-1.5 whitespace-nowrap rounded-sm border-[1.5px] border-ext-border bg-ext-surface px-2 py-0.5 text-[9.5px] font-black uppercase tracking-wider text-ext-text shadow-[2px_2px_0_#1A1A1A] opacity-0 transition-opacity group-hover:opacity-100"
+      style:pointer-events="none"
+      style:position="absolute"
+      style:bottom="100%"
+      style:right="0"
+      style:margin-bottom="6px"
+      style:white-space="nowrap"
+      style:border-radius="2px"
+      style:border="1.5px solid #2B2B2B"
+      style:background="#FFFDF7"
+      style:padding="2px 8px"
+      style:font-size="9.5px"
+      style:font-weight="900"
+      style:text-transform="uppercase"
+      style:letter-spacing="0.05em"
+      style:color="#1A1A1A"
+      style:box-shadow="2px 2px 0 #1A1A1A"
       style:font-family="'Space Grotesk', system-ui, sans-serif"
+      style:opacity={isHovered ? 1 : 0}
+      style:transition="opacity 0.15s"
     >{tooltip}</span>
   </button>
 {/if}
+
+<style>
+  @keyframes aio-spin {
+    to { transform: rotate(360deg); }
+  }
+</style>

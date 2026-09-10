@@ -7,12 +7,13 @@
   import EmptyState from "@/components/EmptyState.svelte";
   import Icon from "@/components/Icon.svelte";
   import SectionHeader from "@/components/SectionHeader.svelte";
+  import Toggle from "@/components/Toggle.svelte";
   import { copyToClipboard, slugify } from "@/lib/browser";
   import { sendMessage, sendToTab } from "@/lib/messaging";
   import { delay } from "@/lib/utils";
   import {
-    AI_TOOLKIT_ACTIONS,
     AI_PLATFORMS,
+    AI_TOOLKIT_ACTIONS,
     CAVEMAN_HINTS,
     CAVEMAN_LEVELS,
     type CavemanLevel,
@@ -338,20 +339,11 @@
             &amp; substance.</span
           >
         </div>
-        <label
-          class="relative inline-flex shrink-0 cursor-pointer items-center"
-        >
-          <input
-            type="checkbox"
-            class="peer sr-only"
-            checked={caveman.enabled}
-            onchange={(e) =>
-              handleToggleCaveman((e.target as HTMLInputElement).checked)}
-          />
-          <span
-            class="h-4.5 w-8 rounded-sm border-[1.5px] bg-[#D4CEC2] transition-colors focus-within:ring-2 focus-within:ring-ext-primary/40 after:absolute after:left-0.5 after:top-[1.5px] after:h-3.25 after:w-3.25 after:rounded-[3px] after:bg-white after:shadow-[1px_1px_0_rgba(26,26,26,0.2)] after:transition-transform after:content-[''] peer-checked:border-[#1E6B38] peer-checked:after:translate-x-3.25"
-          ></span>
-        </label>
+        <Toggle
+          checked={caveman.enabled}
+          label={caveman.enabled ? "Disable Caveman mode" : "Enable Caveman mode"}
+          onchange={(v) => handleToggleCaveman(v)}
+        />
       </div>
       <div class="flex items-center gap-2">
         <span
