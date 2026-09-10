@@ -11,7 +11,7 @@
 </script>
 
 <header
-  class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-ext-border bg-ext-surface px-3"
+  class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-3"
 >
   <button
     type="button"
@@ -37,7 +37,7 @@
     </span>
     <button
       type="button"
-      class="flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+      class="flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
       title="Close"
       onclick={(e) => {
         e.stopPropagation();

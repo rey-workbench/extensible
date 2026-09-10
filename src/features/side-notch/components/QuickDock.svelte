@@ -81,11 +81,11 @@
 <div class="my-1.5 grid grid-cols-2 gap-2">
   <!-- Card 1: Temp Mail -->
   <div
-    class="flex flex-col justify-between rounded-lg border-[1.5px] border-ext-border bg-ext-surface p-2 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
+    class="flex flex-col justify-between rounded-lg border-[1.5px] border-solid border-ext-border bg-ext-surface p-2 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
   >
     <div class="flex items-center gap-1.5">
       <span
-        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] border-[#A82624] bg-ext-danger text-white shadow-[1px_1px_0_#1A1A1A]"
+        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] border-solid border-[#A82624] bg-ext-danger text-white shadow-[1px_1px_0_#1A1A1A]"
       >
         <Icon name="mail" size={12} />
       </span>
@@ -100,12 +100,12 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="mt-1.5 flex items-center justify-between border-t border-ext-border/25 pt-1.5">
+    <div class="mt-1.5 flex items-center justify-between border-t border-solid border-ext-border/25 pt-1.5">
       <div class="flex items-center gap-1">
         <!-- Generate / Refresh Button -->
         <button
           type="button"
-          class="flex h-5 w-5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+          class="flex h-5 w-5 cursor-pointer items-center justify-center rounded-[4px] border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
           title="Generate New Address"
           onclick={onQuickGenerate}
         >
@@ -119,7 +119,7 @@
         <!-- Copy Button -->
         <button
           type="button"
-          class="flex h-5 cursor-pointer items-center gap-1 rounded-sm border-[1.5px] border-ext-border bg-ext-surface px-2 text-[9px] font-bold uppercase tracking-wide text-ext-text-secondary transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+          class="flex h-5 cursor-pointer items-center gap-1 rounded-[4px] border-[1.5px] border-solid border-ext-border bg-ext-surface px-1.5 text-[9px] font-bold uppercase tracking-wide text-ext-text-secondary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
           title="Copy Address"
           onclick={onQuickCopy}
         >
@@ -131,7 +131,7 @@
       <!-- Jump to Inbox Detail -->
       <button
         type="button"
-        class="cursor-pointer text-[9.5px] font-bold uppercase tracking-wide text-ext-primary transition-colors hover:text-ext-primary-dark"
+        class="flex h-5 cursor-pointer items-center rounded-[4px] border-[1.5px] border-solid border-ext-primary bg-[#EDE7DA] px-1.5 text-[9px] font-bold uppercase tracking-wide text-ext-primary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-ext-primary hover:text-white active:translate-x-px active:translate-y-px"
         onclick={() => onOpenDetail("temp-mail")}
       >
         Inbox ›
@@ -141,11 +141,11 @@
 
   <!-- Card 2: AI Toolkit -->
   <div
-    class="flex flex-col justify-between rounded-lg border-[1.5px] border-ext-border bg-ext-surface p-2 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
+    class="flex flex-col justify-between rounded-lg border-[1.5px] border-solid border-ext-border bg-ext-surface p-2 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
   >
     <div class="flex items-center gap-1.5">
       <span
-        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] border-[#1E6B38] bg-ext-success text-white shadow-[1px_1px_0_#1A1A1A]"
+        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] border-solid border-[#1E6B38] bg-ext-success text-white shadow-[1px_1px_0_#1A1A1A]"
       >
         <Icon name="markdown" size={12} />
       </span>
@@ -160,10 +160,10 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class="mt-1.5 flex items-center justify-between border-t border-ext-border/25 pt-1.5">
+    <div class="mt-1.5 flex items-center justify-between border-t border-solid border-ext-border/25 pt-1.5">
       <button
         type="button"
-        class="flex cursor-pointer items-center gap-1 rounded-sm border-[1.5px] border-[#C48C1E] bg-[#FDF3E3] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#C48C1E] transition-all hover:bg-[#F8E5C4] active:translate-x-px active:translate-y-px"
+        class="flex h-5 cursor-pointer items-center gap-1 rounded-[4px] border-[1.5px] border-solid border-[#C48C1E] bg-[#FDF3E3] px-2 text-[9px] font-bold uppercase tracking-wide text-[#C48C1E] shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#F8E5C4] active:translate-x-px active:translate-y-px"
         onclick={() => onOpenDetail("ai-toolkit")}
       >
         <span>Caveman</span>
@@ -171,7 +171,7 @@
 
       <button
         type="button"
-        class="cursor-pointer text-[9.5px] font-bold uppercase tracking-wide text-ext-primary transition-colors hover:text-ext-primary-dark"
+        class="flex h-5 cursor-pointer items-center rounded-[4px] border-[1.5px] border-solid border-ext-primary bg-[#EDE7DA] px-2 text-[9px] font-bold uppercase tracking-wide text-ext-primary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-ext-primary hover:text-white active:translate-x-px active:translate-y-px"
         onclick={() => onOpenDetail("ai-toolkit")}
       >
         Export ›

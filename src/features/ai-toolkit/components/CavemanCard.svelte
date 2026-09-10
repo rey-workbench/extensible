@@ -44,9 +44,9 @@
         {#each CAVEMAN_LEVELS as lvl}
           <button
             type="button"
-            class="rounded-sm border-[1.5px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all active:translate-x-px active:translate-y-px
+            class="cursor-pointer rounded-sm border-[1.5px] border-solid px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all active:translate-x-px active:translate-y-px shadow-[1px_1px_0_#1A1A1A]
                 {caveman.level === lvl
-              ? 'border-ext-primary bg-ext-primary text-white shadow-[1px_1px_0_#1A1A1A]'
+              ? 'border-ext-primary bg-ext-primary text-white'
               : 'border-ext-border bg-ext-surface text-ext-text-secondary hover:bg-[#EDE7DA]'}"
             onclick={() => onSetLevel(lvl as CavemanLevel)}>{lvl}</button
           >

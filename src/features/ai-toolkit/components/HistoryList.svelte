@@ -48,10 +48,10 @@
       })}
       {@const platformName = AI_PLATFORMS[item.platform]?.name || item.platform}
       <div
-        class="flex items-center gap-2 rounded-lg border-[1.5px] border-ext-border bg-ext-surface px-2 py-1.5 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
+        class="flex items-center gap-2 rounded-lg border-[1.5px] border-solid border-ext-border bg-ext-surface px-2 py-1.5 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
       >
         <span
-          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] border border-[#D4CEC2] bg-[#EDE7DA] text-ext-text-secondary"
+          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] border border-solid border-[#D4CEC2] bg-[#EDE7DA] text-ext-text-secondary"
         >
           <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
             ><path
@@ -71,7 +71,7 @@
           {#if item.content}
             <button
               type="button"
-              class="inline-flex h-5.5 w-5.5 items-center justify-center rounded-sm border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text"
+              class="inline-flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
               title="Re-download"
               aria-label="Re-download"
               onclick={() => onDownload(item.id)}
@@ -79,7 +79,7 @@
             >
             <button
               type="button"
-              class="inline-flex h-5.5 w-5.5 items-center justify-center rounded-sm border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text"
+              class="inline-flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
               title="Copy Content"
               aria-label="Copy Content"
               onclick={() => onCopy(item.id)}
@@ -88,7 +88,7 @@
           {/if}
           <button
             type="button"
-            class="inline-flex h-5.5 w-5.5 items-center justify-center rounded-sm border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-ext-danger hover:border-[#A82624] hover:text-white"
+            class="inline-flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-ext-danger hover:border-[#A82624] hover:text-white active:translate-x-px active:translate-y-px"
             title="Delete"
             aria-label="Delete"
             onclick={() => onDelete(item.id)}

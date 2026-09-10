@@ -20,5 +20,5 @@
 
 <span
   id={id || undefined}
-  class="inline-flex items-center rounded-sm border px-2 py-px text-[10px] font-bold uppercase tracking-wider leading-4 {variants[variant]} {cls}"
+  class="inline-flex items-center rounded-sm border border-solid px-2 py-px text-[10px] font-bold uppercase tracking-wider leading-4 {variants[variant]} {cls}"
 >{text}</span>

@@ -74,14 +74,14 @@
   {#if view === "list"}
     <!-- Header -->
     <header
-      class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-ext-border bg-ext-surface px-3"
+      class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-3"
     >
       <!-- Brand -->
       <div class="flex items-center gap-2">
         <img
           src="/icon/icon-48.png"
           alt="Extensible Logo"
-          class="h-6 w-6 rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface object-contain shadow-[1.5px_1.5px_0_#1A1A1A]"
+          class="h-6 w-6 rounded-[5px] border-[1.5px] border-solid border-ext-border bg-ext-surface object-contain shadow-[1.5px_1.5px_0_#1A1A1A]"
         />
         <span class="text-[13px] font-bold uppercase tracking-wider text-ext-text">
           Extensible
@@ -111,7 +111,7 @@
   {:else}
     <!-- Detail View -->
     <header
-      class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-ext-border bg-ext-surface px-3"
+      class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-3"
     >
       <button
         type="button"

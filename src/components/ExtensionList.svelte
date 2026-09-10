@@ -42,9 +42,9 @@
 
 <div class="flex min-h-0 flex-1 flex-col">
   <!-- Search Input -->
-  <div class="border-b-[1.5px] border-ext-border bg-ext-surface px-2.5 pb-2.5 pt-2">
+  <div class="border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 pb-2.5 pt-2">
     <div
-      class="flex h-7.5 items-center gap-1.5 rounded-md border-[1.5px] border-ext-border bg-ext-surface px-2.5 transition-all focus-within:ring-2 focus-within:ring-ext-primary/20"
+      class="flex h-7.5 items-center gap-1.5 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 shadow-[1px_1px_0_#1A1A1A] transition-all focus-within:ring-2 focus-within:ring-ext-primary/20"
     >
       <button
         type="button"
@@ -67,7 +67,7 @@
       {#if query}
         <button
           type="button"
-          class="flex h-4 w-4 cursor-pointer items-center justify-center rounded-[3px] bg-[#EDE7DA] text-[9px] font-bold text-ext-text-secondary transition-colors hover:bg-[#D4CEC2] hover:text-ext-text"
+          class="flex h-4 w-4 cursor-pointer items-center justify-center rounded-[3px] border border-solid border-[#D4CEC2] bg-[#EDE7DA] text-[9px] font-bold text-ext-text-secondary transition-colors hover:bg-[#D4CEC2] hover:text-ext-text"
           aria-label="Clear search"
           onclick={() => (query = "")}
           >&times;</button
@@ -82,7 +82,7 @@
       Extensions
     </span>
     <span
-      class="rounded-sm border border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-px text-[9.5px] font-bold tabular-nums text-ext-text-secondary"
+      class="rounded-sm border border-solid border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-px text-[9.5px] font-bold tabular-nums text-ext-text-secondary"
       >{filtered.length}</span
     >
   </div>

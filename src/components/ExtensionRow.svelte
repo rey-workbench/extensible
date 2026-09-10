@@ -24,7 +24,7 @@
 </script>
 
 <div
-  class="group flex cursor-pointer items-center gap-2.5 rounded-lg border-[1.5px] border-ext-border bg-ext-surface px-2 py-1.5 shadow-[2px_2px_0_#1A1A1A] transition-all {enabled
+  class="group flex cursor-pointer items-center gap-2.5 rounded-lg border-[1.5px] border-solid border-ext-border bg-ext-surface px-2 py-1.5 shadow-[2px_2px_0_#1A1A1A] transition-all {enabled
     ? 'hover:bg-[#EDE7DA] hover:shadow-[3px_3px_0_#1A1A1A] active:shadow-[1px_1px_0_#1A1A1A] active:translate-x-px active:translate-y-px'
     : 'opacity-55 hover:opacity-75'} {dropdownOpen
     ? 'relative z-20 bg-[#EDE7DA] shadow-[3px_3px_0_#1A1A1A]'
@@ -40,7 +40,7 @@
 >
   <!-- App Icon -->
   <span
-    class="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] text-white shadow-[1px_1px_0_#1A1A1A] transition-transform group-hover:scale-105"
+    class="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] border-solid text-white shadow-[1px_1px_0_#1A1A1A] transition-transform group-hover:scale-105"
     style="background: {color}; border-color: {color}; {enabled ? '' : 'filter: grayscale(100%); opacity: 0.55;'}"
   >
     <Icon name={feature.icon} size={14} />
@@ -54,7 +54,7 @@
       </span>
       {#if !enabled}
         <span
-          class="shrink-0 rounded-[3px] border border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-ext-muted"
+          class="shrink-0 rounded-[3px] border border-solid border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-px text-[9px] font-bold uppercase tracking-wider text-ext-muted"
         >Off</span>
       {/if}
     </div>
@@ -67,7 +67,7 @@
   <div class="relative">
     <button
       type="button"
-      class="flex h-5.5 w-5.5 shrink-0 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text"
+      class="flex h-5.5 w-5.5 shrink-0 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
       title="Options"
       aria-label="Options for {feature.name}"
       onclick={(e) => {

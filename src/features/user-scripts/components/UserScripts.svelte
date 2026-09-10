@@ -279,7 +279,7 @@
       <!-- Install from URL -->
       <div class="flex items-center gap-1.5">
         <input
-          class="h-7 min-w-0 flex-1 rounded-md border-[1.5px] border-ext-border bg-ext-surface px-2.5 text-[11.5px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
+          class="h-7 min-w-0 flex-1 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 text-[11.5px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
           placeholder="Install from URL (.user.js)..."
           bind:value={installUrl}
           onkeydown={(e) => e.key === "Enter" && void installFromUrl()}
@@ -297,7 +297,7 @@
       <!-- Create blank script -->
       <div class="flex items-center gap-1.5">
         <input
-          class="h-7 min-w-0 flex-1 rounded-md border-[1.5px] border-ext-border bg-ext-surface px-2.5 text-[11.5px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
+          class="h-7 min-w-0 flex-1 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 text-[11.5px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
           placeholder="New script name..."
           bind:value={newScriptName}
           onkeydown={(e) => e.key === "Enter" && newScriptName.trim() && void createScript()}
@@ -318,7 +318,7 @@
   <div class="flex h-6 shrink-0 items-center justify-between px-1 pt-0.5">
     <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-ext-muted">
       <span>Scripts</span>
-      <span class="rounded-sm border border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-0.2 text-[10px] font-bold text-ext-text-secondary">
+      <span class="rounded-sm border border-solid border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-0.2 text-[10px] font-bold text-ext-text-secondary">
         {scripts.length}
       </span>
     </div>
@@ -332,7 +332,7 @@
       />
       <button
         type="button"
-        class="inline-flex h-5.5 cursor-pointer items-center gap-1 rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface px-2 text-[10px] font-bold uppercase tracking-wider text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] active:translate-x-px active:translate-y-px"
+        class="inline-flex h-5.5 cursor-pointer items-center gap-1 rounded-[5px] border-[1.5px] border-solid border-ext-border bg-ext-surface px-2 text-[10px] font-bold uppercase tracking-wider text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] active:translate-x-px active:translate-y-px"
         onclick={() => fileInput?.click()}
         title="Import script from file"
       >
@@ -341,7 +341,7 @@
       </button>
       <button
         type="button"
-        class="inline-flex h-5.5 cursor-pointer items-center gap-1 rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface px-2 text-[10px] font-bold uppercase tracking-wider text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] active:translate-x-px active:translate-y-px"
+        class="inline-flex h-5.5 cursor-pointer items-center gap-1 rounded-[5px] border-[1.5px] border-solid border-ext-border bg-ext-surface px-2 text-[10px] font-bold uppercase tracking-wider text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] active:translate-x-px active:translate-y-px"
         onclick={exportAll}
         title="Backup all scripts"
       >

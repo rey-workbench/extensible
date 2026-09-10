@@ -37,7 +37,7 @@
   }: Props = $props();
 
   const base =
-    "inline-flex items-center justify-center gap-1.5 rounded-[6px] select-none transition-all cursor-pointer font-semibold tracking-wide " +
+    "inline-flex items-center justify-center gap-1.5 rounded-[6px] border-solid select-none transition-all cursor-pointer font-semibold tracking-wide " +
     "focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#1B4DDB] " +
     "disabled:pointer-events-none disabled:opacity-50";
   const variants: Record<Variant, string> = {
