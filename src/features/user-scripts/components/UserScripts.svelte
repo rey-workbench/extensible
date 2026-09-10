@@ -1,16 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import Button from "@/components/Button.svelte";
+  import Card from "@/components/Card.svelte";
   import EmptyState from "@/components/EmptyState.svelte";
   import Icon from "@/components/Icon.svelte";
-  import SectionHeader from "@/components/SectionHeader.svelte";
   import { slugify } from "@/lib/browser";
   import { sendMessage } from "@/lib/messaging";
   import { USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
   import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
   import { parseImportedHeader } from "../utils/header-import.utils";
-  import InstallBar from "./InstallBar.svelte";
-  import NewScriptBar from "./NewScriptBar.svelte";
   import ScriptEditor from "./ScriptEditor.svelte";
   import ScriptRow from "./ScriptRow.svelte";
 
@@ -23,7 +21,10 @@
   let draftCode = $state("");
   let draftDirty = $state(false);
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
+  let installUrl = $state("");
   let installing = $state(false);
+  let newScriptName = $state("");
+  let fileInput = $state<HTMLInputElement | null>(null);
   let runLogs = $state<Record<string, UserScriptRunLogEntry[]>>({});
 
   onMount(async () => {
@@ -56,8 +57,9 @@
     });
   }
 
-  async function createScript(nameRaw: string): Promise<void> {
-    const name = nameRaw || "New script";
+  async function createScript(): Promise<void> {
+    const name = newScriptName.trim() || "New script";
+    newScriptName = "";
     const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
       record: {
         id: `us_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
@@ -188,7 +190,8 @@
     input.value = "";
   }
 
-  async function installFromUrl(url: string): Promise<void> {
+  async function installFromUrl(): Promise<void> {
+    const url = installUrl.trim();
     if (!url) return;
     installing = true;
     try {
@@ -196,6 +199,7 @@
         url,
       });
       scripts = [...scripts, record];
+      installUrl = "";
       showStatus(`Installed "${record.meta.name}"`);
     } catch (err) {
       showStatus(err instanceof Error ? err.message : "Install failed", true);
@@ -258,42 +262,98 @@
   }
 </script>
 
-<div class="flex flex-col gap-3">
-  <SectionHeader title="User Scripts">
-    {#snippet action()}
-      <Button variant="ghost" size="sm" onclick={exportAll} title="Export all scripts">
-        <Icon name="download" size={14} />
-      </Button>
-      <label class="inline-flex cursor-pointer">
-        <span class="sr-only">Import script</span>
-        <input type="file" accept=".user.js,.js,text/javascript" class="hidden" onchange={onImportPick} />
-        <span
-          class="inline-flex h-7 items-center rounded-md border border-ext-border px-2 text-[11px] font-medium hover:bg-ext-surface-hover"
-        >
-          Import
-        </span>
-      </label>
-    {/snippet}
-  </SectionHeader>
-
+<div class="flex flex-col gap-2.5 p-2.5">
   {#if status}
     <div
-      class="rounded-md border px-2.5 py-1.5 text-[11px] {status.isError
-        ? 'border-red-300 bg-red-50 text-red-700'
-        : 'border-ext-border bg-ext-surface text-ext-text'}"
+      class="rounded-md border-[1.5px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#1A1A1A] {status.isError
+        ? 'border-[#A82624] bg-ext-danger text-white'
+        : 'border-[#1E6B38] bg-ext-success text-white'}"
     >
       {status.text}
     </div>
   {/if}
 
-  <!-- Install from URL -->
-  <div class="ext-card overflow-hidden rounded-lg">
-    <InstallBar {installing} onInstall={(url) => void installFromUrl(url)} />
+  <!-- Add Script Card -->
+  <Card title="Add Script">
+    <div class="flex flex-col gap-2">
+      <!-- Install from URL -->
+      <div class="flex items-center gap-1.5">
+        <input
+          class="h-7 min-w-0 flex-1 rounded-md border-[1.5px] border-ext-border bg-ext-surface px-2.5 text-[11.5px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
+          placeholder="Install from URL (.user.js)..."
+          bind:value={installUrl}
+          onkeydown={(e) => e.key === "Enter" && void installFromUrl()}
+        />
+        <Button
+          size="sm"
+          variant="secondary"
+          disabled={installing || !installUrl.trim()}
+          onclick={installFromUrl}
+        >
+          {installing ? "..." : "Install"}
+        </Button>
+      </div>
+
+      <!-- Create blank script -->
+      <div class="flex items-center gap-1.5">
+        <input
+          class="h-7 min-w-0 flex-1 rounded-md border-[1.5px] border-ext-border bg-ext-surface px-2.5 text-[11.5px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
+          placeholder="New script name..."
+          bind:value={newScriptName}
+          onkeydown={(e) => e.key === "Enter" && newScriptName.trim() && void createScript()}
+        />
+        <Button
+          size="sm"
+          variant="primary"
+          disabled={!newScriptName.trim()}
+          onclick={createScript}
+        >
+          Create
+        </Button>
+      </div>
+    </div>
+  </Card>
+
+  <!-- Script List Header Bar -->
+  <div class="flex h-6 shrink-0 items-center justify-between px-1 pt-0.5">
+    <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-ext-muted">
+      <span>Scripts</span>
+      <span class="rounded-sm border border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-0.2 text-[10px] font-bold text-ext-text-secondary">
+        {scripts.length}
+      </span>
+    </div>
+    <div class="flex items-center gap-1.5">
+      <input
+        bind:this={fileInput}
+        type="file"
+        accept=".user.js,.js,text/javascript"
+        class="hidden"
+        onchange={onImportPick}
+      />
+      <button
+        type="button"
+        class="inline-flex h-5.5 cursor-pointer items-center gap-1 rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface px-2 text-[10px] font-bold uppercase tracking-wider text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] active:translate-x-px active:translate-y-px"
+        onclick={() => fileInput?.click()}
+        title="Import script from file"
+      >
+        <Icon name="download" size={11} class="rotate-180" />
+        <span>Import</span>
+      </button>
+      <button
+        type="button"
+        class="inline-flex h-5.5 cursor-pointer items-center gap-1 rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface px-2 text-[10px] font-bold uppercase tracking-wider text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] active:translate-x-px active:translate-y-px"
+        onclick={exportAll}
+        title="Backup all scripts"
+      >
+        <Icon name="download" size={11} />
+        <span>Export</span>
+      </button>
+    </div>
   </div>
 
   <!-- Script list -->
   {#if isLoading}
-    <div class="py-8 text-center text-[12px] text-ext-muted">Loading scripts…</div>
+    <div class="py-8 text-center text-xs font-medium text-ext-muted">Loading scripts…</div>
   {:else if scripts.length === 0}
     <EmptyState
       title="No scripts yet"
@@ -316,7 +376,7 @@
             editing={editingId === script.id}
             onMove={(dir) => void move(script, dir)}
             onToggle={(v) => void toggle(script, v)}
-            onEdit={() => startEditing(script)}
+            onEdit={() => (editingId === script.id ? cancelEditing() : startEditing(script))}
             onRun={() => void runInTab(script)}
             onToggleLogs={() => void toggleLogs(script)}
             onDuplicate={() => void duplicate(script)}
@@ -340,9 +400,4 @@
       {/each}
     </div>
   {/if}
-
-  <!-- New script -->
-  <div class="ext-card overflow-hidden rounded-lg">
-    <NewScriptBar onCreate={(name) => void createScript(name)} />
-  </div>
 </div>

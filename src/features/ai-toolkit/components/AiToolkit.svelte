@@ -198,7 +198,7 @@
   });
 </script>
 
-<div class="flex flex-col gap-2 p-2">
+<div class="flex flex-col gap-2.5 p-2.5">
   {#if status}
     <div
       class="rounded-md border-[1.5px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#1A1A1A]

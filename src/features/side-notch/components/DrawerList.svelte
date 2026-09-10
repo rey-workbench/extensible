@@ -1,5 +1,6 @@
 <script lang="ts">
   import ExtensionList from "@/components/ExtensionList.svelte";
+  import Icon from "@/components/Icon.svelte";
   import Toggle from "@/components/Toggle.svelte";
   import type { FeatureModule } from "@/lib/feature-registry";
 
@@ -61,9 +62,12 @@
       class="flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
       title="Close panel"
       aria-label="Close panel"
-      onclick={onClose}
+      onclick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
     >
-      &times;
+      <Icon name="close" size={11} />
     </button>
   </div>
 </header>

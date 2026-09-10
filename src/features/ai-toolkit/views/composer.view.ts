@@ -1,3 +1,4 @@
+import globalCss from "@/styles/global.css?inline";
 import { DEFAULT_CAVEMAN_SETTINGS } from "../constants/ai-toolkit.constants";
 import type { CavemanSettings, ExportFormat } from "../types/ai-toolkit.types";
 import { ChatComposerUtils } from "../utils/chat-composer.utils";
@@ -19,6 +20,8 @@ export interface AiToolkitComposerViewCallbacks {
 
 /** Floating pill toolbar docked above the chat composer (Caveman + Export). */
 export class AiToolkitComposerView {
+  private hostEl: HTMLElement | null = null;
+  private shadow: ShadowRoot | null = null;
   private container: HTMLElement | null = null;
   private menuEl: HTMLElement | null = null;
   private backdropEl: HTMLElement | null = null;
@@ -38,6 +41,56 @@ export class AiToolkitComposerView {
     this.startComposerWatcher();
   }
 
+  /** Ensures an isolated Shadow Root host exists for zero-leakage styling. */
+  private ensureShadowHost(): ShadowRoot {
+    if (this.shadow && this.hostEl && document.body.contains(this.hostEl)) {
+      return this.shadow;
+    }
+    let host = document.getElementById("aio-composer-overlay-host");
+    if (host) {
+      host.remove();
+    }
+    host = document.createElement("div");
+    host.id = "aio-composer-overlay-host";
+    host.style.position = "fixed";
+    host.style.inset = "0";
+    host.style.width = "100vw";
+    host.style.height = "100vh";
+    host.style.pointerEvents = "none";
+    host.style.zIndex = "2147483640";
+    document.body.appendChild(host);
+
+    this.hostEl = host;
+    this.shadow = host.attachShadow({ mode: "open" });
+
+    const style = document.createElement("style");
+    style.textContent = `
+      :host {
+        all: initial;
+        font-family: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        color: #1A1A1A;
+        box-sizing: border-box;
+      }
+      *, *::before, *::after {
+        box-sizing: border-box;
+      }
+      button {
+        font-family: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        color: inherit;
+        background: transparent;
+        border: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+      }
+      ${globalCss}
+    `;
+    this.shadow.appendChild(style);
+    return this.shadow;
+  }
+
   /** Load Space Grotesk (Bauhaus typeface) into the host page — scoped to AI chat pages. */
   private loadFont(): void {
     if (document.getElementById("aio-space-grotesk-font")) return;
@@ -55,12 +108,14 @@ export class AiToolkitComposerView {
   }
 
   private renderToolbar(): void {
-    const existing = document.getElementById("aio-composer-bar-root");
+    const shadow = this.ensureShadowHost();
+    const existing = shadow.querySelector("#aio-composer-bar-root");
     if (existing) existing.remove();
 
     this.container = document.createElement("div");
     this.container.id = "aio-composer-bar-root";
     this.container.className = "aio-composer-bar-root";
+    this.container.style.pointerEvents = "auto";
     this.container.innerHTML = buildToolbarHtml(this.currentSettings);
 
     this.positionDock();
@@ -69,14 +124,20 @@ export class AiToolkitComposerView {
   }
 
   private renderMenu(): void {
-    const existing = document.getElementById("aio-composer-menu-root");
+    const shadow = this.ensureShadowHost();
+    const existing = shadow.querySelector("#aio-composer-menu-root");
     if (existing) existing.remove();
-    const existingBackdrop = document.getElementById("aio-composer-backdrop-root");
+    const existingBackdrop = shadow.querySelector("#aio-composer-backdrop-root");
     if (existingBackdrop) existingBackdrop.remove();
 
     this.backdropEl = document.createElement("div");
     this.backdropEl.id = "aio-composer-backdrop-root";
     this.backdropEl.className = "aio-menu-backdrop";
+    this.backdropEl.style.position = "fixed";
+    this.backdropEl.style.inset = "0";
+    this.backdropEl.style.zIndex = "2147483642";
+    this.backdropEl.style.pointerEvents = "auto";
+    this.backdropEl.style.display = "none";
     this.backdropEl.addEventListener("pointerdown", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -87,15 +148,18 @@ export class AiToolkitComposerView {
       e.stopPropagation();
       this.closeMenu();
     });
-    document.body.appendChild(this.backdropEl);
+    shadow.appendChild(this.backdropEl);
 
     this.menuEl = document.createElement("div");
     this.menuEl.id = "aio-composer-menu-root";
     this.menuEl.className =
-      "aio-composer-menu fixed z-2147483647 flex-col overflow-hidden rounded-lg border-[1.5px] border-solid border-[#2B2B2B] bg-[#FFFDF7] p-1.5 shadow-[3px_3px_0_#1A1A1A] [font-family:'Space_Grotesk',system-ui,'Segoe_UI',Roboto,'Helvetica_Neue',Arial,sans-serif]";
+      "aio-composer-menu fixed z-2147483647 flex-col overflow-hidden rounded-lg border-[1.5px] border-solid border-[#2B2B2B] bg-[#FFFDF7] p-1.5 shadow-[3px_3px_0_#1A1A1A]";
+    this.menuEl.style.position = "fixed";
+    this.menuEl.style.zIndex = "2147483643";
+    this.menuEl.style.pointerEvents = "auto";
     this.menuEl.style.display = "none";
     this.menuEl.innerHTML = buildMenuHtml();
-    document.body.appendChild(this.menuEl);
+    shadow.appendChild(this.menuEl);
     this.bindMenuEvents();
   }
 
@@ -115,8 +179,10 @@ export class AiToolkitComposerView {
     this.container.classList.add("aio-composer-floating");
     this.container.style.position = "fixed";
     this.container.style.zIndex = "2147483641";
-    if (!document.body.contains(this.container)) {
-      document.body.appendChild(this.container);
+    this.container.style.pointerEvents = "auto";
+    const shadow = this.ensureShadowHost();
+    if (!shadow.contains(this.container)) {
+      shadow.appendChild(this.container);
     }
     this.alignDockTo(composerBox);
   }
@@ -141,10 +207,14 @@ export class AiToolkitComposerView {
     this.container.classList.add("aio-fallback-dock");
     this.container.style.position = "fixed";
     this.container.style.zIndex = "2147483640";
+    this.container.style.pointerEvents = "auto";
+    this.container.style.bottom = "80px";
+    this.container.style.right = "24px";
     this.container.style.left = "";
     this.container.style.top = "";
-    if (!document.body.contains(this.container)) {
-      document.body.appendChild(this.container);
+    const shadow = this.ensureShadowHost();
+    if (!shadow.contains(this.container)) {
+      shadow.appendChild(this.container);
     }
   }
 
@@ -223,12 +293,10 @@ export class AiToolkitComposerView {
 
   private onDocPointerDown = (e: Event): void => {
     if (!this.isOpen) return;
-    const target = e.target as Node | null;
-    if (!target) return;
-
-    if (this.menuEl?.contains(target)) return;
+    const path = e.composedPath ? e.composedPath() : [];
+    if (this.menuEl && path.includes(this.menuEl)) return;
     const trigger = this.container?.querySelector(".aio-export-trigger-btn");
-    if (trigger?.contains(target)) return;
+    if (trigger && path.includes(trigger)) return;
 
     this.closeMenu();
   };
@@ -276,7 +344,8 @@ export class AiToolkitComposerView {
   }
 
   public openMenu(): void {
-    if (!this.menuEl || !document.body.contains(this.menuEl) || !this.backdropEl) {
+    const shadow = this.ensureShadowHost();
+    if (!this.menuEl || !shadow.contains(this.menuEl) || !this.backdropEl) {
       this.renderMenu();
     }
     if (!this.menuEl || !this.container) return;
@@ -290,7 +359,7 @@ export class AiToolkitComposerView {
     if (this.backdropEl) {
       this.backdropEl.style.position = "fixed";
       this.backdropEl.style.inset = "0";
-      this.backdropEl.style.zIndex = "2147483646";
+      this.backdropEl.style.zIndex = "2147483642";
       this.backdropEl.style.display = "block";
     }
     this.menuEl.style.display = "flex";
@@ -335,6 +404,9 @@ export class AiToolkitComposerView {
     this.backdropEl?.remove();
     this.backdropEl = null;
     document.getElementById("aio-space-grotesk-font")?.remove();
+    this.hostEl?.remove();
+    this.hostEl = null;
+    this.shadow = null;
     this.container?.remove();
     this.container = null;
     this.menuEl?.remove();

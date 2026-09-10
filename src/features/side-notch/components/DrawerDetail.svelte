@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Icon from "@/components/Icon.svelte";
   import type { FeatureModule } from "@/lib/feature-registry";
 
   interface Props {
@@ -38,9 +39,13 @@
       type="button"
       class="flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-[5px] border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
       title="Close"
-      onclick={onClose}
-      >&times;</button
+      onclick={(e) => {
+        e.stopPropagation();
+        onClose();
+      }}
     >
+      <Icon name="close" size={11} />
+    </button>
   </div>
 </header>
 <div class="min-h-0 flex-1 overflow-y-auto">

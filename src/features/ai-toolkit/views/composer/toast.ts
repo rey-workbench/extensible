@@ -19,7 +19,9 @@ export function showComposerToast(anchor: HTMLElement, message: string, isError 
   toast.style.left = `${left}px`;
   toast.style.transform = "translateX(-50%) translateY(4px)";
 
-  document.body.appendChild(toast);
+  const rootNode = anchor.getRootNode();
+  const mountTarget = rootNode instanceof ShadowRoot ? rootNode : document.body;
+  mountTarget.appendChild(toast);
   requestAnimationFrame(() => {
     toast.style.transform = "translateX(-50%) translateY(0)";
   });

@@ -96,8 +96,16 @@
     }
   }
 
+  function onKeyDown(e: KeyboardEvent): void {
+    if (e.key === "Escape" && isOpen) {
+      e.stopPropagation();
+      closeDrawer();
+    }
+  }
+
   onDestroy(() => {
     if (hoverTimeout) clearTimeout(hoverTimeout);
+    window.removeEventListener("keydown", onKeyDown, true);
   });
 
   const activeModule = $derived(
@@ -105,6 +113,8 @@
   );
 
   onMount(() => {
+    window.addEventListener("keydown", onKeyDown, true);
+
     // Tailwind utilities + theme + preflight for everything inside the shadow root.
     const style = document.createElement("style");
     style.textContent = `
@@ -258,9 +268,8 @@
 
   <!-- Slide-out Drawer -->
   <div
-    class="fixed top-0 right-0 z-2147483647 flex h-full w-82.5 max-w-[90vw] flex-col overflow-hidden border-l-[1.5px] border-ext-border bg-ext-bg text-ext-text shadow-[-4px_4px_0_#1A1A1A] transition-transform duration-300 ease-out {isOpen
-      ? 'translate-x-0'
-      : 'translate-x-full'}"
+    class="fixed top-0 right-0 z-2147483647 flex h-full w-82.5 max-w-[90vw] flex-col overflow-hidden border-l-[1.5px] border-ext-border bg-ext-bg text-ext-text shadow-[-4px_4px_0_#1A1A1A] transition-transform duration-300 ease-out"
+    style="transform: translateX({isOpen ? '0%' : '100%'}); pointer-events: {isOpen ? 'auto' : 'none'};"
     role="dialog"
     aria-label="Extensible drawer"
   >

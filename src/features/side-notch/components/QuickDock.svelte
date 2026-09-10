@@ -33,8 +33,9 @@
   }: Props = $props();
 </script>
 
-<!-- Top Row: Brand + Master Switch + Full Panel Button -->
-<div class="flex items-center justify-between">
+<div class="flex h-full w-full flex-col justify-between p-3 text-ext-text">
+  <!-- Top Row: Brand + Master Switch + Full Panel Button -->
+  <div class="flex items-center justify-between">
   <div class="flex items-center gap-2">
     <img
       src={logo48}
@@ -190,3 +191,4 @@
     Open panel →
   </span>
 </button>
+</div>
