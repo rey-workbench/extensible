@@ -44,8 +44,3 @@ export function getFeatures(): FeatureModule[] {
 export function getToggleableFeatures(): FeatureModule[] {
   return [...registry.values()].filter((f) => !f.mandatory);
 }
-
-/** Looks up a single registered feature by id. */
-export function getFeature(id: string): FeatureModule | undefined {
-  return registry.get(id);
-}

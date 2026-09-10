@@ -1,7 +1,14 @@
-import { renderIcon } from "@/lib/icons";
-import { DEFAULT_CAVEMAN_SETTINGS, isValidCavemanLevel } from "../constants/ai-toolkit.constants";
+import { DEFAULT_CAVEMAN_SETTINGS } from "../constants/ai-toolkit.constants";
 import type { CavemanSettings, ExportFormat } from "../types/ai-toolkit.types";
 import { ChatComposerUtils } from "../utils/chat-composer.utils";
+import {
+  buildMenuHtml,
+  buildToolbarHtml,
+  formatExportError,
+  updateCavemanButtonUi,
+} from "./composer/dom-builder";
+import { computeDockPlacement, computeMenuPlacement } from "./composer/positioning";
+import { showComposerToast } from "./composer/toast";
 
 export interface AiToolkitComposerViewCallbacks {
   onExport: (format: ExportFormat) => Promise<void>;
@@ -44,7 +51,7 @@ export class AiToolkitComposerView {
 
   public updateSettings(settings: CavemanSettings): void {
     this.currentSettings = settings;
-    this.updateCavemanButtonUi();
+    updateCavemanButtonUi(this.container, settings);
   }
 
   private renderToolbar(): void {
@@ -54,42 +61,7 @@ export class AiToolkitComposerView {
     this.container = document.createElement("div");
     this.container.id = "aio-composer-bar-root";
     this.container.className = "aio-composer-bar-root";
-
-    const { enabled, level } = this.currentSettings;
-    const levelValid = isValidCavemanLevel(level);
-    const statusText = enabled ? (levelValid ? level.toUpperCase() : "STOP") : "OFF";
-    const badgeClass = enabled && levelValid ? `aio-lvl-${level}` : "";
-
-    this.container.innerHTML = `
-      <div class="aio-composer-bar flex h-7 select-none items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 transition-all"
-        style="font-family: 'Space Grotesk', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; ${
-          enabled
-            ? "background: #FDF3E3; border: 1.5px solid #C48C1E; box-shadow: 2px 2px 0 #1A1A1A;"
-            : "background: #FFFDF7; border: 1.5px solid #2B2B2B; box-shadow: 2px 2px 0 #1A1A1A;"
-        }">
-        <!-- Caveman Toggle Button -->
-        <button type="button" class="aio-bar-btn aio-caveman-toggle-btn flex h-5.5 cursor-pointer items-center gap-1 rounded-sm border-0 bg-transparent px-1.5 text-[11.5px] font-bold outline-none transition-all hover:bg-[#EDE7DA]" style="color: #1A1A1A;" title="Caveman Mode: ${statusText} (Click to cycle level)">
-          ${renderIcon("flame", 13, `aio-flame-icon ${enabled ? "text-[#C48C1E]" : "text-ext-muted"}`)}
-          <span class="aio-bar-btn-text text-[11px] font-bold tracking-[0.1px]" style="color: #1A1A1A;">Caveman</span>
-          <span class="aio-bar-badge aio-lvl-badge ${badgeClass} rounded-[3px] px-1.5 py-px text-[8.5px] font-bold uppercase leading-none tracking-[0.4px] transition-colors ${
-            enabled
-              ? "border border-[#C48C1E] bg-ext-warning text-ext-text"
-              : "border border-[#D4CEC2] bg-[#EDE7DA] text-ext-text-secondary"
-          }">${statusText}</span>
-        </button>
-
-        <div class="aio-bar-divider mx-0.5 h-3.5 w-px bg-ext-border"></div>
-
-        <!-- Export Menu Button -->
-        <div class="aio-export-wrapper inline-flex">
-          <button type="button" class="aio-bar-btn aio-export-trigger-btn flex h-5.5 cursor-pointer items-center gap-1 rounded-sm border-0 bg-transparent px-1.5 text-[11.5px] font-bold outline-none transition-all hover:bg-[#EDE7DA]" style="color: #1A1A1A;" title="Export Conversation">
-            ${renderIcon("download", 13)}
-            <span class="aio-bar-btn-text text-[11px] font-bold tracking-[0.1px]" style="color: #1A1A1A;">Export</span>
-            <span class="aio-export-caret text-[9px] opacity-75 transition-transform" style="color: #1A1A1A;">▾</span>
-          </button>
-        </div>
-      </div>
-    `;
+    this.container.innerHTML = buildToolbarHtml(this.currentSettings);
 
     this.positionDock();
     this.renderMenu();
@@ -122,35 +94,7 @@ export class AiToolkitComposerView {
     this.menuEl.className =
       "aio-composer-menu fixed z-2147483647 flex-col overflow-hidden rounded-lg border-[1.5px] border-solid border-[#2B2B2B] bg-[#FFFDF7] p-1.5 shadow-[3px_3px_0_#1A1A1A] [font-family:'Space_Grotesk',system-ui,'Segoe_UI',Roboto,'Helvetica_Neue',Arial,sans-serif]";
     this.menuEl.style.display = "none";
-    this.menuEl.innerHTML = `
-      <div class="aio-composer-menu-header flex items-center justify-between rounded-[5px] px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-ext-primary" style="background: #EDE7DA;">
-        <span>Export Conversation</span>
-        <button type="button" class="aio-composer-menu-close flex h-4.5 w-4.5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-solid border-ext-border bg-ext-surface p-0 text-[11px] leading-none text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text" title="Close menu">✕</button>
-      </div>
-      <div class="pt-1 flex flex-col gap-0.5">
-        <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-[5px] border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-semibold text-ext-text outline-none transition-all hover:bg-[#EDE7DA] hover:text-ext-text" data-format="markdown">
-          ${renderIcon("markdown", 13, "text-ext-primary")}
-          <span>Markdown (.md)</span>
-        </button>
-        <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-[5px] border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-semibold text-ext-text outline-none transition-all hover:bg-[#EDE7DA] hover:text-ext-text" data-format="pdf">
-          ${renderIcon("pdf", 13, "text-ext-danger")}
-          <span>Print to PDF</span>
-        </button>
-        <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-[5px] border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-semibold text-ext-text outline-none transition-all hover:bg-[#EDE7DA] hover:text-ext-text" data-format="json">
-          ${renderIcon("json", 13, "text-[#C48C1E]")}
-          <span>JSON (.json)</span>
-        </button>
-        <button type="button" class="aio-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-[5px] border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-semibold text-ext-text outline-none transition-all hover:bg-[#EDE7DA] hover:text-ext-text" data-format="html">
-          ${renderIcon("html", 13, "text-ext-primary")}
-          <span>HTML Document</span>
-        </button>
-        <div class="aio-composer-menu-divider my-1 h-px bg-ext-border/20"></div>
-        <button type="button" class="aio-composer-menu-item aio-composer-copy-btn flex w-full cursor-pointer items-center gap-2 rounded-lg border-0 bg-transparent px-2.5 py-1.5 text-left text-xs font-medium text-[#1c2130] outline-none transition-all hover:bg-[#f1f2f7] hover:text-[#1c2130]">
-          ${renderIcon("copy", 13, "text-ext-muted")}
-          <span>Copy to Clipboard</span>
-        </button>
-      </div>
-    `;
+    this.menuEl.innerHTML = buildMenuHtml();
     document.body.appendChild(this.menuEl);
     this.bindMenuEvents();
   }
@@ -185,15 +129,10 @@ export class AiToolkitComposerView {
 
     const width = this.container.offsetWidth || 170;
     const height = this.container.offsetHeight || 30;
+    const { left, top } = computeDockPlacement(rect, width, height);
 
-    let left = rect.left + 6;
-    left = Math.max(8, Math.min(left, window.innerWidth - width - 8));
-
-    let top = rect.top - height - 6;
-    if (top < 8) top = rect.bottom + 6;
-
-    this.container.style.left = `${Math.round(left)}px`;
-    this.container.style.top = `${Math.round(top)}px`;
+    this.container.style.left = `${left}px`;
+    this.container.style.top = `${top}px`;
   }
 
   private applyFallbackDock(): void {
@@ -332,47 +271,6 @@ export class AiToolkitComposerView {
     window.addEventListener("keydown", this.onKeyDown, true);
   }
 
-  private updateCavemanButtonUi(): void {
-    if (!this.container) return;
-    const bar = this.container.querySelector<HTMLElement>(".aio-composer-bar");
-    const icon = this.container.querySelector<SVGElement>(".aio-flame-icon");
-    const badge = this.container.querySelector<HTMLElement>(".aio-lvl-badge");
-    const btn = this.container.querySelector<HTMLButtonElement>(".aio-caveman-toggle-btn");
-
-    const { enabled, level } = this.currentSettings;
-    const levelValid = isValidCavemanLevel(level);
-    const statusText = enabled ? (levelValid ? level.toUpperCase() : "STOP") : "OFF";
-
-    if (bar) {
-      if (enabled) {
-        bar.style.background = "#FDF3E3";
-        bar.style.border = "1.5px solid #C48C1E";
-        bar.style.boxShadow = "2px 2px 0 #1A1A1A";
-        bar.classList.add("aio-caveman-on");
-      } else {
-        bar.style.background = "#FFFDF7";
-        bar.style.border = "1.5px solid #2B2B2B";
-        bar.style.boxShadow = "2px 2px 0 #1A1A1A";
-        bar.classList.remove("aio-caveman-on");
-      }
-    }
-    if (icon) {
-      icon.style.color = enabled ? "#C48C1E" : "#A89B8C";
-    }
-    if (badge) {
-      badge.textContent = statusText;
-      if (enabled) {
-        badge.className = `aio-bar-badge aio-lvl-badge rounded-[3px] px-1.5 py-px text-[8.5px] font-bold uppercase leading-none tracking-[0.4px] transition-colors border border-[#C48C1E] bg-[#E8A727] text-[#1A1A1A] aio-lvl-${level}`;
-      } else {
-        badge.className =
-          "aio-bar-badge aio-lvl-badge rounded-[3px] px-1.5 py-px text-[8.5px] font-bold uppercase leading-none tracking-[0.4px] transition-colors border border-[#D4CEC2] bg-[#EDE7DA] text-ext-text-secondary";
-      }
-    }
-    if (btn) {
-      btn.title = `Caveman Mode: ${statusText} (Click to cycle level)`;
-    }
-  }
-
   public toggleMenu(): void {
     this.isOpen ? this.closeMenu() : this.openMenu();
   }
@@ -399,22 +297,10 @@ export class AiToolkitComposerView {
 
     const menuHeight = this.menuEl.offsetHeight || 220;
     const menuWidth = this.menuEl.offsetWidth || 185;
+    const { top, left } = computeMenuPlacement(rect, menuWidth, menuHeight);
 
-    let top = rect.top - menuHeight - 8;
-    if (top < 10) {
-      top = rect.bottom + 8;
-    }
-
-    let left = rect.left;
-    if (left + menuWidth > window.innerWidth - 12) {
-      left = window.innerWidth - menuWidth - 12;
-    }
-    if (left < 12) {
-      left = 12;
-    }
-
-    this.menuEl.style.top = `${Math.round(top)}px`;
-    this.menuEl.style.left = `${Math.round(left)}px`;
+    this.menuEl.style.top = `${top}px`;
+    this.menuEl.style.left = `${left}px`;
     this.menuEl.style.bottom = "auto";
     this.menuEl.style.right = "auto";
 
@@ -436,31 +322,7 @@ export class AiToolkitComposerView {
 
   public showToast(message: string, isError = false): void {
     if (!this.container) return;
-    const rect = this.container.getBoundingClientRect();
-    const toast = document.createElement("div");
-    toast.className =
-      "aio-composer-toast fixed whitespace-nowrap rounded-md border-[1.5px] border-solid px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider shadow-[3px_3px_0_#1A1A1A] transition-all pointer-events-none";
-    toast.style.fontFamily =
-      "'Space Grotesk', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
-    toast.style.background = isError ? "#D63230" : "#FFFDF7";
-    toast.style.borderColor = isError ? "#A82624" : "#2B2B2B";
-    toast.style.color = isError ? "#ffffff" : "#1A1A1A";
-    toast.textContent = message;
-
-    toast.style.zIndex = "2147483647";
-    toast.style.bottom = `${Math.max(12, window.innerHeight - rect.top + 8)}px`;
-    toast.style.left = `${rect.left + rect.width / 2}px`;
-    toast.style.transform = "translateX(-50%) translateY(4px)";
-
-    document.body.appendChild(toast);
-    requestAnimationFrame(() => {
-      toast.style.transform = "translateX(-50%) translateY(0)";
-    });
-    setTimeout(() => {
-      toast.style.transform = "translateX(-50%) translateY(4px)";
-      toast.style.opacity = "0";
-      setTimeout(() => toast.remove(), 250);
-    }, 2000);
+    showComposerToast(this.container, message, isError);
   }
 
   public unmount(): void {
@@ -479,10 +341,4 @@ export class AiToolkitComposerView {
     this.menuEl = null;
     this.isOpen = false;
   }
-}
-
-/** Human-readable export failure reason — the toast shouldn't swallow the real cause. */
-function formatExportError(err: unknown): string {
-  if (err instanceof Error && err.message) return `Export failed: ${err.message}`;
-  return "Export failed";
 }

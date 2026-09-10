@@ -22,7 +22,7 @@ const RUN_LOG_LIMIT = 30;
 
 export class UserScriptsService {
   /** All stored scripts, in priority order (SM-02, SM-08). */
-  static async list(): Promise<UserScriptRecord[]> {
+  static list(): Promise<UserScriptRecord[]> {
     return scriptsItem.getValue();
   }
 

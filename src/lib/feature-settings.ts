@@ -1,6 +1,6 @@
 import { storage } from "wxt/utils/storage";
 
-export const FEATURE_ENABLED_STORAGE_KEY = "local:feature:enabled";
+const FEATURE_ENABLED_STORAGE_KEY = "local:feature:enabled";
 
 export const featureEnabledItem = storage.defineItem<Record<string, boolean>>(
   FEATURE_ENABLED_STORAGE_KEY,

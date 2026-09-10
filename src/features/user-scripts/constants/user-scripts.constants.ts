@@ -1,4 +1,4 @@
-import type { UserScriptMeta, UserScriptRecord } from "../types/user-scripts.types";
+import type { UserScriptMeta } from "../types/user-scripts.types";
 
 /** Message channel names (all behind constants — atomic rename later). */
 export const USER_SCRIPTS_ACTIONS = {
@@ -36,7 +36,7 @@ export const USER_SCRIPTS_STORAGE_KEYS = {
  * SEC-04: GM APIs a script may receive, keyed by the @grant literal.
  * Anything not listed here cannot be granted.
  */
-export const GM_GRANT_REGISTRY = {
+const GM_GRANT_REGISTRY = {
   none: [],
   unsafeWindow: ["unsafeWindow"],
   GM_getValue: ["GM.getValue", "GM_getValue"],
@@ -53,8 +53,6 @@ export const GM_GRANT_REGISTRY = {
   GM_notification: ["GM.notification", "GM_notification"],
   GM_registerMenuCommand: ["GM.registerMenuCommand", "GM_registerMenuCommand"],
 } as const satisfies Record<string, readonly string[]>;
-
-export type GmGrantName = keyof typeof GM_GRANT_REGISTRY;
 
 /** All API globals a script gets for a given list of @grant literals (SEC-04). */
 export function resolveGrants(grants: string[]): string[] {
@@ -84,40 +82,8 @@ export const USER_SCRIPTS_DEFAULT_META: Omit<UserScriptMeta, "name"> = {
   icon: "",
 };
 
-export function makeScriptTemplate(name: string): string {
-  return `// ==UserScript==
-// @name         ${name}
-// @namespace    extensible/userscripts
-// @version      1.0.0
-// @description  Describe what this script does
-// @match        *://*/*
-// @grant        none
-// @run-at       document-idle
-// @inject-into  content
-// ==/UserScript==
-
-(function () {
-  "use strict";
-  // Your code here
-})();
-`;
-}
-
-export function newScriptRecord(name: string, code?: string): UserScriptRecord {
-  const now = Date.now();
-  return {
-    id: `us_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-    code: code ?? makeScriptTemplate(name),
-    meta: { ...USER_SCRIPTS_DEFAULT_META, name },
-    enabled: true,
-    createdAt: now,
-    updatedAt: now,
-    lastRunAt: null,
-  };
-}
-
 /** URL schemes that must never be script targets (SEC-05). */
-export const BLOCKED_URL_PREFIXES = [
+const BLOCKED_URL_PREFIXES = [
   "chrome://",
   "chrome-extension://",
   "edge://",

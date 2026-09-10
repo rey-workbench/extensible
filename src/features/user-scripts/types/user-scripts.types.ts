@@ -70,13 +70,3 @@ export interface GmRpcPayload {
   fn: string;
   args: unknown[];
 }
-
-/** Value-change notification pushed to tabs (GM_addValueChangeListener). */
-export interface GmValueChangedMessage {
-  scriptId: string;
-  key: string;
-  listenerId: string;
-  newValue: unknown;
-  oldValue: unknown;
-  remote: boolean;
-}

@@ -5,7 +5,7 @@
  */
 import { browser } from "wxt/browser";
 import { USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
-import type { GmHttpResponse, GmRpcPayload } from "../types/user-scripts.types";
+import type { GmRpcPayload } from "../types/user-scripts.types";
 
 const CALL = "us:gm:call";
 const RESP = "us:gm:resp";
@@ -68,5 +68,3 @@ async function handleCall(msg: GmCallMessage): Promise<void> {
     );
   }
 }
-
-export type { GmHttpResponse };

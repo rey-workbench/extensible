@@ -67,25 +67,3 @@ export function parseUserScriptHeader(code: string): UserScriptMeta {
     icon: firstListed(block, "icon64") || firstListed(block, "icon"),
   };
 }
-
-/** Rewrites (or inserts) the `@name` and `@version` lines in a script header. */
-export function withHeaderFields(
-  code: string,
-  fields: Partial<{ name: string; version: string }>
-): string {
-  let next = code;
-  for (const [key, value] of Object.entries(fields)) {
-    if (!value) continue;
-    const lineRe = new RegExp(`^\\s*//\\s*@${key}\\s+.*$`, "im");
-    if (lineRe.test(next)) next = next.replace(lineRe, `// @${key}         ${value}`);
-    else next = next.replace(HEADER_CLOSE, `// @${key}         ${value}\n// ==/UserScript==`);
-  }
-  return next;
-}
-
-/** Extracts just the body (header stripped) — used by the injector. */
-export function stripHeader(code: string): string {
-  const end = code.indexOf(HEADER_CLOSE);
-  if (end < 0) return code;
-  return code.slice(end + HEADER_CLOSE.length);
-}

@@ -8,9 +8,9 @@ function createFakeBrowser(): Record<string, unknown> {
   const listeners = new Set<(changes: unknown, area: string) => void>();
 
   const area = {
-    async get(
+    get(
       keys: string | string[] | Record<string, unknown> | null | undefined
-    ): Promise<Record<string, unknown>> {
+    ): Record<string, unknown> {
       const wanted = Array.isArray(keys)
         ? keys
         : typeof keys === "string"
@@ -20,7 +20,7 @@ function createFakeBrowser(): Record<string, unknown> {
       for (const k of wanted) if (store.has(k)) out[k] = store.get(k);
       return out;
     },
-    async set(items: Record<string, unknown>): Promise<void> {
+    set(items: Record<string, unknown>): void {
       const changes: Record<string, { oldValue?: unknown; newValue: unknown }> = {};
       for (const [k, v] of Object.entries(items)) {
         const old = store.get(k);
@@ -29,10 +29,10 @@ function createFakeBrowser(): Record<string, unknown> {
       }
       for (const fn of listeners) fn(changes, "local");
     },
-    async remove(keys: string | string[]): Promise<void> {
+    remove(keys: string | string[]): void {
       for (const k of Array.isArray(keys) ? keys : [keys]) store.delete(k);
     },
-    async clear(): Promise<void> {
+    clear(): void {
       store.clear();
     },
   };
@@ -106,7 +106,7 @@ ok(
   "Should detect invalidated extension context"
 );
 ok(
-  slugify("Testing AI Exporter Architecture") === "testing-ai-toolkit-architecture",
+  slugify("Testing AI Toolkit Architecture") === "testing-ai-toolkit-architecture",
   "Should slugify text"
 );
 console.log("   ✓ lib utilities passed.");
@@ -115,7 +115,7 @@ console.log("   ✓ lib utilities passed.");
 console.log("\n3. Testing AiToolkitService:");
 const sampleConvo = {
   id: "test_chat_1",
-  title: "Testing AI Exporter Architecture",
+  title: "Testing AI Toolkit Architecture",
   platform: "chatgpt" as const,
   url: "https://chatgpt.com/c/12345",
   createdAt: 1720000000000,
@@ -184,7 +184,7 @@ console.log("   ✓ AiToolkitService passed.");
 console.log("\n4. Testing formatters:");
 const mdOutput = MarkdownFormatterUtils.format(sampleConvo);
 ok(
-  mdOutput.includes('title: "Testing AI Exporter Architecture"'),
+  mdOutput.includes('title: "Testing AI Toolkit Architecture"'),
   "Markdown should include title frontmatter"
 );
 ok(mdOutput.includes("### 🧑 User"), "Markdown should include user role heading");
@@ -197,7 +197,7 @@ ok(parsedJson.conversation.title === sampleConvo.title, "JSON should include con
 
 const htmlOutput = HtmlFormatterUtils.format(sampleConvo);
 ok(htmlOutput.includes("<!DOCTYPE html>"), "HTML should be a full document");
-ok(htmlOutput.includes("Testing AI Exporter Architecture"), "HTML should include title");
+ok(htmlOutput.includes("Testing AI Toolkit Architecture"), "HTML should include title");
 
 const printPdfOutput = HtmlFormatterUtils.format(sampleConvo, { autoPrint: true });
 ok(printPdfOutput.includes("window.print()"), "Auto-print HTML should call window.print()");

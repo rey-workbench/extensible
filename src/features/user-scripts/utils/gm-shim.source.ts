@@ -5,7 +5,7 @@
  * (relay.ts) --chrome.runtime--> background --> back the same path.
  * Response correlation uses incrementing call ids + pending-promise map.
  */
-export const GM_SHIM_SOURCE: string = `
+const GM_SHIM_SOURCE: string = `
 (function () {
   "use strict";
   var CALL = "us:gm:call";

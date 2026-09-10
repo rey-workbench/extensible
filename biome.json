@@ -27,19 +27,60 @@
     "rules": {
       "preset": "recommended",
       "correctness": {
-        "noUnusedImports": "error",
-        "noUnusedVariables": "error"
+        "noUnusedImports": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "noUnusedVariables": "error",
+        "noUnusedFunctionParameters": "warn",
+        "noUnusedPrivateClassMembers": "error"
       },
       "suspicious": {
-        "noExplicitAny": "error"
+        "noExplicitAny": "error",
+        "noExtraNonNullAssertion": "error",
+        "noMisleadingInstantiator": "error",
+        "noUnsafeDeclarationMerging": "error",
+        "useAwait": "warn",
+        "noAsyncPromiseExecutor": "error",
+        "noConstEnum": "error"
+      },
+      "style": {
+        "useImportType": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "useExportType": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "useAsConstAssertion": "error",
+        "useConsistentArrayType": {
+          "level": "error",
+          "options": {
+            "syntax": "shorthand"
+          }
+        },
+        "useShorthandFunctionType": "error",
+        "useLiteralEnumMembers": "error",
+        "useEnumInitializers": "error",
+        "useNodejsImportProtocol": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "noNonNullAssertion": "off"
       },
       "complexity": {
+        "noBannedTypes": "error",
+        "noEmptyTypeParameters": "error",
+        "noUselessTypeConstraint": "error",
+        "noUselessEmptyExport": "error",
         "noStaticOnlyClass": "off",
         "noThisInStatic": "off",
         "noImportantStyles": "off"
       },
-      "style": {
-        "noNonNullAssertion": "off"
+      "performance": {
+        "noAccumulatingSpread": "error",
+        "noDelete": "error"
       }
     }
   },
@@ -51,6 +92,7 @@
     }
   },
   "assist": {
+    "enabled": true,
     "actions": {
       "source": {
         "organizeImports": "on"

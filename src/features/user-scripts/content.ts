@@ -5,6 +5,6 @@
  */
 import { setupGmRelay } from "./content/relay";
 
-export async function setupUserScriptsContent(): Promise<void> {
+export function setupUserScriptsContent(): void {
   setupGmRelay();
 }
