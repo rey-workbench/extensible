@@ -53,7 +53,7 @@ function createFakeBrowser(): Record<string, unknown> {
 const [
   { TempMailUtils },
   { escapeHtml, formatRelativeTime, isContextInvalidated, slugify },
-  { AiExporterService },
+  { AiToolkitService },
   { ChatParserUtils },
   { CavemanDirectiveUtils },
   { HtmlFormatterUtils, JsonFormatterUtils, MarkdownFormatterUtils },
@@ -61,10 +61,10 @@ const [
 ] = await Promise.all([
   import("@/features/temp-mail/utils/temp-mail.utils"),
   import("@/lib/browser"),
-  import("@/features/ai-exporter/services/ai-exporter.service"),
-  import("@/features/ai-exporter/utils/chat-parser.utils"),
-  import("@/features/ai-exporter/utils/caveman-directive.utils"),
-  import("@/features/ai-exporter/utils/index"),
+  import("@/features/ai-toolkit/services/ai-toolkit.service"),
+  import("@/features/ai-toolkit/utils/chat-parser.utils"),
+  import("@/features/ai-toolkit/utils/caveman-directive.utils"),
+  import("@/features/ai-toolkit/utils/index"),
   import("@/features/temp-mail/services/temp-mail.service"),
 ]);
 
@@ -106,13 +106,13 @@ ok(
   "Should detect invalidated extension context"
 );
 ok(
-  slugify("Testing AI Exporter Architecture") === "testing-ai-exporter-architecture",
+  slugify("Testing AI Exporter Architecture") === "testing-ai-toolkit-architecture",
   "Should slugify text"
 );
 console.log("   ✓ lib utilities passed.");
 
-// 3. AiExporterService (storage-backed, runs on the fake browser storage)
-console.log("\n3. Testing AiExporterService:");
+// 3. AiToolkitService (storage-backed, runs on the fake browser storage)
+console.log("\n3. Testing AiToolkitService:");
 const sampleConvo = {
   id: "test_chat_1",
   title: "Testing AI Exporter Architecture",
@@ -126,7 +126,7 @@ const sampleConvo = {
   totalWords: 11,
 };
 
-const service = new AiExporterService();
+const service = new AiToolkitService();
 
 const formattedPdf = service.formatConversation(sampleConvo, "pdf");
 ok(formattedPdf.mimeType === "text/html", "PDF should map to text/html");
@@ -134,7 +134,7 @@ ok(formattedPdf.content.includes("window.print()"), "PDF content should trigger 
 
 const generatedFilename = service.generateFilename(sampleConvo, ".md");
 ok(
-  generatedFilename.startsWith("chatgpt_testing-ai-exporter-architecture_"),
+  generatedFilename.startsWith("chatgpt_testing-ai-toolkit-architecture_"),
   "Filename should start with platform + slugified title"
 );
 ok(generatedFilename.endsWith(".md"), "Filename should end with .md");
@@ -178,7 +178,7 @@ await assert.rejects(
   /Invalid caveman level/,
   "Invalid caveman level should be rejected"
 );
-console.log("   ✓ AiExporterService passed.");
+console.log("   ✓ AiToolkitService passed.");
 
 // 4. Formatters
 console.log("\n4. Testing formatters:");

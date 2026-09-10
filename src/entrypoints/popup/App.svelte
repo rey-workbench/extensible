@@ -82,7 +82,7 @@
     switch (id) {
       case "temp-mail":
         return "#D63230";
-      case "ai-exporter":
+      case "ai-toolkit":
         return "#2D8C4E";
       default:
         return "#1B4DDB";

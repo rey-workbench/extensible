@@ -2,30 +2,30 @@ import { storage } from "wxt/utils/storage";
 import { slugify } from "@/lib/browser";
 import { mergeSettings, readSettings } from "@/lib/utils";
 import {
-  AI_EXPORTER_STORAGE_KEYS,
+  AI_TOOLKIT_STORAGE_KEYS,
   DEFAULT_CAVEMAN_SETTINGS,
   isValidCavemanLevel,
-} from "../constants/ai-exporter.constants";
+} from "../constants/ai-toolkit.constants";
 import type {
   CavemanSettings,
   ChatConversation,
   ExportFormat,
   ExportHistoryItem,
-} from "../types/ai-exporter.types";
+} from "../types/ai-toolkit.types";
 import { HtmlFormatterUtils } from "../utils/html-formatter.utils";
 import { JsonFormatterUtils } from "../utils/json-formatter.utils";
 import { MarkdownFormatterUtils } from "../utils/markdown-formatter.utils";
 
-const historyItem = storage.defineItem<ExportHistoryItem[]>(AI_EXPORTER_STORAGE_KEYS.HISTORY, {
+const historyItem = storage.defineItem<ExportHistoryItem[]>(AI_TOOLKIT_STORAGE_KEYS.HISTORY, {
   defaultValue: [],
 });
 
 export const cavemanSettingsItem = storage.defineItem<CavemanSettings>(
-  AI_EXPORTER_STORAGE_KEYS.CAVEMAN_SETTINGS,
+  AI_TOOLKIT_STORAGE_KEYS.CAVEMAN_SETTINGS,
   { defaultValue: DEFAULT_CAVEMAN_SETTINGS }
 );
 
-export class AiExporterService {
+export class AiToolkitService {
   /**
    * Retrieves recorded export history.
    */
@@ -121,7 +121,7 @@ export class AiExporterService {
 
   /** Metadata lookup for a format (mime type + file extension) without building content. */
   public static formatMeta(format: ExportFormat): { mimeType: string; extension: string } {
-    const meta = AiExporterService.FORMAT_META[format] ?? AiExporterService.FORMAT_META.markdown;
+    const meta = AiToolkitService.FORMAT_META[format] ?? AiToolkitService.FORMAT_META.markdown;
     return { mimeType: meta.mimeType, extension: meta.extension };
   }
 
@@ -132,7 +132,7 @@ export class AiExporterService {
     convo: ChatConversation,
     format: ExportFormat
   ): { content: string; mimeType: string; extension: string } {
-    const meta = AiExporterService.FORMAT_META[format] ?? AiExporterService.FORMAT_META.markdown;
+    const meta = AiToolkitService.FORMAT_META[format] ?? AiToolkitService.FORMAT_META.markdown;
     return { content: meta.build(convo), mimeType: meta.mimeType, extension: meta.extension };
   }
 

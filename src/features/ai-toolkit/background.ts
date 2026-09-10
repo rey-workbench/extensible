@@ -1,23 +1,23 @@
 import { browser } from "wxt/browser";
 import { onMessage } from "@/lib/messaging";
 import { createUniqueId } from "@/lib/utils";
-import { AI_EXPORTER_ACTIONS } from "./constants/ai-exporter.constants";
-import { AiExporterService } from "./services/ai-exporter.service";
+import { AI_TOOLKIT_ACTIONS } from "./constants/ai-toolkit.constants";
+import { AiToolkitService } from "./services/ai-toolkit.service";
 import type {
   ChatConversation,
   ExportFormat,
   ExportHistoryItem,
   ExportResult,
-} from "./types/ai-exporter.types";
+} from "./types/ai-toolkit.types";
 
-/** AI Exporter background handlers: file export (download / printable tab) + history. */
-export function setupAiExporterBackground(): void {
-  const service = new AiExporterService();
+/** AI Toolkit background handlers: file export (download / printable tab) + history. */
+export function setupAiToolkitBackground(): void {
+  const service = new AiToolkitService();
 
   onMessage<
     { conversation: ChatConversation; format: ExportFormat; filename?: string },
     ExportResult
-  >(AI_EXPORTER_ACTIONS.EXPORT_FILE, async (payload) => {
+  >(AI_TOOLKIT_ACTIONS.EXPORT_FILE, async (payload) => {
     if (!payload?.conversation || !payload?.format) {
       throw new Error("Missing conversation or format");
     }
@@ -49,7 +49,7 @@ export function setupAiExporterBackground(): void {
   });
 
   onMessage<{ content: string; filename: string; mimeType?: string }, { success: boolean }>(
-    AI_EXPORTER_ACTIONS.DOWNLOAD_CONTENT,
+    AI_TOOLKIT_ACTIONS.DOWNLOAD_CONTENT,
     async (payload) => {
       if (!payload?.content || !payload?.filename) {
         throw new Error("Missing content or filename");

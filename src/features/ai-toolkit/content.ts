@@ -1,28 +1,28 @@
 import { onMessage, sendMessage } from "@/lib/messaging";
 import { readSettings } from "@/lib/utils";
 import {
-  AI_EXPORTER_ACTIONS,
+  AI_TOOLKIT_ACTIONS,
   CAVEMAN_LEVELS,
   type CavemanLevel,
   DEFAULT_CAVEMAN_SETTINGS,
   isValidCavemanLevel,
-} from "./constants/ai-exporter.constants";
-import { cavemanSettingsItem } from "./services/ai-exporter.service";
-import type { CavemanSettings, ChatConversation, ExportFormat } from "./types/ai-exporter.types";
+} from "./constants/ai-toolkit.constants";
+import { cavemanSettingsItem } from "./services/ai-toolkit.service";
+import type { CavemanSettings, ChatConversation, ExportFormat } from "./types/ai-toolkit.types";
 import { CavemanDirectiveUtils } from "./utils/caveman-directive.utils";
 import { ChatComposerUtils } from "./utils/chat-composer.utils";
 import { ChatParserUtils } from "./utils/chat-parser.utils";
 import { MarkdownFormatterUtils } from "./utils/markdown-formatter.utils";
-import { AiExporterComposerView } from "./views/composer.view";
+import { AiToolkitComposerView } from "./views/composer.view";
 
 /**
- * AI Exporter content-side setup: DOM scrape handler + floating composer toolbar
+ * AI Toolkit content-side setup: DOM scrape handler + floating composer toolbar
  * (Caveman toggle / export menu) + caveman send interceptors on AI chat pages.
  */
-export async function setupAiExporterContent(): Promise<void> {
+export async function setupAiToolkitContent(): Promise<void> {
   // 1. Register content script handler for scraping DOM when requested by Popup
   onMessage<{ hydrate?: boolean } | null, { conversation: ChatConversation | null }>(
-    AI_EXPORTER_ACTIONS.SCRAPE_DOM,
+    AI_TOOLKIT_ACTIONS.SCRAPE_DOM,
     async (payload) => {
       try {
         if (payload?.hydrate) {
@@ -30,7 +30,7 @@ export async function setupAiExporterContent(): Promise<void> {
         }
         return { conversation: ChatParserUtils.parseActivePage(document) };
       } catch (err) {
-        console.warn("[AiExporter] SCRAPE_DOM failed:", err);
+        console.warn("[AiToolkit] SCRAPE_DOM failed:", err);
         return { conversation: null };
       }
     }
@@ -47,13 +47,13 @@ export async function setupAiExporterContent(): Promise<void> {
     // fall back to defaults
   }
 
-  const view = new AiExporterComposerView({
+  const view = new AiToolkitComposerView({
     onExport: async (format: ExportFormat) => {
       const convo = await ChatParserUtils.scrapeConvo(document, {
         hydrate: true,
         actionLabel: "export",
       });
-      await sendMessage(AI_EXPORTER_ACTIONS.EXPORT_FILE, { conversation: convo, format });
+      await sendMessage(AI_TOOLKIT_ACTIONS.EXPORT_FILE, { conversation: convo, format });
     },
     onCopy: async () => {
       const convo = await ChatParserUtils.scrapeConvo(document, { actionLabel: "copy" });

@@ -1,4 +1,4 @@
-import { type CavemanLevel, isValidCavemanLevel } from "../constants/ai-exporter.constants";
+import { type CavemanLevel, isValidCavemanLevel } from "../constants/ai-toolkit.constants";
 
 export class CavemanDirectiveUtils {
   /** Public so content/UI code can detect directives without hardcoding the literal. */

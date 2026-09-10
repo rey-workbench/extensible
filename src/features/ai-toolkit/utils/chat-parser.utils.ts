@@ -1,6 +1,6 @@
 import { createUniqueId, delay } from "@/lib/utils";
-import { AI_PLATFORMS, type SupportedAiPlatform } from "../constants/ai-exporter.constants";
-import type { ChatConversation, ChatMessage, MessageRole } from "../types/ai-exporter.types";
+import { AI_PLATFORMS, type SupportedAiPlatform } from "../constants/ai-toolkit.constants";
+import type { ChatConversation, ChatMessage, MessageRole } from "../types/ai-toolkit.types";
 
 export class ChatParserUtils {
   /**
@@ -45,7 +45,7 @@ export class ChatParserUtils {
 
     if (messages.length === 0) {
       // Fallback try generic if specialized parser yielded 0
-      console.warn(`[AiExporter] No messages parsed on "${platform}" — falling back to generic.`);
+      console.warn(`[AiToolkit] No messages parsed on "${platform}" — falling back to generic.`);
       messages = this.parseGeneric(doc);
     }
 

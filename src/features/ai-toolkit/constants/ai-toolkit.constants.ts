@@ -1,15 +1,15 @@
 /**
- * Action and event constants specific to the AiExporter module.
+ * Action and event constants specific to the AiToolkit module.
  */
-import type { CavemanSettings } from "../types/ai-exporter.types";
+import type { CavemanSettings } from "../types/ai-toolkit.types";
 
-export const AI_EXPORTER_ACTIONS = {
-  SCRAPE_DOM: "ai_exporter:scrape_dom",
-  EXPORT_FILE: "ai_exporter:export_file",
-  DOWNLOAD_CONTENT: "ai_exporter:download_content",
+export const AI_TOOLKIT_ACTIONS = {
+  SCRAPE_DOM: "ai_toolkit:scrape_dom",
+  EXPORT_FILE: "ai_toolkit:export_file",
+  DOWNLOAD_CONTENT: "ai_toolkit:download_content",
 } as const;
 
-export const AI_EXPORTER_STORAGE_KEYS = {
+export const AI_TOOLKIT_STORAGE_KEYS = {
   HISTORY: "local:ai_exporter_history",
   CAVEMAN_SETTINGS: "local:ai_exporter_caveman",
 } as const;

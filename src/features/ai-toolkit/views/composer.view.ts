@@ -1,9 +1,9 @@
 import { renderIcon } from "@/lib/icons";
-import { DEFAULT_CAVEMAN_SETTINGS, isValidCavemanLevel } from "../constants/ai-exporter.constants";
-import type { CavemanSettings, ExportFormat } from "../types/ai-exporter.types";
+import { DEFAULT_CAVEMAN_SETTINGS, isValidCavemanLevel } from "../constants/ai-toolkit.constants";
+import type { CavemanSettings, ExportFormat } from "../types/ai-toolkit.types";
 import { ChatComposerUtils } from "../utils/chat-composer.utils";
 
-export interface AiExporterComposerViewCallbacks {
+export interface AiToolkitComposerViewCallbacks {
   onExport: (format: ExportFormat) => Promise<void>;
   onCopy: () => Promise<void>;
   onToggleCaveman: () => Promise<CavemanSettings>;
@@ -11,7 +11,7 @@ export interface AiExporterComposerViewCallbacks {
 }
 
 /** Floating pill toolbar docked above the chat composer (Caveman + Export). */
-export class AiExporterComposerView {
+export class AiToolkitComposerView {
   private container: HTMLElement | null = null;
   private menuEl: HTMLElement | null = null;
   private backdropEl: HTMLElement | null = null;
@@ -20,7 +20,7 @@ export class AiExporterComposerView {
   private currentSettings: CavemanSettings = DEFAULT_CAVEMAN_SETTINGS;
   private alignScheduled = false;
 
-  constructor(private readonly callbacks: AiExporterComposerViewCallbacks) {}
+  constructor(private readonly callbacks: AiToolkitComposerViewCallbacks) {}
 
   public mount(initialSettings?: CavemanSettings): void {
     if (initialSettings) {
@@ -257,7 +257,7 @@ export class AiExporterComposerView {
             await this.callbacks.onExport(format);
             this.showToast(format === "pdf" ? "Print dialog opened!" : "Exported!");
           } catch (err) {
-            console.warn("[AiExporter] Export failed:", err);
+            console.warn("[AiToolkit] Export failed:", err);
             this.showToast(formatExportError(err), true);
           }
         }
@@ -273,7 +273,7 @@ export class AiExporterComposerView {
         await this.callbacks.onCopy();
         this.showToast("Copied to clipboard!");
       } catch (err) {
-        console.warn("[AiExporter] Copy failed:", err);
+        console.warn("[AiToolkit] Copy failed:", err);
         this.showToast(
           err instanceof Error && err.message ? `Copy failed: ${err.message}` : "Copy failed",
           true

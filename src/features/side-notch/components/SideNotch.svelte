@@ -214,7 +214,7 @@
     switch (id) {
       case "temp-mail":
         return "#D63230";
-      case "ai-exporter":
+      case "ai-toolkit":
         return "#2D8C4E";
       default:
         return "#1B4DDB";
@@ -373,7 +373,7 @@
             </div>
           </div>
 
-          <!-- Card 2: AI Exporter -->
+          <!-- Card 2: AI Toolkit -->
           <div
             class="flex flex-col justify-between rounded-lg border-[1.5px] border-ext-border bg-ext-surface p-2 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
           >
@@ -385,7 +385,7 @@
               </span>
               <div class="min-w-0 flex-1">
                 <div class="truncate text-[10.5px] font-bold uppercase tracking-wide text-ext-text leading-tight">
-                  AI Exporter
+                  AI Toolkit
                 </div>
                 <div class="truncate text-[9px] text-ext-muted">
                   {modules.filter((m) => enabledMap[m.id] !== false).length} extensions active
@@ -401,7 +401,7 @@
                 onclick={(e) => {
                   e.stopPropagation();
                   isHovered = false;
-                  openDetail("ai-exporter");
+                  openDetail("ai-toolkit");
                 }}
               >
                 <span>Caveman</span>
@@ -413,7 +413,7 @@
                 onclick={(e) => {
                   e.stopPropagation();
                   isHovered = false;
-                  openDetail("ai-exporter");
+                  openDetail("ai-toolkit");
                 }}
               >
                 Export ›

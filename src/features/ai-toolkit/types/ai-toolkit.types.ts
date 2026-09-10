@@ -1,4 +1,4 @@
-import type { CavemanLevel, SupportedAiPlatform } from "../constants/ai-exporter.constants";
+import type { CavemanLevel, SupportedAiPlatform } from "../constants/ai-toolkit.constants";
 
 export type MessageRole = "user" | "assistant" | "system";
 

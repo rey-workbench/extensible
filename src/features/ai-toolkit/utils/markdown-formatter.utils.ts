@@ -1,4 +1,4 @@
-import type { ChatConversation } from "../types/ai-exporter.types";
+import type { ChatConversation } from "../types/ai-toolkit.types";
 
 export class MarkdownFormatterUtils {
   /**
