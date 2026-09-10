@@ -40,8 +40,9 @@ export default defineConfig({
       "tabs",
       "notifications",
       "downloads",
+      "userScripts",
     ],
-    host_permissions: ["https://api.tempmail.ing/*", "http://127.0.0.1/*"],
+    host_permissions: ["https://api.tempmail.ing/*", "http://127.0.0.1/*", "<all_urls>"],
     browser_specific_settings: {
       gecko: {
         id: "extensible@extension.local",

@@ -122,7 +122,7 @@
     <div class="flex items-center gap-0.5">
       <button
         type="button"
-        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] border border-transparent text-ext-muted transition-all hover:border-ext-border hover:bg-[#EDE7DA] hover:text-ext-text"
+        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm border border-transparent text-ext-muted transition-all hover:border-ext-border hover:bg-[#EDE7DA] hover:text-ext-text"
         onclick={onDuplicate}
         title="Duplicate script"
       >
@@ -130,7 +130,7 @@
       </button>
       <button
         type="button"
-        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] border border-transparent text-ext-muted transition-all hover:border-ext-border hover:bg-[#EDE7DA] hover:text-ext-text"
+        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm border border-transparent text-ext-muted transition-all hover:border-ext-border hover:bg-[#EDE7DA] hover:text-ext-text"
         onclick={onExport}
         title="Export as .user.js"
       >
@@ -138,7 +138,7 @@
       </button>
       <button
         type="button"
-        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-[4px] border border-transparent text-ext-danger transition-all hover:border-[#A82624]/30 hover:bg-ext-danger/10"
+        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm border border-transparent text-ext-danger transition-all hover:border-[#A82624]/30 hover:bg-ext-danger/10"
         onclick={onDelete}
         title="Delete script"
       >

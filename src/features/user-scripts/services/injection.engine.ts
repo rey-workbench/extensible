@@ -7,6 +7,7 @@ import { browser } from "wxt/browser";
 import { isFeatureEnabled } from "@/lib/feature-settings";
 import { isBlockedUrl, resolveGrants } from "../constants/user-scripts.constants";
 import type { UserScriptRecord } from "../types/user-scripts.types";
+import { buildScriptSource } from "../utils/gm-shim.source";
 import { UserScriptsService } from "./user-scripts.service";
 
 /** Scripts already injected into a given tab (per navigation). */
@@ -51,11 +52,63 @@ export class InjectionEngine {
 
   /** Re-run matching scripts across open tabs (after toggle/import/delete). */
   static async reinjectAll(): Promise<void> {
+    await InjectionEngine.syncUserScriptsApi().catch(() => {});
     const tabs = await browser.tabs.query({ url: ["http://*/*", "https://*/*"] });
     for (const tab of tabs) {
       if (tab.id == null) continue;
       injectedTabs.delete(tab.id);
       await InjectionEngine.runScriptsInTab(tab.id, "auto", tab.url ?? undefined).catch(() => {});
+    }
+  }
+
+  /** Syncs registered scripts with chrome.userScripts API when supported. */
+  static async syncUserScriptsApi(): Promise<void> {
+    const userScriptsApi =
+      (
+        browser as unknown as {
+          userScripts?: {
+            register: (arg: unknown) => Promise<unknown>;
+            unregister: () => Promise<unknown>;
+          };
+        }
+      ).userScripts ??
+      (
+        globalThis.chrome as unknown as {
+          userScripts?: {
+            register: (arg: unknown) => Promise<unknown>;
+            unregister: () => Promise<unknown>;
+          };
+        }
+      )?.userScripts;
+    if (typeof userScriptsApi?.register !== "function") return;
+
+    try {
+      if (typeof userScriptsApi.unregister === "function") {
+        await userScriptsApi.unregister().catch(() => {});
+      }
+      const allScripts = await UserScriptsService.list();
+      const enabled = allScripts.filter((s) => s.enabled);
+      if (!enabled.length) return;
+
+      const items = [];
+      for (const script of enabled) {
+        const source = buildScriptSource({
+          scriptId: script.id,
+          apis: resolveGrants(script.meta.grants),
+          requires: [],
+          body: InjectionEngine.stripHeaderOnly(script.code),
+        });
+        items.push({
+          id: script.id,
+          matches: script.meta.matches.length ? script.meta.matches : ["*://*/*"],
+          js: [{ code: source }],
+          runAt: script.meta.runAt === "document-start" ? "document_start" : "document_idle",
+          world: "USER_SCRIPT",
+        });
+      }
+      await userScriptsApi.register(items);
+    } catch (err) {
+      console.debug("[UserScripts] syncUserScriptsApi error:", err);
     }
   }
 
@@ -96,7 +149,6 @@ export class InjectionEngine {
         : apis.filter((a) => a !== "unsafeWindow");
 
     // Compose the executable source (shim + requires + body).
-    const { buildScriptSource } = await import("../utils/gm-shim.source");
     const source = buildScriptSource({
       scriptId: script.id,
       apis: apisForWorld,
@@ -104,28 +156,67 @@ export class InjectionEngine {
       body: InjectionEngine.stripHeaderOnly(script.code),
     });
 
-    const world = script.meta.injectInto === "page" ? "MAIN" : "ISOLATED";
+    // 1. Prefer chrome.userScripts.execute when available (Chrome 120+, exempt from page CSP)
     try {
-      await browser.scripting.executeScript({
+      const userScriptsApi =
+        (browser as unknown as { userScripts?: { execute: (arg: unknown) => Promise<unknown> } })
+          .userScripts ??
+        (
+          globalThis.chrome as unknown as {
+            userScripts?: { execute: (arg: unknown) => Promise<unknown> };
+          }
+        )?.userScripts;
+      if (typeof userScriptsApi?.execute === "function") {
+        await userScriptsApi.execute({
+          target: { tabId },
+          js: [{ code: source }],
+        });
+        await UserScriptsService.appendRunLog({
+          scriptId: script.id,
+          ts: Date.now(),
+          url,
+          ok: true,
+        });
+        await UserScriptsService.save({ ...script, lastRunAt: Date.now() });
+        return true;
+      }
+    } catch (e) {
+      console.debug("[UserScripts] chrome.userScripts.execute fallback:", e);
+    }
+
+    const world = "MAIN";
+    try {
+      const results = await browser.scripting.executeScript({
         target: { tabId },
         world,
         injectImmediately: script.meta.runAt === "document-start",
         func: (src: string) => {
-          // ARC-01: no eval — new Function keeps CSP safe via the official API.
-          // eslint-disable-next-line no-new-func
+          // Attempt 1: DOM script element injection in page MAIN world
           try {
-            const res = new Function(src)();
-            if (res && typeof (res as Promise<unknown>).catch === "function") {
-              (res as Promise<unknown>).catch((e: unknown) => {
-                console.error("[UserScripts] async error:", e);
-              });
+            const el = document.createElement("script");
+            el.textContent = src;
+            (document.head || document.documentElement).appendChild(el);
+            el.remove();
+            return { ok: true };
+          } catch {
+            // Attempt 2: Function evaluation fallback in page MAIN world
+            try {
+              const run = new Function(src);
+              run();
+              return { ok: true };
+            } catch (evalErr) {
+              const msg = evalErr instanceof Error ? evalErr.message : String(evalErr);
+              console.error("[UserScripts] execute error:", evalErr);
+              return { ok: false, error: msg };
             }
-          } catch (e) {
-            console.error("[UserScripts] execute error:", e);
           }
         },
         args: [source],
       });
+      const res = results?.[0]?.result as { ok?: boolean; error?: string } | undefined;
+      if (res && res.ok === false) {
+        throw new Error(res.error || "Execution failed in page context");
+      }
       await UserScriptsService.appendRunLog({ scriptId: script.id, ts: Date.now(), url, ok: true });
       await UserScriptsService.save({ ...script, lastRunAt: Date.now() });
       return true;

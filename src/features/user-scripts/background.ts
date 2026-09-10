@@ -19,6 +19,9 @@ import type {
 } from "./types/user-scripts.types";
 
 export function setupUserScriptsBackground(): void {
+  // Sync scripts to native chrome.userScripts API on startup
+  void InjectionEngine.syncUserScriptsApi().catch(() => {});
+
   // Cache invalidation — must live inside setup(): this module is also bundled
   // into the content script, where `browser.tabs` is undefined.
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
@@ -94,8 +97,12 @@ export function setupUserScriptsBackground(): void {
     async (p, sender) => {
       let tabId = p?.tabId ?? sender.tab?.id;
       if (tabId == null) {
-        const [active] = await browser.tabs.query({ active: true, currentWindow: true });
+        const [active] = await browser.tabs.query({ active: true, lastFocusedWindow: true });
         tabId = active?.id;
+        if (tabId == null) {
+          const [fallback] = await browser.tabs.query({ active: true });
+          tabId = fallback?.id;
+        }
       }
       if (tabId == null) throw new Error("No active tab");
       return InjectionEngine.runScriptsInTab(tabId, "manual", undefined, p?.scriptId);

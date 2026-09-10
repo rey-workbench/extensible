@@ -247,12 +247,12 @@
 
   async function runInTab(script: UserScriptRecord): Promise<void> {
     try {
-      const tabs = await new Promise<{ id?: number }[]>((resolve) =>
-        chrome.tabs.query({ active: true, currentWindow: true }, (t) => resolve(t)),
-      );
-      const tab = tabs[0];
-      if (!tab?.id) throw new Error("No active tab");
-      const count = await sendMessage<number>(USER_SCRIPTS_ACTIONS.RUN_IN_TAB, { tabId: tab.id });
+      if (editingId === script.id && draftDirty) {
+        await saveDraft();
+      }
+      const count = await sendMessage<number>(USER_SCRIPTS_ACTIONS.RUN_IN_TAB, {
+        scriptId: script.id,
+      });
       showStatus(count > 0 ? `Ran ${count} script(s) in tab` : "No matching scripts for this tab");
       expandedId = script.id;
       await loadRunLog(script);
