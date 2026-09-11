@@ -9,9 +9,6 @@ defineFeature({
   icon: "markdown",
   color: "#2D8C4E",
   background: setupAiToolkitBackground,
-  content: async () => {
-    const { setupAiToolkitContent } = await import("./content");
-    return setupAiToolkitContent();
-  },
+  content: () => import("./content").then((m) => m.setupAiToolkitContent()),
   popup: AiToolkit,
 });

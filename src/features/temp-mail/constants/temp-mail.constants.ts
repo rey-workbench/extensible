@@ -23,6 +23,6 @@ export const TEMPMAIL_STORAGE_KEYS = {
 export const TEMPMAIL_CONFIG = {
   API_BASE: "https://api.tempmail.ing",
   DEFAULT_DURATION: 60,
-  POLL_INTERVAL_SEC: 15,
+  POLL_INTERVAL_SEC: 60,
   REQUEST_TIMEOUT_MS: 10_000,
 } as const;

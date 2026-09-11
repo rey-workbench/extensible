@@ -26,23 +26,29 @@
           : "Fill Temp Mail"
   );
 
+  let rafId: number | null = null;
   function updateRect(): void {
     if (!target.isConnected) return;
     rect = target.getBoundingClientRect();
   }
 
   function onViewportChange(): void {
-    updateRect();
+    if (rafId !== null) return;
+    rafId = requestAnimationFrame(() => {
+      rafId = null;
+      updateRect();
+    });
   }
 
   onMount(() => {
     updateRect();
-    window.addEventListener("scroll", onViewportChange, true);
-    window.addEventListener("resize", onViewportChange);
-    window.addEventListener("input", onViewportChange, true);
+    window.addEventListener("scroll", onViewportChange, { capture: true, passive: true });
+    window.addEventListener("resize", onViewportChange, { passive: true });
+    window.addEventListener("input", onViewportChange, { capture: true, passive: true });
   });
 
   onDestroy(() => {
+    if (rafId !== null) cancelAnimationFrame(rafId);
     window.removeEventListener("scroll", onViewportChange, true);
     window.removeEventListener("resize", onViewportChange);
     window.removeEventListener("input", onViewportChange, true);

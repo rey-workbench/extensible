@@ -35,7 +35,6 @@ export class AiToolkitComposerView {
     if (initialSettings) {
       this.currentSettings = initialSettings;
     }
-    this.loadFont();
     this.renderToolbar();
     this.startComposerWatcher();
   }
@@ -67,16 +66,6 @@ export class AiToolkitComposerView {
     `;
     this.shadow.appendChild(style);
     return this.shadow;
-  }
-
-  private loadFont(): void {
-    if (document.getElementById("aio-space-grotesk-font")) return;
-    const link = document.createElement("link");
-    link.id = "aio-space-grotesk-font";
-    link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap";
-    document.head.appendChild(link);
   }
 
   public updateSettings(settings: CavemanSettings): void {

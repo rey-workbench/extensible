@@ -55,11 +55,6 @@ export class UserScriptsService {
     return updated;
   }
 
-  static async add(record: UserScriptRecord): Promise<UserScriptRecord> {
-    await UserScriptsService.save(record);
-    return record;
-  }
-
   static async remove(id: string): Promise<boolean> {
     const all = await scriptsItem.getValue();
     const next = all.filter((s) => s.id !== id);

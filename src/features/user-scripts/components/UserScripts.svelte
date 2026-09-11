@@ -6,17 +6,20 @@
   import Icon from "@/components/Icon.svelte";
   import { slugify } from "@/lib/browser";
   import { sendMessage } from "@/lib/messaging";
+  import { showToast } from "@/lib/toast";
   import { createUniqueId } from "@/lib/utils";
   import { USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
+  import { recordFromCode } from "../services/user-scripts.service";
   import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
-  import { parseUserScriptHeader } from "../utils/header-parser.utils";
+  import { makeScriptTemplate, parseUserScriptHeader } from "../utils/header-parser.utils";
   import ScriptEditor from "./ScriptEditor.svelte";
   import ScriptRow from "./ScriptRow.svelte";
 
+  let rootEl = $state<HTMLElement | null>(null);
   let scripts = $state<UserScriptRecord[]>([]);
   let isLoading = $state(true);
-  let status = $state<{ text: string; isError?: boolean } | null>(null);
-  let statusTimer: ReturnType<typeof setTimeout> | null = null;
+  let deleteConfirmId = $state<string | null>(null);
+  let deleteConfirmTimer: ReturnType<typeof setTimeout> | null = null;
   let expandedId = $state<string | null>(null);
   let editingId = $state<string | null>(null);
   let draftCode = $state("");
@@ -44,11 +47,7 @@
   }
 
   function showStatus(text: string, isError = false): void {
-    status = { text, isError };
-    if (statusTimer) clearTimeout(statusTimer);
-    statusTimer = setTimeout(() => {
-      if (status?.text === text) status = null;
-    }, 2500);
+    if (rootEl) showToast(rootEl, text, { isError });
   }
 
   async function toggle(script: UserScriptRecord, enabled: boolean): Promise<void> {
@@ -62,36 +61,8 @@
     const name = newScriptName.trim() || "New script";
     newScriptName = "";
     const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
-      record: {
-        id: `us_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-        code: "",
-        meta: {
-          name,
-          namespace: "extensible/userscripts",
-          version: "1.0.0",
-          description: "",
-          matches: ["*://*/*"],
-          excludes: [],
-          runAt: "document-idle",
-          grants: ["none"],
-          requires: [],
-          resources: {},
-          injectInto: "content",
-          connects: [],
-          updateURL: "",
-          downloadURL: "",
-          icon: "",
-        },
-        enabled: true,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        lastRunAt: null,
-      },
+      record: recordFromCode(makeScriptTemplate(name)),
     });
-    if (!record.code) {
-      record.code = `// ==UserScript==\n// @name         ${name}\n// @version      1.0.0\n// @match        *://*/*\n// @grant        none\n// ==/UserScript==\n\n(function () {\n  "use strict";\n})();\n`;
-      await sendMessage(USER_SCRIPTS_ACTIONS.SAVE, { record });
-    }
     scripts = [...scripts, record];
     startEditing(record);
   }
@@ -107,7 +78,16 @@
   }
 
   async function remove(script: UserScriptRecord): Promise<void> {
-    if (!confirm(`Delete "${script.meta.name}" and its run history?`)) return;
+    if (deleteConfirmId !== script.id) {
+      deleteConfirmId = script.id;
+      showStatus(`Click delete again to confirm "${script.meta.name}"`, true);
+      if (deleteConfirmTimer) clearTimeout(deleteConfirmTimer);
+      deleteConfirmTimer = setTimeout(() => {
+        if (deleteConfirmId === script.id) deleteConfirmId = null;
+      }, 3000);
+      return;
+    }
+    deleteConfirmId = null;
     const ok = await sendMessage<boolean>(USER_SCRIPTS_ACTIONS.DELETE, { id: script.id });
     if (ok) {
       scripts = scripts.filter((s) => s.id !== script.id);
@@ -256,17 +236,7 @@
   }
 </script>
 
-<div class="flex flex-col gap-2.5 p-2.5">
-  {#if status}
-    <div
-      class="rounded-md border-[1.5px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#1A1A1A] {status.isError
-        ? 'border-[#A82624] bg-ext-danger text-white'
-        : 'border-[#1E6B38] bg-ext-success text-white'}"
-    >
-      {status.text}
-    </div>
-  {/if}
-
+<div bind:this={rootEl} class="flex flex-col gap-2.5 p-2.5">
   <Card title="Add Script">
     <div class="flex flex-col gap-2">
       <div class="flex items-center gap-1.5">

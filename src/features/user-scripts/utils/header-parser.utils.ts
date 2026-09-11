@@ -61,3 +61,7 @@ export function parseUserScriptHeader(code: string, fallbackDefaultName?: string
     icon: firstListed(block, "icon64") || firstListed(block, "icon"),
   };
 }
+
+export function makeScriptTemplate(name: string): string {
+  return `// ==UserScript==\n// @name         ${name}\n// @version      1.0.0\n// @match        *://*/*\n// @grant        none\n// ==/UserScript==\n\n(function () {\n  "use strict";\n})();\n`;
+}

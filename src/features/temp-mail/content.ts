@@ -94,15 +94,20 @@ async function setupBadges(): Promise<void> {
   }
 
   function teardown(): void {
+    clearTimeout(scanTimer);
     for (const entry of badges.values()) entry.unmount();
     badges.clear();
   }
 
   scan();
 
+  let scanTimer: ReturnType<typeof setTimeout> | undefined;
   const observer = new MutationObserver(() => {
-    scan();
-    prune();
+    clearTimeout(scanTimer);
+    scanTimer = setTimeout(() => {
+      scan();
+      prune();
+    }, 200);
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 

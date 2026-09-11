@@ -22,11 +22,12 @@ export default defineConfig({
     },
     esbuild: {
       drop: ["debugger"],
-      pure: ["console.log", "console.debug"],
+      pure: ["console.log", "console.debug", "console.info"],
       legalComments: "none",
     },
   }),
   manifest: {
+    minimum_chrome_version: "120",
     name: "Extensible - Modular Extension Suite",
     description:
       "Extensible modular productivity extension with temporary email generation, instant input autofill, and live inbox OTP reader.",

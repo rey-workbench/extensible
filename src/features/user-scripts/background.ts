@@ -62,7 +62,7 @@ export function setupUserScriptsBackground(): void {
     USER_SCRIPTS_ACTIONS.IMPORT_FILE,
     (p) => {
       if (!p?.record) throw new Error("Missing record");
-      return UserScriptsService.add(p.record);
+      return UserScriptsService.save(p.record);
     },
   );
 
@@ -76,7 +76,7 @@ export function setupUserScriptsBackground(): void {
     const res = await fetch(url, { credentials: "omit" });
     if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
     const record = recordFromCode(await res.text());
-    await UserScriptsService.add(record);
+    await UserScriptsService.save(record);
     await InjectionEngine.reinjectAll();
     return record;
   });

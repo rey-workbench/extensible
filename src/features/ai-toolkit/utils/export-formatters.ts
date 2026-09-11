@@ -1,101 +1,118 @@
 import { escapeHtml } from "@/lib/browser";
 import type { ChatConversation } from "../types/ai-toolkit.types";
 
-export class JsonFormatterUtils {
-  public static format(convo: ChatConversation): string {
-    return JSON.stringify(
-      {
-        version: "1.0",
-        exportedAt: new Date().toISOString(),
-        conversation: convo,
-      },
-      null,
-      2,
-    );
-  }
+export function formatJson(convo: ChatConversation): string {
+  return JSON.stringify(
+    {
+      version: "1.0",
+      exportedAt: new Date().toISOString(),
+      conversation: convo,
+    },
+    null,
+    2,
+  );
 }
 
-export class MarkdownFormatterUtils {
-  public static format(
-    convo: ChatConversation,
-    options: { includeMetadata?: boolean } = {},
-  ): string {
-    const { includeMetadata = true } = options;
-    const lines: string[] = [];
+export function formatMarkdown(
+  convo: ChatConversation,
+  options: { includeMetadata?: boolean } = {},
+): string {
+  const { includeMetadata = true } = options;
+  const lines: string[] = [];
 
-    if (includeMetadata) {
-      lines.push("---");
-      lines.push(`title: "${convo.title.replace(/"/g, '\\"')}"`);
-      lines.push(`platform: ${convo.platform}`);
-      lines.push(`date: ${new Date(convo.createdAt).toISOString()}`);
-      if (convo.url) {
-        lines.push(`source: "${convo.url}"`);
-      }
-      lines.push(`messages: ${convo.messages.length}`);
-      if (convo.totalWords) {
-        lines.push(`word_count: ${convo.totalWords}`);
-      }
-      lines.push("---\n");
+  if (includeMetadata) {
+    lines.push("---");
+    lines.push(`title: "${convo.title.replace(/"/g, '\\"')}"`);
+    lines.push(`platform: ${convo.platform}`);
+    lines.push(`date: ${new Date(convo.createdAt).toISOString()}`);
+    if (convo.url) {
+      lines.push(`source: "${convo.url}"`);
     }
-
-    lines.push(`# ${convo.title}\n`);
-
-    convo.messages.forEach((msg, _index) => {
-      const isUser = msg.role === "user";
-      const roleLabel = isUser ? "🧑 User" : "🤖 Assistant";
-      lines.push(`### ${roleLabel}\n`);
-      lines.push(msg.content.trim());
-      lines.push("\n---\n");
-    });
-
-    return lines.join("\n");
+    lines.push(`messages: ${convo.messages.length}`);
+    if (convo.totalWords) {
+      lines.push(`word_count: ${convo.totalWords}`);
+    }
+    lines.push("---\n");
   }
 
-  public static formatPlainText(convo: ChatConversation): string {
-    const lines: string[] = [];
-    lines.push(`${convo.title.toUpperCase()}\n${"=".repeat(convo.title.length)}\n`);
+  lines.push(`# ${convo.title}\n`);
 
-    convo.messages.forEach((msg) => {
-      const role = msg.role.toUpperCase();
-      lines.push(`[${role}]:\n${msg.content.trim()}\n`);
-    });
+  convo.messages.forEach((msg, _index) => {
+    const isUser = msg.role === "user";
+    const roleLabel = isUser ? "🧑 User" : "🤖 Assistant";
+    lines.push(`### ${roleLabel}\n`);
+    lines.push(msg.content.trim());
+    lines.push("\n---\n");
+  });
 
-    return lines.join("\n");
-  }
+  return lines.join("\n");
 }
 
-export class HtmlFormatterUtils {
-  public static format(convo: ChatConversation, options: { autoPrint?: boolean } = {}): string {
-    const title = escapeHtml(convo.title);
-    const dateStr = new Date(convo.createdAt).toLocaleString();
-    const { autoPrint = false } = options;
+export function formatPlainText(convo: ChatConversation): string {
+  const lines: string[] = [];
+  lines.push(`${convo.title.toUpperCase()}\n${"=".repeat(convo.title.length)}\n`);
 
-    const messagesHtml = convo.messages
-      .map((msg) => {
-        const isUser = msg.role === "user";
-        const roleLabel = isUser ? "User" : "Assistant";
-        const roleClass = isUser ? "role-user" : "role-assistant";
-        const formattedContent = HtmlFormatterUtils.formatMessageBody(msg.content);
+  convo.messages.forEach((msg) => {
+    const role = msg.role.toUpperCase();
+    lines.push(`[${role}]:\n${msg.content.trim()}\n`);
+  });
 
-        return `
+  return lines.join("\n");
+}
+
+function formatMessageBody(content: string): string {
+  const codeBlocks: string[] = [];
+  let processed = content.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
+    const idx = codeBlocks.length;
+    const langAttr = lang ? ` class="language-${escapeHtml(lang)}"` : "";
+    codeBlocks.push(`<pre><code${langAttr}>${escapeHtml(code.trim())}</code></pre>`);
+    return `__CODE_BLOCK_${idx}__`;
+  });
+
+  processed = escapeHtml(processed);
+
+  processed = processed.replace(/`([^`]+)`/g, "<code>$1</code>");
+
+  processed = processed.replace(/\n/g, "<br>");
+
+  codeBlocks.forEach((block, idx) => {
+    processed = processed.replace(`__CODE_BLOCK_${idx}__`, block);
+  });
+
+  return processed;
+}
+
+export function formatHtml(convo: ChatConversation, options: { autoPrint?: boolean } = {}): string {
+  const title = escapeHtml(convo.title);
+  const dateStr = new Date(convo.createdAt).toLocaleString();
+  const { autoPrint = false } = options;
+
+  const messagesHtml = convo.messages
+    .map((msg) => {
+      const isUser = msg.role === "user";
+      const roleLabel = isUser ? "User" : "Assistant";
+      const roleClass = isUser ? "role-user" : "role-assistant";
+      const formattedContent = formatMessageBody(msg.content);
+
+      return `
       <div class="message ${roleClass}">
         <div class="message-header">
           <span class="role-tag">${roleLabel}</span>
         </div>
         <div class="message-body">${formattedContent}</div>
       </div>`;
-      })
-      .join("\n");
+    })
+    .join("\n");
 
-    const autoPrintScript = autoPrint
-      ? `<script>
+  const autoPrintScript = autoPrint
+    ? `<script>
     window.addEventListener('load', function() {
       setTimeout(function() { window.print(); }, 400);
     });
   </script>`
-      : "";
+    : "";
 
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -199,32 +216,8 @@ export class HtmlFormatterUtils {
   </main>
 </body>
 </html>`;
-  }
-
-  private static formatMessageBody(content: string): string {
-    const codeBlocks: string[] = [];
-    let processed = content.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
-      const idx = codeBlocks.length;
-      const langAttr = lang ? ` class="language-${escapeHtml(lang)}"` : "";
-      codeBlocks.push(`<pre><code${langAttr}>${escapeHtml(code.trim())}</code></pre>`);
-      return `__CODE_BLOCK_${idx}__`;
-    });
-
-    processed = escapeHtml(processed);
-
-    processed = processed.replace(/`([^`]+)`/g, "<code>$1</code>");
-
-    processed = processed.replace(/\n/g, "<br>");
-
-    codeBlocks.forEach((block, idx) => {
-      processed = processed.replace(`__CODE_BLOCK_${idx}__`, block);
-    });
-
-    return processed;
-  }
 }
 
-export const formatJson = JsonFormatterUtils.format;
-export const formatMarkdown = MarkdownFormatterUtils.format;
-export const formatPlainText = MarkdownFormatterUtils.formatPlainText;
-export const formatHtml = HtmlFormatterUtils.format;
+export const JsonFormatterUtils = { format: formatJson };
+export const MarkdownFormatterUtils = { format: formatMarkdown, formatPlainText };
+export const HtmlFormatterUtils = { format: formatHtml };

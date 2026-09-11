@@ -7,8 +7,5 @@ defineFeature({
   icon: "sidebar",
   color: "#1B4DDB",
   mandatory: true,
-  content: async () => {
-    const { setupSideNotchContent } = await import("./content");
-    return setupSideNotchContent();
-  },
+  content: () => import("./content").then((m) => m.setupSideNotchContent()),
 });

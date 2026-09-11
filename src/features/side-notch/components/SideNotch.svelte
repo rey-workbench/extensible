@@ -1,8 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import { browser } from "wxt/browser";
-  import { TEMPMAIL_ACTIONS } from "@/features/temp-mail/constants/temp-mail.constants";
-  import type { TempEmail, TempMailCurrentState } from "@/features/temp-mail/types/temp-mail.types";
+  import { tempMailApi } from "@/features/temp-mail/api";
   import { copyToClipboard } from "@/lib/browser";
   import {
     type FeatureModule,
@@ -14,7 +13,6 @@
     setFeatureEnabled,
     setFeaturesEnabled,
   } from "@/lib/feature-settings";
-  import { sendMessage } from "@/lib/messaging";
   import { showToast } from "@/lib/toast";
   import globalCss from "@/styles/global.css?inline";
   import DrawerDetail from "./DrawerDetail.svelte";
@@ -63,10 +61,7 @@
 
   async function syncTempMail(): Promise<void> {
     try {
-      const state = await sendMessage<TempMailCurrentState>(
-        TEMPMAIL_ACTIONS.GET_CURRENT,
-        { autoGenerate: false }
-      );
+      const state = await tempMailApi.getCurrentState({ autoGenerate: false });
       activeTempAddress = state?.email?.address ?? null;
     } catch {
       
@@ -77,7 +72,7 @@
     if (isGeneratingMail) return;
     isGeneratingMail = true;
     try {
-      const res = await sendMessage<TempEmail>(TEMPMAIL_ACTIONS.GENERATE_NEW);
+      const res = await tempMailApi.generateNewAddress();
       if (res?.address) {
         activeTempAddress = res.address;
         showToast(shadowRoot, "Created!", { durationMs: 1500 });

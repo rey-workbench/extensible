@@ -9,9 +9,6 @@ defineFeature({
   icon: "puzzle",
   color: "#C48C1E",
   background: setupUserScriptsBackground,
-  content: async () => {
-    const { setupUserScriptsContent } = await import("./content");
-    return setupUserScriptsContent();
-  },
+  content: () => import("./content").then((m) => m.setupUserScriptsContent()),
   popup: UserScripts,
 });

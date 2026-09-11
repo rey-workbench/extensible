@@ -9,9 +9,6 @@ defineFeature({
   icon: "mail",
   color: "#D63230",
   background: setupTempMailBackground,
-  content: async () => {
-    const { setupTempMailContent } = await import("./content");
-    return setupTempMailContent();
-  },
+  content: () => import("./content").then((m) => m.setupTempMailContent()),
   popup: TempMail,
 });
