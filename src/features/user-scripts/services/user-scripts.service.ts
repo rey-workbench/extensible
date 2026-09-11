@@ -1,6 +1,8 @@
 import { storage } from "wxt/utils/storage";
+import { createUniqueId } from "@/lib/utils";
 import { USER_SCRIPTS_STORAGE_KEYS } from "../constants/user-scripts.constants";
 import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
+import { parseUserScriptHeader } from "../utils/header-parser.utils";
 
 const scriptsItem = storage.defineItem<UserScriptRecord[]>(USER_SCRIPTS_STORAGE_KEYS.SCRIPTS, {
   defaultValue: [],
@@ -160,8 +162,23 @@ function newScriptCopy(src: UserScriptRecord): UserScriptRecord {
   const now = Date.now();
   return {
     ...src,
-    id: `us_${now.toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+    id: createUniqueId("us"),
     meta: { ...src.meta, name: `${src.meta.name} (copy)` },
+    createdAt: now,
+    updatedAt: now,
+    lastRunAt: null,
+  };
+}
+
+/** Builds a fresh record by parsing code (used by install-from-URL and import). */
+export function recordFromCode(code: string): UserScriptRecord {
+  const now = Date.now();
+  const meta = parseUserScriptHeader(code);
+  return {
+    id: createUniqueId("us"),
+    code,
+    meta,
+    enabled: true,
     createdAt: now,
     updatedAt: now,
     lastRunAt: null,

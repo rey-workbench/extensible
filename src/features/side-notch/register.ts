@@ -6,6 +6,7 @@ defineFeature({
   name: "Quick Dock",
   description: "Floating panel with quick access to all features",
   icon: "sidebar",
+  color: "#1B4DDB",
   /** Host/shell UI — always enabled, hidden from feature lists. */
   mandatory: true,
   content: setupSideNotchContent,

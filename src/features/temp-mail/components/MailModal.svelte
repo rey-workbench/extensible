@@ -2,7 +2,7 @@
   import Button from "@/components/Button.svelte";
   import Icon from "@/components/Icon.svelte";
   import type { EmailMessage } from "../types/temp-mail.types";
-  import { TempMailUtils } from "../utils/temp-mail.utils";
+  import { extractOtpCode } from "../utils/temp-mail.utils";
 
   interface Props {
     email: EmailMessage | null;
@@ -13,7 +13,7 @@
   let { email, onClose, onDelete, onCopy }: Props = $props();
 
   const otpCode = $derived(
-    email ? TempMailUtils.extractOtpCode(`${email.subject || ""} ${email.content || ""}`) : null,
+    email ? extractOtpCode(`${email.subject || ""} ${email.content || ""}`) : null,
   );
 </script>
 

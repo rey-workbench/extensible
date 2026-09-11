@@ -12,7 +12,7 @@ import type { CavemanSettings, ChatConversation, ExportFormat } from "./types/ai
 import { CavemanDirectiveUtils } from "./utils/caveman-directive.utils";
 import { ChatComposerUtils } from "./utils/chat-composer.utils";
 import { ChatParserUtils } from "./utils/chat-parser.utils";
-import { MarkdownFormatterUtils } from "./utils/markdown-formatter.utils";
+import { formatMarkdown } from "./utils/export-formatters";
 import { AiToolkitComposerView } from "./views/composer.view";
 
 /**
@@ -57,7 +57,7 @@ export async function setupAiToolkitContent(): Promise<void> {
     },
     onCopy: async () => {
       const convo = await ChatParserUtils.scrapeConvo(document, { actionLabel: "copy" });
-      const mdText = MarkdownFormatterUtils.format(convo);
+      const mdText = formatMarkdown(convo);
       await navigator.clipboard.writeText(mdText);
     },
     onToggleCaveman: async (): Promise<CavemanSettings> => {

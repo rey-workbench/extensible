@@ -23,6 +23,8 @@ export interface FeatureModule {
   content?: () => void | Promise<void>;
   /** Svelte component rendered by the popup / drawer detail view. */
   popup?: Component;
+  /** Accent / brand color for the feature UI. */
+  color?: string;
 }
 
 const registry = new Map<string, FeatureModule>();
@@ -43,4 +45,9 @@ export function getFeatures(): FeatureModule[] {
 /** Non-mandatory features — the ones users can toggle in lists. */
 export function getToggleableFeatures(): FeatureModule[] {
   return [...registry.values()].filter((f) => !f.mandatory);
+}
+
+/** Theme brand color per feature module registered in defineFeature. */
+export function getFeatureColor(id: string): string {
+  return registry.get(id)?.color ?? "#1B4DDB";
 }

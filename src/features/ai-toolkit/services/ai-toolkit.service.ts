@@ -12,9 +12,12 @@ import type {
   ExportFormat,
   ExportHistoryItem,
 } from "../types/ai-toolkit.types";
-import { HtmlFormatterUtils } from "../utils/html-formatter.utils";
-import { JsonFormatterUtils } from "../utils/json-formatter.utils";
-import { MarkdownFormatterUtils } from "../utils/markdown-formatter.utils";
+import {
+  formatHtml,
+  formatJson,
+  formatMarkdown,
+  formatPlainText,
+} from "../utils/export-formatters";
 
 const historyItem = storage.defineItem<ExportHistoryItem[]>(AI_TOOLKIT_STORAGE_KEYS.HISTORY, {
   defaultValue: [],
@@ -95,27 +98,27 @@ export class AiToolkitService {
     markdown: {
       mimeType: "text/markdown",
       extension: ".md",
-      build: (c) => MarkdownFormatterUtils.format(c),
+      build: (c) => formatMarkdown(c),
     },
     json: {
       mimeType: "application/json",
       extension: ".json",
-      build: (c) => JsonFormatterUtils.format(c),
+      build: (c) => formatJson(c),
     },
     html: {
       mimeType: "text/html",
       extension: ".html",
-      build: (c) => HtmlFormatterUtils.format(c),
+      build: (c) => formatHtml(c),
     },
     pdf: {
       mimeType: "text/html",
       extension: ".html",
-      build: (c) => HtmlFormatterUtils.format(c, { autoPrint: true }),
+      build: (c) => formatHtml(c, { autoPrint: true }),
     },
     text: {
       mimeType: "text/plain",
       extension: ".txt",
-      build: (c) => MarkdownFormatterUtils.formatPlainText(c),
+      build: (c) => formatPlainText(c),
     },
   };
 

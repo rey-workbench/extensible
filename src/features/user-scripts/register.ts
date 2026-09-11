@@ -8,6 +8,7 @@ defineFeature({
   name: "User Scripts",
   description: "Tampermonkey-like userscript engine (GM_* APIs, auto-inject)",
   icon: "puzzle",
+  color: "#C48C1E",
   background: setupUserScriptsBackground,
   content: setupUserScriptsContent,
   popup: UserScripts,

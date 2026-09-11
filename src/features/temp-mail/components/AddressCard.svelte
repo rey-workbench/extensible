@@ -4,7 +4,7 @@
   import { sendMessage } from "@/lib/messaging";
   import { TEMPMAIL_ACTIONS } from "../constants/temp-mail.constants";
   import type { TempEmail } from "../types/temp-mail.types";
-  import { TempMailUtils } from "../utils/temp-mail.utils";
+  import { formatCountdown } from "../utils/temp-mail.utils";
 
   interface Props {
     email: TempEmail | null;
@@ -41,7 +41,7 @@
     <span
       class="rounded-sm border border-[#D4CEC2] bg-[#EDE7DA] px-2 py-0.5 text-[10.5px] font-bold tabular-nums text-ext-text-secondary"
     >
-      {isActive ? TempMailUtils.formatCountdown(remainingSeconds) : "00:00"}
+      {isActive ? formatCountdown(remainingSeconds) : "00:00"}
     </span>
   </div>
 

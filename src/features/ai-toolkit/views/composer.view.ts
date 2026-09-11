@@ -65,26 +65,6 @@ export class AiToolkitComposerView {
 
     const style = document.createElement("style");
     style.textContent = `
-      :host {
-        all: initial;
-        font-family: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        color: #1A1A1A;
-        box-sizing: border-box;
-      }
-      *, *::before, *::after {
-        box-sizing: border-box;
-      }
-      button {
-        font-family: inherit;
-        font-size: inherit;
-        line-height: inherit;
-        color: inherit;
-        background: transparent;
-        border: none;
-        padding: 0;
-        margin: 0;
-        cursor: pointer;
-      }
       ${globalCss}
     `;
     this.shadow.appendChild(style);

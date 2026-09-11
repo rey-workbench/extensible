@@ -2,7 +2,11 @@
   import { onMount } from "svelte";
   import ExtensionList from "@/components/ExtensionList.svelte";
   import Toggle from "@/components/Toggle.svelte";
-  import { type FeatureModule, getToggleableFeatures } from "@/lib/feature-registry";
+  import {
+    type FeatureModule,
+    getFeatureColor,
+    getToggleableFeatures,
+  } from "@/lib/feature-registry";
   import {
     featureEnabledItem,
     setFeatureEnabled,
@@ -54,19 +58,6 @@
 
   function showList(): void {
     view = "list";
-  }
-
-  function getFeatureColor(id: string): string {
-    switch (id) {
-      case "temp-mail":
-        return "#D63230";
-      case "ai-toolkit":
-        return "#2D8C4E";
-      case "user-scripts":
-        return "#C48C1E";
-      default:
-        return "#1B4DDB";
-    }
   }
 </script>
 

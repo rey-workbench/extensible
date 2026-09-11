@@ -108,40 +108,20 @@
     aria-label={tooltip}
   >
     {#if phase === "loading"}
-      <Icon name="spinner" size={13} style="color: #1A1A1A; animation: aio-spin 1s linear infinite;" />
+      <div class="animate-spin text-ext-text">
+        <Icon name="spinner" size={13} />
+      </div>
     {:else if phase === "filled"}
       <Icon name="check" size={13} style="color: #2D8C4E;" />
     {:else if phase === "error"}
       <Icon name="close" size={13} style="color: #D63230;" />
     {:else}
-      <Icon name="mail" size={13} style="color: #D63230;" />
+      <Icon name="mail" size={13} style="color: #1A1A1A;" />
     {/if}
     <span
-      style:pointer-events="none"
-      style:position="absolute"
-      style:bottom="100%"
-      style:right="0"
-      style:margin-bottom="6px"
-      style:white-space="nowrap"
-      style:border-radius="2px"
-      style:border="1.5px solid #2B2B2B"
-      style:background="#FFFDF7"
-      style:padding="2px 8px"
-      style:font-size="9.5px"
-      style:font-weight="900"
-      style:text-transform="uppercase"
-      style:letter-spacing="0.05em"
-      style:color="#1A1A1A"
-      style:box-shadow="2px 2px 0 #1A1A1A"
-      style:font-family="'Space Grotesk', system-ui, sans-serif"
+      class="pointer-events-none absolute bottom-[calc(100%+6px)] right-0 z-50 whitespace-nowrap rounded border border-ext-border bg-ext-surface px-2 py-1 text-[10px] font-bold text-ext-text shadow-[2px_2px_0_#1A1A1A]"
       style:opacity={isHovered ? 1 : 0}
       style:transition="opacity 0.15s"
     >{tooltip}</span>
   </button>
 {/if}
-
-<style>
-  @keyframes aio-spin {
-    to { transform: rotate(360deg); }
-  }
-</style>

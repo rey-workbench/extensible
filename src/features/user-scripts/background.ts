@@ -9,9 +9,8 @@ import { onMessage, sendToTab } from "@/lib/messaging";
 import { isBlockedUrl, USER_SCRIPTS_ACTIONS } from "./constants/user-scripts.constants";
 import { GmRpcService, MENU_PREFIX } from "./services/gm-rpc.service";
 import { InjectionEngine } from "./services/injection.engine";
-import { recordFromCode } from "./services/record-factory";
 import { UpdateService } from "./services/update.service";
-import { UserScriptsService } from "./services/user-scripts.service";
+import { recordFromCode, UserScriptsService } from "./services/user-scripts.service";
 import type {
   GmRpcPayload,
   UserScriptRecord,

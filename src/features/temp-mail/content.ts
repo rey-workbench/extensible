@@ -4,7 +4,7 @@ import { onMessage, sendMessage } from "@/lib/messaging";
 import TempMailBadge from "./components/TempMailBadge.svelte";
 import { TEMPMAIL_ACTIONS } from "./constants/temp-mail.constants";
 import { tempMailSettings } from "./services/temp-mail.service";
-import { TempMailUtils } from "./utils/temp-mail.utils";
+import { isEmailField } from "./utils/temp-mail.utils";
 
 interface BadgeEntry {
   unmount: () => void;
@@ -19,12 +19,12 @@ export async function setupTempMailContent(): Promise<void> {
     if (!email) return false;
 
     const activeEl = document.activeElement;
-    if (activeEl instanceof HTMLInputElement && TempMailUtils.isEmailField(activeEl)) {
+    if (activeEl instanceof HTMLInputElement && isEmailField(activeEl)) {
       setInputValue(activeEl, email);
       return true;
     }
     for (const input of document.querySelectorAll<HTMLInputElement>("input")) {
-      if (TempMailUtils.isEmailField(input)) {
+      if (isEmailField(input)) {
         setInputValue(input, email);
         return true;
       }
@@ -62,7 +62,7 @@ async function setupBadges(): Promise<void> {
   function scan(): void {
     if (!settings.showFloatingButton) return;
     for (const input of document.querySelectorAll<HTMLInputElement>("input")) {
-      if (TempMailUtils.isEmailField(input)) attach(input);
+      if (isEmailField(input)) attach(input);
     }
   }
 

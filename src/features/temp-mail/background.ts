@@ -152,7 +152,9 @@ async function fillActiveTab(tabId: number | null): Promise<boolean> {
   if (!s.email) return false;
   try {
     const targetTabId =
-      tabId ?? (await browser.tabs.query({ active: true, currentWindow: true }))[0]?.id;
+      tabId ??
+      (await browser.tabs.query({ active: true, lastFocusedWindow: true }))[0]?.id ??
+      (await browser.tabs.query({ active: true }))[0]?.id;
     if (targetTabId == null) return false;
     await sendToTab(targetTabId, TEMPMAIL_ACTIONS.AUTOFILL_EMAIL, {
       email: s.email.address,

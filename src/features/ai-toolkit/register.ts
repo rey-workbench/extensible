@@ -8,6 +8,7 @@ defineFeature({
   name: "AI Toolkit",
   description: "Export AI chats & Caveman mode",
   icon: "markdown",
+  color: "#2D8C4E",
   background: setupAiToolkitBackground,
   content: setupAiToolkitContent,
   popup: AiToolkit,

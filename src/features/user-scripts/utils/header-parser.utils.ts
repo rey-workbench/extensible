@@ -22,7 +22,7 @@ function allListed(block: string, key: string): string[] {
  * Spec §2 — all standard keys, unknown keys ignored. Values may be wrapped
  * in quotes (e.g. @name "My Script").
  */
-export function parseUserScriptHeader(code: string): UserScriptMeta {
+export function parseUserScriptHeader(code: string, fallbackDefaultName?: string): UserScriptMeta {
   const start = code.indexOf(HEADER_OPEN);
   const end = code.indexOf(HEADER_CLOSE, start >= 0 ? start : 0);
   const block = start >= 0 && end > start ? code.slice(start, end) : "";
@@ -50,7 +50,7 @@ export function parseUserScriptHeader(code: string): UserScriptMeta {
       .slice(0, 40) || "Untitled script";
 
   return {
-    name: unquote(firstListed(block, "name")) || fallbackName,
+    name: unquote(firstListed(block, "name")) || fallbackDefaultName || fallbackName,
     namespace: firstListed(block, "namespace"),
     version: firstListed(block, "version") || "0.0.0",
     description: unquote(firstListed(block, "description")),

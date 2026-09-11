@@ -8,6 +8,7 @@ defineFeature({
   name: "Temp Mail",
   description: "Disposable email with live inbox & OTP reader",
   icon: "mail",
+  color: "#D63230",
   background: setupTempMailBackground,
   content: setupTempMailContent,
   popup: TempMail,

@@ -64,3 +64,7 @@ export class TempMailUtils {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 }
+
+export const extractOtpCode = TempMailUtils.extractOtpCode;
+export const isEmailField = TempMailUtils.isEmailField;
+export const formatCountdown = TempMailUtils.formatCountdown;

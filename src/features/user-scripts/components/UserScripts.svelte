@@ -6,9 +6,10 @@
   import Icon from "@/components/Icon.svelte";
   import { slugify } from "@/lib/browser";
   import { sendMessage } from "@/lib/messaging";
+  import { createUniqueId } from "@/lib/utils";
   import { USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
   import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
-  import { parseImportedHeader } from "../utils/header-import.utils";
+  import { parseUserScriptHeader } from "../utils/header-parser.utils";
   import ScriptEditor from "./ScriptEditor.svelte";
   import ScriptRow from "./ScriptRow.svelte";
 
@@ -166,10 +167,10 @@
   async function importFromFile(file: File): Promise<void> {
     const code = await file.text();
     const fallbackName = file.name.replace(/\.user\.js$|\.js$/i, "");
-    const meta = parseImportedHeader(code, fallbackName);
+    const meta = parseUserScriptHeader(code, fallbackName);
     const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.IMPORT_FILE, {
       record: {
-        id: `us_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
+        id: createUniqueId("us"),
         code,
         meta,
         enabled: true,

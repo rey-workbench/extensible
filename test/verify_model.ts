@@ -58,6 +58,7 @@ const [
   { CavemanDirectiveUtils },
   { HtmlFormatterUtils, JsonFormatterUtils, MarkdownFormatterUtils },
   tempMail,
+  { defineFeature, getFeatureColor },
 ] = await Promise.all([
   import("@/features/temp-mail/utils/temp-mail.utils"),
   import("@/lib/browser"),
@@ -66,8 +67,8 @@ const [
   import("@/features/ai-toolkit/utils/caveman-directive.utils"),
   import("@/features/ai-toolkit/utils/index"),
   import("@/features/temp-mail/services/temp-mail.service"),
+  import("@/lib/feature-registry"),
 ]);
-
 let passed = 0;
 
 function ok(cond: unknown, label: string): void {
@@ -110,8 +111,23 @@ ok(
   "Should slugify text"
 );
 console.log("   ✓ lib utilities passed.");
-
-// 3. AiToolkitService (storage-backed, runs on the fake browser storage)
+console.log("\n2.5. Testing Feature Module Colors & Registration:");
+defineFeature({
+  id: "test-module",
+  name: "Test Module",
+  description: "Test description",
+  icon: "mail",
+  color: "#FF4400",
+});
+ok(
+  getFeatureColor("test-module") === "#FF4400",
+  "Custom registered feature should report registered color"
+);
+ok(
+  getFeatureColor("unknown-feature") === "#1B4DDB",
+  "Unknown feature should fall back to default color #1B4DDB"
+);
+console.log("   ✓ Feature module colors passed.");
 console.log("\n3. Testing AiToolkitService:");
 const sampleConvo = {
   id: "test_chat_1",

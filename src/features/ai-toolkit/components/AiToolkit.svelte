@@ -12,7 +12,7 @@
     ExportFormat,
   } from "../types/ai-toolkit.types";
   import { ChatParserUtils } from "../utils/chat-parser.utils";
-  import { MarkdownFormatterUtils } from "../utils/markdown-formatter.utils";
+  import { formatMarkdown } from "../utils/export-formatters";
   import ActiveSessionCard from "./ActiveSessionCard.svelte";
   import CavemanCard from "./CavemanCard.svelte";
   import HistoryList from "./HistoryList.svelte";
@@ -132,7 +132,7 @@
     if (!convo) return;
     isLoading = true;
     try {
-      const mdText = MarkdownFormatterUtils.format(convo);
+      const mdText = formatMarkdown(convo);
       const ok = await copyToClipboard(mdText);
       showStatus(ok ? "Copied to clipboard!" : "Copy failed", !ok);
     } catch {
