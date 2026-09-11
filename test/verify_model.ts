@@ -228,6 +228,13 @@ ok(htmlOutput.includes("Testing AI Toolkit Architecture"), "HTML should include 
 
 const printPdfOutput = formatHtml(sampleConvo, { autoPrint: true });
 ok(printPdfOutput.includes("window.print()"), "Auto-print HTML should call window.print()");
+
+const plainTextOutput = formatPlainText(sampleConvo);
+ok(
+  plainTextOutput.includes(sampleConvo.title.toUpperCase()),
+  "Plain text should include uppercase title",
+);
+ok(plainTextOutput.includes("[USER]:"), "Plain text should include user prefix");
 console.log("   ✓ Formatters passed.");
 
 console.log("\n5. Testing ChatParserUtils platform detection:");
