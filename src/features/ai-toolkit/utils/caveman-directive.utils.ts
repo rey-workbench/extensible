@@ -1,7 +1,7 @@
 import { type CavemanLevel, isValidCavemanLevel } from "../constants/ai-toolkit.constants";
 
 export const PRIMER_PREFIX = "[Caveman mode is ON";
-export const REMINDER_PREFIX = "[stay in caveman mode";
+const REMINDER_PREFIX = "[stay in caveman mode";
 export const STOP_PREFIX = "[stop caveman mode";
 
 const STOP_DIRECTIVE =
@@ -81,19 +81,3 @@ export function wrapText(text: string, needsPrimer: boolean, level: CavemanLevel
   const directive = needsPrimer ? buildPrimer(level) : buildReminder(level);
   return `${directive}\n\n${text}`;
 }
-
-export const CavemanDirectiveUtils = {
-  PRIMER_PREFIX,
-  REMINDER_PREFIX,
-  STOP_PREFIX,
-  buildPrimer,
-  buildReminder,
-  buildStop,
-  isPrefixed,
-  isStopPrefixed,
-  hasPrimer,
-  hasStop,
-  wrapStop,
-  needsPrimer,
-  wrapText,
-};

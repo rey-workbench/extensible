@@ -11,7 +11,7 @@
     ChatConversation,
     ExportFormat,
   } from "../types/ai-toolkit.types";
-  import { ChatParserUtils } from "../utils/chat-parser.utils";
+  import { hydrateVirtualizedChat, parseActivePage } from "../utils/chat-parser.utils";
   import { formatMarkdown } from "../utils/export-formatters";
   import ActiveSessionCard from "./ActiveSessionCard.svelte";
   import CavemanCard from "./CavemanCard.svelte";
@@ -55,8 +55,8 @@
       if (!isExtensionPopup && typeof document !== "undefined") {
         try {
           if (deepHydrate)
-            await ChatParserUtils.hydrateVirtualizedChat(document);
-          convo = ChatParserUtils.parseActivePage(document);
+            await hydrateVirtualizedChat(document);
+          convo = parseActivePage(document);
           return;
         } catch (err) {
           console.warn("[AiToolkit] Direct DOM scrape error:", err);

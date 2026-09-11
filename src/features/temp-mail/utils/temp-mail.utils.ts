@@ -99,10 +99,3 @@ export function sanitizeEmailHtml(rawHtml: string | null | undefined): string {
       );
   }
 }
-
-export const TempMailUtils = {
-  isEmailField,
-  extractOtpCode,
-  formatCountdown,
-  sanitizeEmailHtml,
-};

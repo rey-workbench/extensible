@@ -49,12 +49,22 @@ function createFakeBrowser(): Record<string, unknown> {
 (globalThis as Record<string, unknown>).browser = createFakeBrowser();
 
 const [
-  { TempMailUtils, sanitizeEmailHtml },
+  { extractOtpCode, formatCountdown, sanitizeEmailHtml },
   { escapeHtml, formatRelativeTime, isContextInvalidated, slugify, setInputValue, setNativeValue },
   { AiToolkitService },
-  { ChatParserUtils },
-  { CavemanDirectiveUtils },
-  { HtmlFormatterUtils, JsonFormatterUtils, MarkdownFormatterUtils },
+  { detectPlatform },
+  {
+    buildPrimer,
+    buildReminder,
+    buildStop,
+    hasStop,
+    isPrefixed,
+    isStopPrefixed,
+    needsPrimer,
+    wrapStop,
+    wrapText,
+  },
+  { formatHtml, formatJson, formatMarkdown, formatPlainText },
   tempMail,
   { defineFeature, getFeatureColor },
   { GmRpcService },
@@ -80,17 +90,17 @@ function ok(cond: unknown, label: string): void {
 
 console.log("1. Testing TempMailUtils:");
 ok(
-  TempMailUtils.extractOtpCode("Your verification code is 492810. Do not share it.") === "492810",
+  extractOtpCode("Your verification code is 492810. Do not share it.") === "492810",
   "Should extract 6-digit verification code",
 );
 ok(
-  TempMailUtils.extractOtpCode(
+  extractOtpCode(
     "<style>p { color: #555555; font-size: 14px; }</style><p>Click this link: https://app.faceless.video/auth/confirm?token_hash=pkce_4a686446df7117ce7f7d25cd7c55edb230587c7c779ccdb04595105a&type=signup</p>",
   ) === null,
   "Should return null for magic link email without OTP",
 );
-ok(TempMailUtils.formatCountdown(125) === "02:05", "Should format 125 seconds to 02:05");
-ok(TempMailUtils.formatCountdown(0) === "Expired", "Should report Expired for 0 seconds");
+ok(formatCountdown(125) === "02:05", "Should format 125 seconds to 02:05");
+ok(formatCountdown(0) === "Expired", "Should report Expired for 0 seconds");
 console.log("   ✓ TempMailUtils passed.");
 
 console.log("\n2. Testing lib utilities:");
@@ -168,7 +178,7 @@ await service.recordHistory({
   exportedAt: Date.now(),
   format: "markdown",
   url: sampleConvo.url,
-  content: MarkdownFormatterUtils.format(sampleConvo),
+  content: formatMarkdown(sampleConvo),
 });
 const hist = await service.getHistory();
 ok(hist.length === 1, "History should contain one item");
@@ -199,7 +209,7 @@ await assert.rejects(
 console.log("   ✓ AiToolkitService passed.");
 
 console.log("\n4. Testing formatters:");
-const mdOutput = MarkdownFormatterUtils.format(sampleConvo);
+const mdOutput = formatMarkdown(sampleConvo);
 ok(
   mdOutput.includes('title: "Testing AI Toolkit Architecture"'),
   "Markdown should include title frontmatter",
@@ -207,110 +217,82 @@ ok(
 ok(mdOutput.includes("### 🧑 User"), "Markdown should include user role heading");
 ok(mdOutput.includes("### 🤖 Assistant"), "Markdown should include assistant role heading");
 
-const jsonOutput = JsonFormatterUtils.format(sampleConvo);
+const jsonOutput = formatJson(sampleConvo);
 const parsedJson = JSON.parse(jsonOutput);
 ok(parsedJson.version === "1.0", "JSON should include version");
 ok(parsedJson.conversation.title === sampleConvo.title, "JSON should include conversation title");
 
-const htmlOutput = HtmlFormatterUtils.format(sampleConvo);
+const htmlOutput = formatHtml(sampleConvo);
 ok(htmlOutput.includes("<!DOCTYPE html>"), "HTML should be a full document");
 ok(htmlOutput.includes("Testing AI Toolkit Architecture"), "HTML should include title");
 
-const printPdfOutput = HtmlFormatterUtils.format(sampleConvo, { autoPrint: true });
+const printPdfOutput = formatHtml(sampleConvo, { autoPrint: true });
 ok(printPdfOutput.includes("window.print()"), "Auto-print HTML should call window.print()");
 console.log("   ✓ Formatters passed.");
 
 console.log("\n5. Testing ChatParserUtils platform detection:");
-ok(ChatParserUtils.detectPlatform("chatgpt.com") === "chatgpt", "Should detect ChatGPT");
-ok(ChatParserUtils.detectPlatform("claude.ai") === "claude", "Should detect Claude");
-ok(ChatParserUtils.detectPlatform("gemini.google.com") === "gemini", "Should detect Gemini");
-ok(ChatParserUtils.detectPlatform("chat.deepseek.com") === "deepseek", "Should detect DeepSeek");
-ok(ChatParserUtils.detectPlatform("example.com") === "generic", "Should fall back to generic");
+ok(detectPlatform("chatgpt.com") === "chatgpt", "Should detect ChatGPT");
+ok(detectPlatform("claude.ai") === "claude", "Should detect Claude");
+ok(detectPlatform("gemini.google.com") === "gemini", "Should detect Gemini");
+ok(detectPlatform("chat.deepseek.com") === "deepseek", "Should detect DeepSeek");
+ok(detectPlatform("example.com") === "generic", "Should fall back to generic");
 console.log("   ✓ ChatParserUtils passed.");
 
 console.log("\n6. Testing CavemanDirectiveUtils:");
-ok(
-  CavemanDirectiveUtils.buildReminder("lite").includes("LITE"),
-  "Lite reminder should mention LITE",
-);
-ok(
-  CavemanDirectiveUtils.buildReminder("full").includes("FULL"),
-  "Full reminder should mention FULL",
-);
-ok(
-  CavemanDirectiveUtils.buildPrimer("ultra").includes("Intensity ULTRA"),
-  "Ultra primer should mention ULTRA",
-);
+ok(buildReminder("lite").includes("LITE"), "Lite reminder should mention LITE");
+ok(buildReminder("full").includes("FULL"), "Full reminder should mention FULL");
+ok(buildPrimer("ultra").includes("Intensity ULTRA"), "Ultra primer should mention ULTRA");
 
-ok(
-  CavemanDirectiveUtils.isPrefixed("[Caveman mode is ON] Hello") === true,
-  "Should detect primer prefix",
-);
-ok(
-  CavemanDirectiveUtils.isPrefixed("[stay in caveman mode — FULL] Hello") === true,
-  "Should detect reminder prefix",
-);
-ok(
-  CavemanDirectiveUtils.isPrefixed("Hello world") === false,
-  "Should not detect prefix on plain text",
-);
+ok(isPrefixed("[Caveman mode is ON] Hello") === true, "Should detect primer prefix");
+ok(isPrefixed("[stay in caveman mode — FULL] Hello") === true, "Should detect reminder prefix");
+ok(isPrefixed("Hello world") === false, "Should not detect prefix on plain text");
 
-ok(CavemanDirectiveUtils.needsPrimer([]) === true, "Empty history requires primer");
-ok(CavemanDirectiveUtils.needsPrimer(null) === true, "Null history requires primer");
+ok(needsPrimer([]) === true, "Empty history requires primer");
+ok(needsPrimer(null) === true, "Null history requires primer");
 ok(
-  CavemanDirectiveUtils.needsPrimer([
+  needsPrimer([
     { role: "user", content: "Halo apa kabar" },
     { role: "assistant", content: "Kabar baik!" },
   ]) === true,
   "Ongoing chat with no caveman prefix must require primer",
 );
 ok(
-  CavemanDirectiveUtils.needsPrimer([
+  needsPrimer([
     { role: "user", content: "[Caveman mode is ON for this whole conversation...] Halo" },
     { role: "assistant", content: "Halo." },
   ]) === false,
   "Already-primed chat should not require primer",
 );
 
-const wrappedPrimer = CavemanDirectiveUtils.wrapText("Explain recursion", true, "full");
+const wrappedPrimer = wrapText("Explain recursion", true, "full");
 ok(wrappedPrimer.startsWith("[Caveman mode is ON"), "wrapText(true) should prepend primer");
 ok(wrappedPrimer.includes("Explain recursion"), "wrapText should keep original text");
 
-const wrappedReminder = CavemanDirectiveUtils.wrapText("Explain recursion", false, "full");
+const wrappedReminder = wrapText("Explain recursion", false, "full");
 ok(
   wrappedReminder.startsWith("[stay in caveman mode — FULL]"),
   "wrapText(false) should prepend reminder",
 );
 
-const stopWrapped = CavemanDirectiveUtils.wrapText("Explain recursion", false, "bogus" as never);
+const stopWrapped = wrapText("Explain recursion", false, "bogus" as never);
 ok(stopWrapped.startsWith("[stop caveman mode"), "Unknown level must inject the stop directive");
-ok(CavemanDirectiveUtils.buildStop().includes("normal"), "Stop directive resumes normal replies");
-ok(
-  CavemanDirectiveUtils.isPrefixed("[stop caveman mode] Please clarify") === true,
-  "Should detect stop prefix",
-);
-ok(
-  CavemanDirectiveUtils.isStopPrefixed("[stop caveman mode] Please clarify") === true,
-  "isStopPrefixed true",
-);
-ok(CavemanDirectiveUtils.isStopPrefixed("normal text") === false, "isStopPrefixed false");
+ok(buildStop().includes("normal"), "Stop directive resumes normal replies");
+ok(isPrefixed("[stop caveman mode] Please clarify") === true, "Should detect stop prefix");
+ok(isStopPrefixed("[stop caveman mode] Please clarify") === true, "isStopPrefixed true");
+ok(isStopPrefixed("normal text") === false, "isStopPrefixed false");
 
 ok(
-  CavemanDirectiveUtils.hasStop([
-    { role: "user", content: "[stop caveman mode] Resume normal" },
-  ]) === true,
+  hasStop([{ role: "user", content: "[stop caveman mode] Resume normal" }]) === true,
   "hasStop should find stop directive",
 );
 ok(
-  CavemanDirectiveUtils.hasStop([{ role: "user", content: "[stay in caveman mode — LITE]" }]) ===
-    false,
+  hasStop([{ role: "user", content: "[stay in caveman mode — LITE]" }]) === false,
   "hasStop should ignore reminders",
 );
-const stopOff = CavemanDirectiveUtils.wrapStop("Continue explaining");
+const stopOff = wrapStop("Continue explaining");
 ok(stopOff.startsWith("[stop caveman mode"), "wrapStop must prepend the stop directive");
 ok(
-  CavemanDirectiveUtils.wrapStop("[stop caveman mode] already stopped") ===
-    "[stop caveman mode] already stopped",
+  wrapStop("[stop caveman mode] already stopped") === "[stop caveman mode] already stopped",
   "wrapStop must be idempotent",
 );
 console.log("   ✓ CavemanDirectiveUtils passed.");

@@ -131,11 +131,3 @@ export function setText(editor: HTMLElement, text: string): void {
   } catch {}
   editor.dispatchEvent(new Event("input", { bubbles: true }));
 }
-
-export const ChatComposerUtils = {
-  getEditor,
-  getComposerBox,
-  getSendButton,
-  getText,
-  setText,
-};

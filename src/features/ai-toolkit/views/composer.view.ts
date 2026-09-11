@@ -1,7 +1,7 @@
 import globalCss from "@/styles/global.css?inline";
 import { DEFAULT_CAVEMAN_SETTINGS } from "../constants/ai-toolkit.constants";
 import type { CavemanSettings, ExportFormat } from "../types/ai-toolkit.types";
-import { ChatComposerUtils } from "../utils/chat-composer.utils";
+import { getComposerBox, getEditor } from "../utils/chat-composer.utils";
 import {
   buildMenuHtml,
   buildToolbarHtml,
@@ -132,8 +132,8 @@ export class AiToolkitComposerView {
   private positionDock(): void {
     if (!this.container) return;
 
-    const composerBox = ChatComposerUtils.getComposerBox(document);
-    const editor = ChatComposerUtils.getEditor(document);
+    const composerBox = getComposerBox(document);
+    const editor = getEditor(document);
 
     if (!composerBox || composerBox === editor || editor?.contains(composerBox)) {
       this.applyFallbackDock();
@@ -188,7 +188,7 @@ export class AiToolkitComposerView {
     requestAnimationFrame(() => {
       this.alignScheduled = false;
       if (!this.container) return;
-      const composerBox = ChatComposerUtils.getComposerBox(document);
+      const composerBox = getComposerBox(document);
       if (composerBox && this.container.classList.contains("aio-composer-floating")) {
         this.alignDockTo(composerBox);
       } else {

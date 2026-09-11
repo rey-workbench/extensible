@@ -217,7 +217,3 @@ export function formatHtml(convo: ChatConversation, options: { autoPrint?: boole
 </body>
 </html>`;
 }
-
-export const JsonFormatterUtils = { format: formatJson };
-export const MarkdownFormatterUtils = { format: formatMarkdown, formatPlainText };
-export const HtmlFormatterUtils = { format: formatHtml };

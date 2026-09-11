@@ -100,7 +100,7 @@ export async function hydrateVirtualizedChat(doc: Document = document): Promise<
   } catch {}
 }
 
-export function extractTitle(doc: Document, messages: readonly ChatMessage[]): string {
+function extractTitle(doc: Document, messages: readonly ChatMessage[]): string {
   const docTitle = doc.title ? doc.title.replace(/\s*[-–|].*$/, "").trim() : "";
   if (docTitle && !["ChatGPT", "Claude", "Gemini", "DeepSeek", "New Chat"].includes(docTitle)) {
     return docTitle;
@@ -117,11 +117,3 @@ export function extractTitle(doc: Document, messages: readonly ChatMessage[]): s
 
   return `AI Chat - ${new Date().toLocaleDateString()}`;
 }
-
-export const ChatParserUtils = {
-  detectPlatform,
-  parseActivePage,
-  scrapeConvo,
-  hydrateVirtualizedChat,
-  extractTitle,
-};

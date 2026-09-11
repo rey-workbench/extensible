@@ -9,9 +9,22 @@ import {
 } from "./constants/ai-toolkit.constants";
 import { cavemanSettingsItem } from "./services/ai-toolkit.service";
 import type { CavemanSettings, ChatConversation, ExportFormat } from "./types/ai-toolkit.types";
-import { CavemanDirectiveUtils } from "./utils/caveman-directive.utils";
-import { ChatComposerUtils } from "./utils/chat-composer.utils";
-import { ChatParserUtils } from "./utils/chat-parser.utils";
+import {
+  hasPrimer,
+  hasStop,
+  isPrefixed,
+  PRIMER_PREFIX,
+  STOP_PREFIX,
+  wrapStop,
+  wrapText,
+} from "./utils/caveman-directive.utils";
+import { getEditor, getSendButton, getText, setText } from "./utils/chat-composer.utils";
+import {
+  detectPlatform,
+  hydrateVirtualizedChat,
+  parseActivePage,
+  scrapeConvo,
+} from "./utils/chat-parser.utils";
 import { formatMarkdown } from "./utils/export-formatters";
 import { AiToolkitComposerView } from "./views/composer.view";
 
@@ -21,9 +34,9 @@ export async function setupAiToolkitContent(): Promise<void> {
     async (payload) => {
       try {
         if (payload?.hydrate) {
-          await ChatParserUtils.hydrateVirtualizedChat(document);
+          await hydrateVirtualizedChat(document);
         }
-        return { conversation: ChatParserUtils.parseActivePage(document) };
+        return { conversation: parseActivePage(document) };
       } catch (err) {
         console.warn("[AiToolkit] SCRAPE_DOM failed:", err);
         return { conversation: null };
@@ -31,7 +44,7 @@ export async function setupAiToolkitContent(): Promise<void> {
     },
   );
 
-  const platform = ChatParserUtils.detectPlatform(window.location.hostname);
+  const platform = detectPlatform(window.location.hostname);
   if (platform === "generic") return;
 
   let cavemanSettings: CavemanSettings = DEFAULT_CAVEMAN_SETTINGS;
@@ -41,14 +54,14 @@ export async function setupAiToolkitContent(): Promise<void> {
 
   const view = new AiToolkitComposerView({
     onExport: async (format: ExportFormat) => {
-      const convo = await ChatParserUtils.scrapeConvo(document, {
+      const convo = await scrapeConvo(document, {
         hydrate: true,
         actionLabel: "export",
       });
       await sendMessage(AI_TOOLKIT_ACTIONS.EXPORT_FILE, { conversation: convo, format });
     },
     onCopy: async () => {
-      const convo = await ChatParserUtils.scrapeConvo(document, { actionLabel: "copy" });
+      const convo = await scrapeConvo(document, { actionLabel: "copy" });
       const mdText = formatMarkdown(convo);
       await navigator.clipboard.writeText(mdText);
     },
@@ -98,11 +111,11 @@ export async function setupAiToolkitContent(): Promise<void> {
     const host = window.location.hostname.replace(/^www\./, "");
     if (cavemanSettings.sites[host] === false) return;
 
-    const editor = ChatComposerUtils.getEditor(document);
+    const editor = getEditor(document);
     if (!editor) return;
 
-    const raw = ChatComposerUtils.getText(editor);
-    if (!raw.trim() || CavemanDirectiveUtils.isPrefixed(raw)) return;
+    const raw = getText(editor);
+    if (!raw.trim() || isPrefixed(raw)) return;
 
     const modeActive = cavemanSettings.enabled && isValidCavemanLevel(cavemanSettings.level);
 
@@ -112,33 +125,29 @@ export async function setupAiToolkitContent(): Promise<void> {
       ) || document.body;
     const chatText = mainChat?.textContent ?? "";
 
-    if (!modeActive && !chatText.includes(CavemanDirectiveUtils.PRIMER_PREFIX)) return;
+    if (!modeActive && !chatText.includes(PRIMER_PREFIX)) return;
 
-    const convo = ChatParserUtils.parseActivePage(document);
-    const hasPrimerInChat =
-      CavemanDirectiveUtils.hasPrimer(convo?.messages) ||
-      chatText.includes(CavemanDirectiveUtils.PRIMER_PREFIX);
-    const hasStopInChat =
-      CavemanDirectiveUtils.hasStop(convo?.messages) ||
-      chatText.includes(CavemanDirectiveUtils.STOP_PREFIX);
+    const convo = parseActivePage(document);
+    const hasPrimerInChat = hasPrimer(convo?.messages) || chatText.includes(PRIMER_PREFIX);
+    const hasStopInChat = hasStop(convo?.messages) || chatText.includes(STOP_PREFIX);
 
     if (!modeActive && !hasPrimerInChat) return;
 
     if (!modeActive) {
       if (!hasStopInChat) {
-        setBypassThenWrite(editor, CavemanDirectiveUtils.wrapStop(raw));
+        setBypassThenWrite(editor, wrapStop(raw));
       }
       return;
     }
 
-    const wrapped = CavemanDirectiveUtils.wrapText(raw, !hasPrimerInChat, cavemanSettings.level);
+    const wrapped = wrapText(raw, !hasPrimerInChat, cavemanSettings.level);
     setBypassThenWrite(editor, wrapped);
   };
 
   const setBypassThenWrite = (editor: HTMLElement, text: string): void => {
     if (bypassTimer) clearTimeout(bypassTimer);
     bypass = true;
-    ChatComposerUtils.setText(editor, text);
+    setText(editor, text);
     bypassTimer = setTimeout(() => {
       bypass = false;
       bypassTimer = null;
@@ -153,7 +162,7 @@ export async function setupAiToolkitContent(): Promise<void> {
   const clickListener = (e: MouseEvent): void => {
     const target = e.target as HTMLElement | null;
     if (!target) return;
-    const sendBtn = ChatComposerUtils.getSendButton(document);
+    const sendBtn = getSendButton(document);
     if (sendBtn && (target === sendBtn || sendBtn.contains(target))) {
       handleCavemanInjection();
     }
