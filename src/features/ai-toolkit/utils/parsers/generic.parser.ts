@@ -1,7 +1,6 @@
 import type { ChatMessage } from "../../types/ai-toolkit.types";
 import { cleanElementText, pushMessage } from "./base.parser";
 
-/** Generic DOM extractor using structural heuristics */
 export function parseGeneric(doc: Document): ChatMessage[] {
   const messages: ChatMessage[] = [];
   const candidates = doc.querySelectorAll(

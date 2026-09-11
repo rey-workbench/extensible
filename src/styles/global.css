@@ -2,10 +2,6 @@
 @import "tailwindcss";
 @source "../**";
 
-/*
- * Design tokens — Mid-Century Modern / Bauhaus poster palette.
- * Warm cream backgrounds, bold primary colors, geometric aesthetic.
- */
 @theme {
   --color-ext-bg: #F5F0E8;
   --color-ext-surface: #FFFDF7;
@@ -21,10 +17,8 @@
   --color-ext-warning: #E8A727;
   --color-ext-accent: #E86A33;
 
-  /* Host isolation: lock spacing multiplier to 4px instead of 0.25rem so host page html font-size cannot distort layout */
   --spacing: 4px;
 
-  /* Host isolation: lock font scales to pixels instead of rem */
   --text-2xs: 10px;
   --text-2xs--line-height: 14px;
   --text-xs: 12px;
@@ -39,11 +33,6 @@
   --text-xl--line-height: 28px;
 }
 
-/*
- * Shadow DOM compatibility: Chromium does NOT inherit Houdini @property
- * rules into ShadowRoots. These explicit declarations ensure borders and
- * Tailwind v4 shadows work reliably inside content script shadow DOMs.
- */
 :host {
   display: block;
   font-family:
@@ -73,10 +62,6 @@
   --tw-ring-shadow: 0 0 #0000;
 }
 
-/*
- * Base styles — scoped to popup (isolated document).
- * This file is NEVER injected into content scripts; only popup/main.ts imports it.
- */
 @layer base {
   html,
   body {
@@ -96,9 +81,6 @@
   }
 }
 
-/* ------------------------------------------------------------------ */
-/* Shared primitives — flat Bauhaus surfaces, hard geometric shadows   */
-/* ------------------------------------------------------------------ */
 .ext-card {
   background: #FFFDF7;
   border: 1.5px solid #2B2B2B;

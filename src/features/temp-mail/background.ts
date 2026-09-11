@@ -1,6 +1,3 @@
-/**
- * TempMail background setup: message routes, poll alarm, context menus, badge.
- */
 import { browser } from "wxt/browser";
 import { setBadge, showNotification } from "@/lib/browser";
 import { onMessage, sendToTab } from "@/lib/messaging";
@@ -20,6 +17,30 @@ import type { InboxState, TempEmail, TempMailSettings } from "./types/temp-mail.
 
 const ALARM_NAME = "tempmail_poll";
 
+let consecutiveErrors = 0;
+let nextAllowedPollTime = 0;
+let lastFetchTime = 0;
+
+async function executeInboxPoll(): Promise<void> {
+  if (Date.now() < nextAllowedPollTime) return;
+  if (!(await hasValidEmail())) return;
+
+  try {
+    lastFetchTime = Date.now();
+    await fetchInbox();
+    consecutiveErrors = 0;
+    await updateBadge();
+  } catch (err) {
+    consecutiveErrors++;
+    const backoffSec = Math.min(300, 2 ** Math.min(consecutiveErrors, 5) * 10);
+    nextAllowedPollTime = Date.now() + backoffSec * 1000;
+    console.debug(
+      `[TempMail] poll failed (${consecutiveErrors} consecutive); backing off ${backoffSec}s:`,
+      err
+    );
+  }
+}
+
 async function updateBadge(): Promise<void> {
   if (!(await hasValidEmail())) return setBadge("");
   const unread = (await getCurrentState(false)).unreadCount;
@@ -31,20 +52,30 @@ export function setupTempMailBackground(): void {
   onMessage<
     { autoGenerate?: boolean; duration?: number } | null,
     Awaited<ReturnType<typeof getCurrentState>>
-  >(TEMPMAIL_ACTIONS.GET_CURRENT, async (payload) =>
-    getCurrentState(payload?.autoGenerate ?? false)
-  );
+  >(TEMPMAIL_ACTIONS.GET_CURRENT, async (payload) => {
+    const state = await getCurrentState(payload?.autoGenerate ?? false);
+    if (state.hasValidEmail && Date.now() - lastFetchTime > 5000) {
+      void executeInboxPoll();
+    }
+    return state;
+  });
 
   onMessage<{ duration?: number } | null, TempEmail>(
     TEMPMAIL_ACTIONS.GENERATE_NEW,
     async (payload) => {
       const email = await generateEmail(payload?.duration);
+      consecutiveErrors = 0;
+      nextAllowedPollTime = 0;
+      lastFetchTime = Date.now();
       await updateBadge();
       return email;
     }
   );
 
   onMessage<null, InboxState>(TEMPMAIL_ACTIONS.GET_INBOX, async () => {
+    lastFetchTime = Date.now();
+    consecutiveErrors = 0;
+    nextAllowedPollTime = 0;
     await fetchInbox();
     await updateBadge();
     return getInboxState();
@@ -72,23 +103,12 @@ export function setupTempMailBackground(): void {
 
   onMessage<null, boolean>(TEMPMAIL_ACTIONS.AUTOFILL_ACTIVE_TAB, async () => fillActiveTab(null));
 
-  // Poll alarm (MV3-safe, replaces setInterval)
   browser.alarms.create(ALARM_NAME, { periodInMinutes: TEMPMAIL_CONFIG.POLL_INTERVAL_SEC / 60 });
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name !== ALARM_NAME) return;
-    void (async () => {
-      if (await hasValidEmail()) {
-        try {
-          await fetchInbox();
-          await updateBadge();
-        } catch (err) {
-          console.debug("[TempMail] poll tick:", err);
-        }
-      }
-    })();
+    void executeInboxPoll();
   });
 
-  // New-email notification whenever the inbox cache grows (any context writes it)
   void inboxItem.watch((newEmails, oldEmails) => {
     const prev = oldEmails ?? [];
     if (newEmails.length <= prev.length) return;
@@ -101,7 +121,6 @@ export function setupTempMailBackground(): void {
     void updateBadge();
   });
 
-  // Context menus
   browser.runtime.onInstalled.addListener(() => {
     browser.contextMenus.create({
       id: "tempmail_root",

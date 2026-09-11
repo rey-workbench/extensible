@@ -17,11 +17,6 @@ function allListed(block: string, key: string): string[] {
   return out;
 }
 
-/**
- * Parses a `// ==UserScript==` metadata block into a UserScriptMeta.
- * Spec §2 — all standard keys, unknown keys ignored. Values may be wrapped
- * in quotes (e.g. @name "My Script").
- */
 export function parseUserScriptHeader(code: string, fallbackDefaultName?: string): UserScriptMeta {
   const start = code.indexOf(HEADER_OPEN);
   const end = code.indexOf(HEADER_CLOSE, start >= 0 ? start : 0);
@@ -38,7 +33,6 @@ export function parseUserScriptHeader(code: string, fallbackDefaultName?: string
     runAtRaw === "document-start" || runAtRaw === "document-end" ? runAtRaw : "document-idle";
   const injectRaw = firstListed(block, "inject-into").toLowerCase();
   const resources: Record<string, string> = {};
-  // @resource <name> <url>
   const resourceRe = /^\s*\/\/\s*@resource\s+(\S+)\s+(.+?)\s*$/gim;
   for (const rm of block.matchAll(resourceRe)) resources[rm[1]] = unquote(rm[2]);
 

@@ -1,6 +1,5 @@
 import type { UserScriptMeta } from "../types/user-scripts.types";
 
-/** Message channel names (all behind constants — atomic rename later). */
 export const USER_SCRIPTS_ACTIONS = {
   LIST: "user_scripts:list",
   GET: "user_scripts:get",
@@ -11,31 +10,23 @@ export const USER_SCRIPTS_ACTIONS = {
   TOGGLE: "user_scripts:toggle",
   IMPORT_FILE: "user_scripts:import",
   EXPORT: "user_scripts:export",
-  /** Ask background to fetch + parse a .user.js from a URL (install flow). */
   INSTALL_FROM_URL: "user_scripts:install_url",
-  /** Ask background to run all matching scripts in a tab now. */
   RUN_IN_TAB: "user_scripts:run_in_tab",
-  /** Pop the script into a dedicated editor tab. */
   OPEN_EDITOR: "user_scripts:open_editor",
 
-  // GM RPC bridge (ARC-02): content <-> background
   GM_RPC: "user_scripts:gm_rpc",
   GM_VALUE_CHANGED: "user_scripts:gm_value_changed",
   GM_MENU_COMMAND: "user_scripts:gm_menu_command",
   GM_MENU_REGISTERED: "user_scripts:gm_menu_registered",
+  REGISTER_SESSION_TOKEN: "user_scripts:register_session_token",
 } as const;
 
-/** Storage areas (chrome.storage.local via WXT storage). */
 export const USER_SCRIPTS_STORAGE_KEYS = {
   SCRIPTS: "local:user_scripts:scripts",
   RUN_LOGS: "local:user_scripts:run_logs",
   GM_VALUES: "local:user_scripts:gm_values",
 } as const;
 
-/**
- * SEC-04: GM APIs a script may receive, keyed by the @grant literal.
- * Anything not listed here cannot be granted.
- */
 const GM_GRANT_REGISTRY = {
   none: [],
   unsafeWindow: ["unsafeWindow"],
@@ -54,7 +45,6 @@ const GM_GRANT_REGISTRY = {
   GM_registerMenuCommand: ["GM.registerMenuCommand", "GM_registerMenuCommand"],
 } as const satisfies Record<string, readonly string[]>;
 
-/** All API globals a script gets for a given list of @grant literals (SEC-04). */
 export function resolveGrants(grants: string[]): string[] {
   const out = new Set<string>();
   if (grants.includes("none")) return [];
@@ -82,7 +72,6 @@ export const USER_SCRIPTS_DEFAULT_META: Omit<UserScriptMeta, "name"> = {
   icon: "",
 };
 
-/** URL schemes that must never be script targets (SEC-05). */
 const BLOCKED_URL_PREFIXES = [
   "chrome://",
   "chrome-extension://",

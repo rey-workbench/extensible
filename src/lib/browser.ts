@@ -15,12 +15,9 @@ export async function setBadge(text: string, color = "#10b981"): Promise<void> {
   try {
     await browser.action.setBadgeText({ text: text || "" });
     if (text) await browser.action.setBadgeBackgroundColor({ color });
-  } catch {
-    // badge unsupported (e.g. Firefox mobile)
-  }
+  } catch {}
 }
 
-/** Inline PNG so notifications work without a packaged icon file. */
 const NOTIFICATION_ICON =
   "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
 
@@ -30,7 +27,6 @@ export function showNotification(options: {
   iconUrl?: string;
 }): void {
   if (!browser.notifications) return;
-  // Best-effort: never let a rejected notification crash the background watcher.
   browser.notifications
     .create({
       type: "basic",
@@ -41,10 +37,6 @@ export function showNotification(options: {
     .catch(() => {});
 }
 
-/**
- * Sets a value through the element's native setter so frameworks (React/Vue)
- * pick it up, then fires input/change events. Works for inputs and textareas.
- */
 export function setNativeValue(input: HTMLInputElement | HTMLTextAreaElement, value: string): void {
   const proto =
     input instanceof HTMLTextAreaElement
@@ -57,7 +49,6 @@ export function setNativeValue(input: HTMLInputElement | HTMLTextAreaElement, va
   input.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
 }
 
-/** Sets an email input's value so frameworks pick it up, then fires input events. */
 export function setInputValue(input: HTMLInputElement, value: string): void {
   setNativeValue(input, value);
 }

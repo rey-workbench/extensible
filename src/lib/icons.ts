@@ -59,7 +59,6 @@ export function iconPath(name: IconName): string {
   return ICON_PATHS[name as Exclude<IconName, "spinner">] ?? "";
 }
 
-/** Render an icon as an inline SVG string (for vanilla-TS views outside Svelte). */
 export function renderIcon(name: IconName, size = 16, classNames = ""): string {
   if (name === "spinner") {
     return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" class="${classNames}" role="img"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>`;

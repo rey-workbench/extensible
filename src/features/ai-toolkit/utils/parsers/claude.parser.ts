@@ -2,10 +2,8 @@ import type { ChatMessage, MessageRole } from "../../types/ai-toolkit.types";
 import { cleanElementText, pushMessage } from "./base.parser";
 import { parseGeneric } from "./generic.parser";
 
-/** Claude DOM extractor */
 export function parseClaude(doc: Document): ChatMessage[] {
   const messages: ChatMessage[] = [];
-  // Claude messages are usually grouped in rows or containers with font-claude-message or font-user-message
   const turns = doc.querySelectorAll(
     'div[data-is-streaming], div[class*="font-claude-message"], div[class*="font-user-message"], div[data-test-render-count]'
   );

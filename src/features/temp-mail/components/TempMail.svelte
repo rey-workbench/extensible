@@ -2,6 +2,7 @@
   import { onDestroy, onMount } from "svelte";
   import { copyToClipboard, isContextInvalidated } from "@/lib/browser";
   import { sendMessage } from "@/lib/messaging";
+  import { showToast } from "@/lib/toast";
   import { TEMPMAIL_ACTIONS } from "../constants/temp-mail.constants";
   import type {
     EmailMessage,
@@ -17,20 +18,17 @@
   let remainingSeconds = $state(0);
   let emails = $state<EmailMessage[]>([]);
   let isRefreshing = $state(false);
-  let toast = $state<string | null>(null);
-  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  let rootEl = $state<HTMLElement | null>(null);
   let countdownTimer: ReturnType<typeof setInterval> | null = null;
   let pollTimer: ReturnType<typeof setInterval> | null = null;
 
-  // Modal state
+  
   let modalEmail = $state<EmailMessage | null>(null);
 
   const isActive = $derived(email !== null && remainingSeconds > 0);
 
-  function showToast(msg: string): void {
-    toast = msg;
-    if (toastTimer) clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => (toast = null), 2000);
+  function showToastMsg(msg: string): void {
+    if (rootEl) showToast(rootEl, msg);
   }
 
   function startCountdown(initial: number): void {
@@ -70,12 +68,12 @@
         email = newEmail;
         startCountdown((newEmail.durationMinutes ?? 60) * 60);
         emails = [];
-        showToast("Generated new address!");
+        showToastMsg("Generated new address!");
       }
     } catch (err) {
       if (isContextInvalidated(err)) return;
       console.error("[TempMail] Generate error:", err);
-      showToast("Failed to generate address");
+      showToastMsg("Failed to generate address");
     } finally {
       isRefreshing = false;
     }
@@ -86,14 +84,14 @@
       const success = await sendMessage<boolean>(
         TEMPMAIL_ACTIONS.AUTOFILL_ACTIVE_TAB,
       );
-      showToast(
+      showToastMsg(
         success
           ? "Filled email into page!"
           : "No email field found on active tab",
       );
     } catch (err) {
       if (isContextInvalidated(err)) return;
-      showToast("Autofill failed");
+      showToastMsg("Autofill failed");
     }
   }
 
@@ -102,7 +100,7 @@
     isRefreshing = true;
     try {
       await refreshInbox();
-      showToast("Inbox refreshed");
+      showToastMsg("Inbox refreshed");
     } catch (err) {
       if (isContextInvalidated(err)) return;
       console.error("[TempMail] Refresh error:", err);
@@ -118,7 +116,7 @@
         messageId: modalEmail.id,
       });
       modalEmail = null;
-      showToast("Message deleted");
+      showToastMsg("Message deleted");
       await refreshInbox();
     } catch (err) {
       if (isContextInvalidated(err)) return;
@@ -131,7 +129,7 @@
     successMsg = "Copied to clipboard!",
   ): Promise<void> {
     const ok = await copyToClipboard(text);
-    if (ok) showToast(successMsg);
+    if (ok) showToastMsg(successMsg);
   }
 
   onMount(async () => {
@@ -155,18 +153,17 @@
       isRefreshing = false;
     }
 
-    // Lightweight fallback poll every 10s
+    
     pollTimer = setInterval(() => void refreshInbox(), 10_000);
   });
 
   onDestroy(() => {
     stopCountdown();
     if (pollTimer) clearInterval(pollTimer);
-    if (toastTimer) clearTimeout(toastTimer);
   });
 </script>
 
-<div class="flex flex-col gap-2.5 p-2.5">
+<div bind:this={rootEl} class="flex flex-col gap-2.5 p-2.5">
   <AddressCard
     {email}
     {remainingSeconds}
@@ -190,12 +187,4 @@
     onDelete={() => void handleDelete()}
     onCopy={(t, m) => void handleCopy(t, m)}
   />
-
-  {#if toast}
-    <div
-      class="pointer-events-none fixed bottom-3 left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-md border-[1.5px] border-ext-border bg-ext-surface px-3.5 py-1 text-[11px] font-bold text-ext-text shadow-[3px_3px_0_#1A1A1A]"
-    >
-      {toast}
-    </div>
-  {/if}
 </div>

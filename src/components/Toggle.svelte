@@ -16,11 +16,6 @@
   }: Props = $props();
 </script>
 
-<!--
-  Toggle — shared switch component.
-  Uses <button> role=switch pattern (ARIA-compliant).
-  Matches the design in SideNotch & App.svelte.
--->
 <button
   type="button"
   role="switch"

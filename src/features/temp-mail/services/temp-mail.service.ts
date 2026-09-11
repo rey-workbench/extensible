@@ -1,7 +1,3 @@
-/**
- * TempMail service — plain functions, state persisted via WXT storage items.
- * Works in any context; API calls only ever run in the background.
- */
 import { storage } from "wxt/utils/storage";
 import {
   DEFAULT_TEMPMAIL_SETTINGS,
@@ -36,7 +32,6 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return (await res.json()) as T;
 }
 
-/** Generate a fresh address, replacing any previous one. */
 export async function generateEmail(durationMinutes?: number): Promise<TempEmail> {
   const duration = durationMinutes ?? TEMPMAIL_CONFIG.DEFAULT_DURATION;
   const data = await api<{ success: boolean; email?: TempEmail; error?: string }>("/api/generate", {
@@ -50,14 +45,22 @@ export async function generateEmail(durationMinutes?: number): Promise<TempEmail
   return data.email;
 }
 
+const MAX_CACHED_EMAILS = 30;
+
 function isExpired(email: TempEmail | null): boolean {
   return !email || Date.now() >= new Date(email.expiresAt).getTime();
 }
 
-/** Returns the current address when still valid, otherwise null. */
 async function getValidEmail(): Promise<TempEmail | null> {
   const email = await emailItem.getValue();
-  return isExpired(email) ? null : email;
+  if (isExpired(email)) {
+    if (email !== null) {
+      await emailItem.setValue(null);
+      await inboxItem.setValue([]);
+    }
+    return null;
+  }
+  return email;
 }
 
 export async function hasValidEmail(): Promise<boolean> {
@@ -82,7 +85,6 @@ export async function getCurrentState(autoGenerate = false): Promise<TempMailCur
   };
 }
 
-/** Fetch inbox from the API, merging read-state; 404 means empty inbox. */
 export async function fetchInbox(): Promise<EmailMessage[]> {
   const email = await getValidEmail();
   if (!email) return [];
@@ -106,8 +108,9 @@ export async function fetchInbox(): Promise<EmailMessage[]> {
     ...item,
     is_read: readIds.has(item.id) || !!item.is_read,
   }));
-  await inboxItem.setValue(merged);
-  return merged;
+  const capped = merged.slice(0, MAX_CACHED_EMAILS);
+  await inboxItem.setValue(capped);
+  return capped;
 }
 
 export async function getInboxState(): Promise<InboxState> {

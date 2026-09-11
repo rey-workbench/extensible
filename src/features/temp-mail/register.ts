@@ -1,7 +1,6 @@
 import { defineFeature } from "@/lib/feature-registry";
 import { setupTempMailBackground } from "./background";
 import TempMail from "./components/TempMail.svelte";
-import { setupTempMailContent } from "./content";
 
 defineFeature({
   id: "temp-mail",
@@ -10,6 +9,9 @@ defineFeature({
   icon: "mail",
   color: "#D63230",
   background: setupTempMailBackground,
-  content: setupTempMailContent,
+  content: async () => {
+    const { setupTempMailContent } = await import("./content");
+    return setupTempMailContent();
+  },
   popup: TempMail,
 });

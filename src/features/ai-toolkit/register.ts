@@ -1,7 +1,6 @@
 import { defineFeature } from "@/lib/feature-registry";
 import { setupAiToolkitBackground } from "./background";
 import AiToolkit from "./components/AiToolkit.svelte";
-import { setupAiToolkitContent } from "./content";
 
 defineFeature({
   id: "ai-toolkit",
@@ -10,6 +9,9 @@ defineFeature({
   icon: "markdown",
   color: "#2D8C4E",
   background: setupAiToolkitBackground,
-  content: setupAiToolkitContent,
+  content: async () => {
+    const { setupAiToolkitContent } = await import("./content");
+    return setupAiToolkitContent();
+  },
   popup: AiToolkit,
 });

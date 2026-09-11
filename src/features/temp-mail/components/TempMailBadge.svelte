@@ -1,13 +1,12 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import Icon from "@/components/Icon.svelte";
+  import { DANGER, INK, SUCCESS, SURFACE } from "@/lib/design-tokens";
 
   type BadgeState = "idle" | "loading" | "filled" | "error";
 
   interface Props {
-    /** The email input this badge floats beside. */
     target: HTMLInputElement;
-    /** Generate (and fill) an email; resolves to the address or null on failure. */
     onFill: () => Promise<string | null>;
   }
 
@@ -18,7 +17,13 @@
   let isHovered = $state(false);
 
   const tooltip = $derived(
-    phase === "loading" ? "Generating..." : phase === "filled" ? "Filled!" : phase === "error" ? "Error" : "Fill Temp Mail"
+    phase === "loading"
+      ? "Generating..."
+      : phase === "filled"
+        ? "Filled!"
+        : phase === "error"
+          ? "Error"
+          : "Fill Temp Mail"
   );
 
   function updateRect(): void {
@@ -52,9 +57,9 @@
       const email = await onFill();
       if (email) {
         phase = "filled";
-        // Brief green outline on the filled field
-        target.style.outline = "2px solid #2D8C4E";
-        target.style.boxShadow = "2px 2px 0 #1A1A1A";
+        
+        target.style.outline = `2px solid ${SUCCESS}`;
+        target.style.boxShadow = `2px 2px 0 ${INK}`;
         setTimeout(() => {
           target.style.outline = "";
           target.style.boxShadow = "";
@@ -77,51 +82,65 @@
 {#if !hidden}
   <button
     type="button"
-    class:aio-loading={phase === "loading"}
     style:top="{top}px"
     style:left="{left}px"
-    style:width="24px"
-    style:height="24px"
+    style:width="26px"
+    style:height="26px"
     style:position="fixed"
     style:z-index="2147483640"
     style:margin="0"
     style:padding="0"
-    style:background="#FFFDF7"
-    style:border="1.5px solid #1A1A1A"
-    style:box-shadow="2px 2px 0 #1A1A1A"
+    style:background={phase === "error" ? DANGER : SURFACE}
+    style:border={`1.5px solid ${INK}`}
+    style:border-radius="8px"
+    style:box-shadow={`2px 2px 0 ${INK}`}
     style:cursor="pointer"
     style:outline="none"
     style:user-select="none"
     style:box-sizing="border-box"
-    style:transform={isHovered ? "translateY(-50%) scale(1.05)" : "translateY(-50%)"}
+    style:transform="translateY(-50%) scale({isHovered ? 1.12 : 1})"
     style:display="flex"
     style:align-items="center"
     style:justify-content="center"
-    style:border-radius="2px"
-    style:transition="transform 0.15s"
-    style:color="#D63230"
+    style:transition="transform 0.15s ease, background 0.15s ease"
+    style:color={INK}
     tabindex="-1"
+    aria-label={tooltip}
     onmouseenter={() => (isHovered = true)}
     onmouseleave={() => (isHovered = false)}
     onmousedown={(e) => e.preventDefault()}
     onclick={handleClick}
-    aria-label={tooltip}
   >
     {#if phase === "loading"}
-      <div class="animate-spin text-ext-text">
+      <span style:display="flex" style:animation="aio-badge-spin 0.9s linear infinite">
         <Icon name="spinner" size={13} />
-      </div>
+      </span>
     {:else if phase === "filled"}
-      <Icon name="check" size={13} style="color: #2D8C4E;" />
+      <Icon name="check" size={13} style={`color:${SUCCESS}`} />
     {:else if phase === "error"}
-      <Icon name="close" size={13} style="color: #D63230;" />
+      <Icon name="close" size={13} style={`color:${SURFACE}`} />
     {:else}
-      <Icon name="mail" size={13} style="color: #1A1A1A;" />
+      <Icon name="mail" size={13} />
     {/if}
+
     <span
-      class="pointer-events-none absolute bottom-[calc(100%+6px)] right-0 z-50 whitespace-nowrap rounded border border-ext-border bg-ext-surface px-2 py-1 text-[10px] font-bold text-ext-text shadow-[2px_2px_0_#1A1A1A]"
+      style:position="fixed"
+      style:top="{rect.top - 8}px"
+      style:left="{rect.right - 26}px"
+      style:transform="translateY(-100%)"
+      style:z-index="2147483641"
+      style:padding="4px 8px"
+      style:background={INK}
+      style:color={SURFACE}
+      style:font="700 10px/1 'Segoe UI', system-ui, sans-serif"
+      style:border-radius="4px"
+      style:box-shadow="2px 2px 0 rgba(26,26,26,0.25)"
+      style:white-space="nowrap"
+      style:pointer-events="none"
       style:opacity={isHovered ? 1 : 0}
-      style:transition="opacity 0.15s"
-    >{tooltip}</span>
+      style:transition="opacity 0.15s ease"
+    >
+      {tooltip}
+    </span>
   </button>
 {/if}

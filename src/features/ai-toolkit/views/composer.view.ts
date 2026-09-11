@@ -18,7 +18,6 @@ export interface AiToolkitComposerViewCallbacks {
   onCycleCavemanLevel: () => Promise<CavemanSettings>;
 }
 
-/** Floating pill toolbar docked above the chat composer (Caveman + Export). */
 export class AiToolkitComposerView {
   private hostEl: HTMLElement | null = null;
   private shadow: ShadowRoot | null = null;
@@ -41,7 +40,6 @@ export class AiToolkitComposerView {
     this.startComposerWatcher();
   }
 
-  /** Ensures an isolated Shadow Root host exists for zero-leakage styling. */
   private ensureShadowHost(): ShadowRoot {
     if (this.shadow && this.hostEl && document.body.contains(this.hostEl)) {
       return this.shadow;
@@ -71,7 +69,6 @@ export class AiToolkitComposerView {
     return this.shadow;
   }
 
-  /** Load Space Grotesk (Bauhaus typeface) into the host page — scoped to AI chat pages. */
   private loadFont(): void {
     if (document.getElementById("aio-space-grotesk-font")) return;
     const link = document.createElement("link");
@@ -143,7 +140,6 @@ export class AiToolkitComposerView {
     this.bindMenuEvents();
   }
 
-  /** Anchors the toolbar as a viewport-fixed overlay above the composer box. */
   private positionDock(): void {
     if (!this.container) return;
 
@@ -167,7 +163,6 @@ export class AiToolkitComposerView {
     this.alignDockTo(composerBox);
   }
 
-  /** Places the floating bar just above the composer (or below when no headroom). */
   private alignDockTo(composerBox: HTMLElement): void {
     if (!this.container) return;
     const rect = composerBox.getBoundingClientRect();
@@ -198,7 +193,6 @@ export class AiToolkitComposerView {
     }
   }
 
-  /** rAF-coalesced re-align — safe to call on every mutation/scroll/resize. */
   private scheduleDockAlign(): void {
     if (this.alignScheduled) return;
     this.alignScheduled = true;

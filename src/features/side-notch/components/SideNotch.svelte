@@ -15,6 +15,7 @@
     setFeaturesEnabled,
   } from "@/lib/feature-settings";
   import { sendMessage } from "@/lib/messaging";
+  import { showToast } from "@/lib/toast";
   import globalCss from "@/styles/global.css?inline";
   import DrawerDetail from "./DrawerDetail.svelte";
   import DrawerList from "./DrawerList.svelte";
@@ -25,12 +26,12 @@
   const logo32 = browser.runtime.getURL("/icon/icon-32.png");
 
   interface Props {
-    /** The shadow root the drawer is mounted into (Tailwind utilities are injected here). */
+    
     shadowRoot: ShadowRoot;
   }
   let { shadowRoot }: Props = $props();
 
-  // Don't list ourselves (or other mandatory host features) in the drawer.
+  
   const modules = getToggleableFeatures();
 
   let isOpen = $state(false);
@@ -38,7 +39,6 @@
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   let activeTempAddress = $state<string | null>(null);
   let isGeneratingMail = $state(false);
-  let quickToast = $state<string | null>(null);
 
   let view = $state<"list" | "detail">("list");
   let activeId = $state<string | null>(null);
@@ -69,7 +69,7 @@
       );
       activeTempAddress = state?.email?.address ?? null;
     } catch {
-      // Background idle
+      
     }
   }
 
@@ -80,8 +80,7 @@
       const res = await sendMessage<TempEmail>(TEMPMAIL_ACTIONS.GENERATE_NEW);
       if (res?.address) {
         activeTempAddress = res.address;
-        quickToast = "Created!";
-        setTimeout(() => (quickToast = null), 1500);
+        showToast(shadowRoot, "Created!", { durationMs: 1500 });
       }
     } finally {
       isGeneratingMail = false;
@@ -94,10 +93,7 @@
       return;
     }
     const ok = await copyToClipboard(activeTempAddress);
-    if (ok) {
-      quickToast = "Copied!";
-      setTimeout(() => (quickToast = null), 1500);
-    }
+    if (ok) showToast(shadowRoot, "Copied!", { durationMs: 1500 });
   }
 
   function onKeyDown(e: KeyboardEvent): void {
@@ -119,7 +115,7 @@
   onMount(() => {
     window.addEventListener("keydown", onKeyDown, true);
 
-    // Tailwind utilities + theme + preflight for everything inside the shadow root.
+    
     const style = document.createElement("style");
     style.textContent = `
       ${globalCss}
@@ -216,7 +212,6 @@
   class="aio-notch-root select-none text-[14px]"
   style="font-family: 'Space Grotesk', system-ui, 'Segoe UI', Roboto, Ubuntu, sans-serif; font-size: 14px; line-height: 1.5; color: #1A1A1A;"
 >
-  <!-- Quick Dock (floating right-edge panel) -->
   <div
     class="ext-quick-dock group {isHovered ? 'is-expanded' : 'is-idle'} {isOpen
       ? 'pointer-events-none opacity-0'
@@ -232,7 +227,6 @@
         {masterOn}
         {activeTempAddress}
         {isGeneratingMail}
-        {quickToast}
         {modules}
         {enabledMap}
         onToggleAll={(v) => void toggleAll(v)}
@@ -246,7 +240,6 @@
     {/if}
   </div>
 
-  <!-- Backdrop -->
   <div
     class="fixed inset-0 z-2147483646 bg-ext-text/40 backdrop-blur-[2px] transition-opacity duration-300 {isOpen
       ? 'pointer-events-auto opacity-100'
@@ -257,7 +250,6 @@
     onkeydown={(e) => e.key === "Escape" && closeDrawer()}
   ></div>
 
-  <!-- Slide-out Drawer -->
   <div
     class="fixed top-0 right-0 z-2147483647 flex h-full w-[330px] max-w-[90vw] flex-col overflow-hidden border-l-[1.5px] border-ext-border bg-ext-bg text-ext-text shadow-[-4px_4px_0_#1A1A1A] transition-transform duration-300 ease-out"
     style="transform: translateX({isOpen ? '0%' : '100%'}); pointer-events: {isOpen ? 'auto' : 'none'};"

@@ -8,12 +8,11 @@ export default defineContentScript({
   async main() {
     for (const feature of getFeatures()) {
       if (!feature.content) continue;
-      // Mandatory (host) features are always enabled.
       if (!feature.mandatory && !(await isFeatureEnabled(feature.id))) continue;
       try {
         await feature.content();
       } catch (err) {
-        console.warn(`[WXT] "${feature.id}" content setup failed:`, err);
+        console.error(`[WXT] "${feature.id}" content setup failed:`, err);
       }
     }
   },

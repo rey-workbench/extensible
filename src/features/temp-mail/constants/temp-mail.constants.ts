@@ -1,6 +1,3 @@
-/**
- * TempMail constants.
- */
 import type { TempMailSettings } from "../types/temp-mail.types";
 
 export const DEFAULT_TEMPMAIL_SETTINGS: TempMailSettings = {

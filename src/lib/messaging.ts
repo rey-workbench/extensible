@@ -10,7 +10,6 @@ type Handler = (payload: unknown, sender: Browser.runtime.MessageSender) => unkn
 
 const handlers = new Map<string, Handler>();
 
-/** Start listening once per context; safe to call from multiple features. */
 function startMessageListener(): void {
   if (listeners > 0) return;
   listeners++;
@@ -43,7 +42,6 @@ export function onMessage<TReq = unknown, TRes = unknown>(
   startMessageListener();
 }
 
-/** Unwraps a message response, throwing on failure or missing handler. */
 function unwrap<TRes>(res: ApiResponse<TRes> | undefined, errorLabel: string): TRes {
   if (!res || res.success === false) throw new Error(res?.error || errorLabel);
   return res.data as TRes;

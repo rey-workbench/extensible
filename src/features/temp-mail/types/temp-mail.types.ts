@@ -1,7 +1,3 @@
-/**
- * TempMail Feature Domain Types (plain TS interfaces — WXT storage handles persistence).
- */
-
 export interface TempEmail {
   address: string;
   expiresAt: string;
@@ -29,7 +25,6 @@ export interface TempMailCurrentState {
   unreadCount: number;
 }
 
-/** GET_INBOX response: cached inbox + remaining countdown for the popup. */
 export interface InboxState {
   emails: EmailMessage[];
   remainingSeconds: number;

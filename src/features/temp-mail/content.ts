@@ -1,31 +1,42 @@
 import { mount, unmount } from "svelte";
-import { setInputValue } from "@/lib/browser";
+import { setNativeValue } from "@/lib/browser";
 import { onMessage, sendMessage } from "@/lib/messaging";
+import {
+  createShadowHost,
+  markUiClicks,
+  rescueClicksIn,
+  shieldKeysFromHost,
+} from "@/lib/shadow-ui";
 import TempMailBadge from "./components/TempMailBadge.svelte";
 import { TEMPMAIL_ACTIONS } from "./constants/temp-mail.constants";
 import { tempMailSettings } from "./services/temp-mail.service";
 import { isEmailField } from "./utils/temp-mail.utils";
+
+const BADGE_CSS = `
+  @keyframes aio-badge-spin {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+`;
 
 interface BadgeEntry {
   unmount: () => void;
   input: HTMLInputElement;
 }
 
-/** TempMail content-side setup: email autofill handler + floating fill badges. */
 export async function setupTempMailContent(): Promise<void> {
-  // Fill an email field on request (context menu / popup autofill)
   onMessage<{ email?: string } | null, boolean>(TEMPMAIL_ACTIONS.AUTOFILL_EMAIL, (payload) => {
     const email = payload?.email;
     if (!email) return false;
 
     const activeEl = document.activeElement;
     if (activeEl instanceof HTMLInputElement && isEmailField(activeEl)) {
-      setInputValue(activeEl, email);
+      setNativeValue(activeEl, email);
       return true;
     }
     for (const input of document.querySelectorAll<HTMLInputElement>("input")) {
       if (isEmailField(input)) {
-        setInputValue(input, email);
+        setNativeValue(input, email);
         return true;
       }
     }
@@ -39,16 +50,23 @@ async function setupBadges(): Promise<void> {
   let settings = await tempMailSettings.getValue();
   const badges = new Map<HTMLInputElement, BadgeEntry>();
 
+  const ui = createShadowHost("aio-tempmail-badge-host", BADGE_CSS);
+  if (!ui) return;
+  const { host, shadow } = ui;
+  markUiClicks(shadow);
+  const disposeRescue = rescueClicksIn(host);
+  shieldKeysFromHost(host);
+
   function attach(input: HTMLInputElement): void {
     if (badges.has(input)) return;
     const component = mount(TempMailBadge, {
-      target: document.body,
+      target: shadow,
       props: {
         target: input,
         onFill: async () => {
           const email = await sendMessage<{ address: string }>(TEMPMAIL_ACTIONS.GENERATE_NEW);
           if (!email?.address) return null;
-          setInputValue(input, email.address);
+          setNativeValue(input, email.address);
           return email.address;
         },
       },
@@ -87,6 +105,8 @@ async function setupBadges(): Promise<void> {
     prune();
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  window.addEventListener("pagehide", () => disposeRescue(), { once: true });
 
   void tempMailSettings.watch((next) => {
     const prev = settings;

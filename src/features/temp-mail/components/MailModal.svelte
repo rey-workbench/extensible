@@ -2,7 +2,7 @@
   import Button from "@/components/Button.svelte";
   import Icon from "@/components/Icon.svelte";
   import type { EmailMessage } from "../types/temp-mail.types";
-  import { extractOtpCode } from "../utils/temp-mail.utils";
+  import { extractOtpCode, sanitizeEmailHtml } from "../utils/temp-mail.utils";
 
   interface Props {
     email: EmailMessage | null;
@@ -12,8 +12,22 @@
   }
   let { email, onClose, onDelete, onCopy }: Props = $props();
 
+  let allowRemoteImages = $state(false);
+
   const otpCode = $derived(
     email ? extractOtpCode(`${email.subject || ""} ${email.content || ""}`) : null,
+  );
+
+  const hasRemoteImages = $derived(
+    Boolean(email?.content && /<img[^>]+src=["']https?:\/\//i.test(email.content))
+  );
+
+  const sanitizedContent = $derived(
+    email?.content ? sanitizeEmailHtml(email.content) : ""
+  );
+
+  const cspString = $derived(
+    `default-src 'none'; style-src 'unsafe-inline'; img-src data:${allowRemoteImages ? " https: http:" : ""}; font-src data:;`
   );
 </script>
 
@@ -82,12 +96,27 @@
           </div>
         {/if}
 
-        {#if email.content}
+        {#if hasRemoteImages}
+          <div
+            class="mb-2 flex items-center justify-between rounded border border-ext-border bg-[#F5EFEB] px-2.5 py-1.5 text-[11px] text-ext-text-secondary"
+          >
+            <span>Remote images hidden to prevent tracking.</span>
+            <button
+              type="button"
+              class="cursor-pointer font-semibold text-ext-primary underline hover:text-ext-primary-hover"
+              onclick={() => (allowRemoteImages = !allowRemoteImages)}
+            >
+              {allowRemoteImages ? "Hide Images" : "Load Images"}
+            </button>
+          </div>
+        {/if}
+
+        {#if sanitizedContent}
           <iframe
             title="Email content"
             class="h-64 w-full rounded-lg border-[1.5px] border-ext-border bg-white"
             sandbox="allow-popups allow-popups-to-escape-sandbox"
-            srcdoc={`<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data: https: http:; font-src data:;"><base target="_blank"><style>@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');body{font-family:'Space Grotesk',system-ui,'Segoe UI',Roboto,sans-serif;font-size:12px;line-height:1.45;color:#1A1A1A;margin:8px;word-break:break-word;background:#FFFDF7;}img{max-width:100%;height:auto;}a{color:#1B4DDB;text-decoration:underline;cursor:pointer;font-weight:600;}a:hover{color:#0F3BA8;}</style></head><body>${email.content}</body></html>`}
+            srcdoc={`<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="${cspString}"><base target="_blank"><style>body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:12px;line-height:1.45;color:#1A1A1A;margin:8px;word-break:break-word;background:#FFFDF7;}img{max-width:100%;height:auto;}a{color:#1B4DDB;text-decoration:underline;cursor:pointer;font-weight:600;}a:hover{color:#0F3BA8;}</style></head><body>${sanitizedContent}</body></html>`}
           ></iframe>
         {:else}
           <p class="text-xs font-medium text-ext-muted">(Empty email content)</p>

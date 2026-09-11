@@ -8,7 +8,6 @@
     masterOn: boolean;
     activeTempAddress: string | null;
     isGeneratingMail: boolean;
-    quickToast: string | null;
     modules: FeatureModule[];
     enabledMap: Record<string, boolean>;
     onToggleAll: (enabled: boolean) => void;
@@ -22,7 +21,6 @@
     masterOn,
     activeTempAddress,
     isGeneratingMail,
-    quickToast,
     modules,
     enabledMap,
     onToggleAll,
@@ -34,7 +32,6 @@
 </script>
 
 <div class="flex h-full w-full flex-col justify-between p-3 text-ext-text">
-  <!-- Top Row: Brand + Master Switch + Full Panel Button -->
   <div class="flex items-center justify-between">
   <div class="flex items-center gap-2">
     <img
@@ -48,7 +45,6 @@
     </div>
   </div>
 
-  <!-- Right Controls: Toggle + Expand Button -->
   <div class="flex items-center gap-2">
     <Toggle
       checked={masterOn}
@@ -77,9 +73,7 @@
   </div>
 </div>
 
-<!-- Middle 2-Column Cards Grid -->
 <div class="my-1.5 grid grid-cols-2 gap-2">
-  <!-- Card 1: Temp Mail -->
   <div
     class="flex flex-col justify-between rounded-lg border-[1.5px] border-solid border-ext-border bg-ext-surface p-2 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
   >
@@ -99,10 +93,8 @@
       </div>
     </div>
 
-    <!-- Quick Actions -->
     <div class="mt-1.5 flex items-center justify-between border-t border-solid border-ext-border/25 pt-1.5">
       <div class="flex items-center gap-1">
-        <!-- Generate / Refresh Button -->
         <button
           type="button"
           class="flex h-5 w-5 cursor-pointer items-center justify-center rounded-[4px] border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
@@ -116,7 +108,6 @@
           />
         </button>
 
-        <!-- Copy Button -->
         <button
           type="button"
           class="flex h-5 cursor-pointer items-center gap-1 rounded-[4px] border-[1.5px] border-solid border-ext-border bg-ext-surface px-1.5 text-[9px] font-bold uppercase tracking-wide text-ext-text-secondary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
@@ -124,11 +115,10 @@
           onclick={onQuickCopy}
         >
           <Icon name="copy" size={9} />
-          <span>{quickToast || "Copy"}</span>
+          <span>Copy</span>
         </button>
       </div>
 
-      <!-- Jump to Inbox Detail -->
       <button
         type="button"
         class="flex h-5 cursor-pointer items-center rounded-[4px] border-[1.5px] border-solid border-ext-primary bg-[#EDE7DA] px-1.5 text-[9px] font-bold uppercase tracking-wide text-ext-primary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-ext-primary hover:text-white active:translate-x-px active:translate-y-px"
@@ -139,7 +129,6 @@
     </div>
   </div>
 
-  <!-- Card 2: AI Toolkit -->
   <div
     class="flex flex-col justify-between rounded-lg border-[1.5px] border-solid border-ext-border bg-ext-surface p-2 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
   >
@@ -159,7 +148,6 @@
       </div>
     </div>
 
-    <!-- Quick Actions -->
     <div class="mt-1.5 flex items-center justify-between border-t border-solid border-ext-border/25 pt-1.5">
       <button
         type="button"
@@ -180,7 +168,6 @@
   </div>
 </div>
 
-<!-- Bottom Footer -->
 <button
   type="button"
   class="flex w-full cursor-pointer items-center justify-between border-0 border-t border-ext-border/25 bg-transparent pt-1 text-[9.5px] font-bold uppercase tracking-wide text-ext-muted outline-none transition-colors hover:text-ext-text"

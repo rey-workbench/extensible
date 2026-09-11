@@ -2,9 +2,6 @@ import { escapeHtml } from "@/lib/browser";
 import type { ChatConversation } from "../types/ai-toolkit.types";
 
 export class JsonFormatterUtils {
-  /**
-   * Formats a ChatConversation into structured JSON with 2-space indentation.
-   */
   public static format(convo: ChatConversation): string {
     return JSON.stringify(
       {
@@ -19,9 +16,6 @@ export class JsonFormatterUtils {
 }
 
 export class MarkdownFormatterUtils {
-  /**
-   * Formats a ChatConversation into standard GitHub-flavored Markdown with metadata frontmatter.
-   */
   public static format(
     convo: ChatConversation,
     options: { includeMetadata?: boolean } = {}
@@ -57,9 +51,6 @@ export class MarkdownFormatterUtils {
     return lines.join("\n");
   }
 
-  /**
-   * Formats conversation into plain text (e.g. for quick clipboard pasting).
-   */
   public static formatPlainText(convo: ChatConversation): string {
     const lines: string[] = [];
     lines.push(`${convo.title.toUpperCase()}\n${"=".repeat(convo.title.length)}\n`);
@@ -74,9 +65,6 @@ export class MarkdownFormatterUtils {
 }
 
 export class HtmlFormatterUtils {
-  /**
-   * Formats a ChatConversation into an offline, self-contained HTML document.
-   */
   public static format(convo: ChatConversation, options: { autoPrint?: boolean } = {}): string {
     const title = escapeHtml(convo.title);
     const dateStr = new Date(convo.createdAt).toLocaleString();
@@ -213,11 +201,7 @@ export class HtmlFormatterUtils {
 </html>`;
   }
 
-  /**
-   * Helper to format markdown-like blocks (code fences, inline code, paragraphs) in HTML.
-   */
   private static formatMessageBody(content: string): string {
-    // 1. Extract and replace code fences ```lang ... ```
     const codeBlocks: string[] = [];
     let processed = content.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (_, lang, code) => {
       const idx = codeBlocks.length;
@@ -226,16 +210,12 @@ export class HtmlFormatterUtils {
       return `__CODE_BLOCK_${idx}__`;
     });
 
-    // 2. Escape HTML for the rest of the text
     processed = escapeHtml(processed);
 
-    // 3. Inline code `...`
     processed = processed.replace(/`([^`]+)`/g, "<code>$1</code>");
 
-    // 4. Line breaks to <br>
     processed = processed.replace(/\n/g, "<br>");
 
-    // 5. Restore code blocks
     codeBlocks.forEach((block, idx) => {
       processed = processed.replace(`__CODE_BLOCK_${idx}__`, block);
     });

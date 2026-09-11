@@ -1,7 +1,6 @@
 import type { ChatMessage, MessageRole } from "../../types/ai-toolkit.types";
 import { cleanElementText, pushMessage } from "./base.parser";
 
-/** ChatGPT DOM extractor */
 export function parseChatGPT(doc: Document): ChatMessage[] {
   const messages: ChatMessage[] = [];
   const articles = doc.querySelectorAll('article[data-testid^="conversation-turn"]');
@@ -25,7 +24,6 @@ export function parseChatGPT(doc: Document): ChatMessage[] {
     return messages;
   }
 
-  // Secondary selector for varying ChatGPT web versions
   const rawTurns = doc.querySelectorAll("[data-message-author-role]");
   rawTurns.forEach((el, index) => {
     const authorRole = el.getAttribute("data-message-author-role");

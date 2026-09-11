@@ -2,7 +2,6 @@ import assert from "node:assert";
 
 console.log("[Test] Running WXT + Svelte Unit & Integration Tests...\n");
 
-// ── Fake browser (WXT storage reads `globalThis.browser` at import time) ──
 function createFakeBrowser(): Record<string, unknown> {
   const store = new Map<string, unknown>();
   const listeners = new Set<(changes: unknown, area: string) => void>();
@@ -49,25 +48,28 @@ function createFakeBrowser(): Record<string, unknown> {
 
 (globalThis as Record<string, unknown>).browser = createFakeBrowser();
 
-// Modules must be imported AFTER the fake browser is installed.
 const [
-  { TempMailUtils },
-  { escapeHtml, formatRelativeTime, isContextInvalidated, slugify },
+  { TempMailUtils, sanitizeEmailHtml },
+  { escapeHtml, formatRelativeTime, isContextInvalidated, slugify, setInputValue, setNativeValue },
   { AiToolkitService },
   { ChatParserUtils },
   { CavemanDirectiveUtils },
   { HtmlFormatterUtils, JsonFormatterUtils, MarkdownFormatterUtils },
   tempMail,
   { defineFeature, getFeatureColor },
+  { GmRpcService },
+  { UserScriptsService },
 ] = await Promise.all([
   import("@/features/temp-mail/utils/temp-mail.utils"),
   import("@/lib/browser"),
   import("@/features/ai-toolkit/services/ai-toolkit.service"),
   import("@/features/ai-toolkit/utils/chat-parser.utils"),
   import("@/features/ai-toolkit/utils/caveman-directive.utils"),
-  import("@/features/ai-toolkit/utils/index"),
+  import("@/features/ai-toolkit/utils/export-formatters"),
   import("@/features/temp-mail/services/temp-mail.service"),
   import("@/lib/feature-registry"),
+  import("@/features/user-scripts/services/gm-rpc.service"),
+  import("@/features/user-scripts/services/user-scripts.service"),
 ]);
 let passed = 0;
 
@@ -76,7 +78,6 @@ function ok(cond: unknown, label: string): void {
   passed++;
 }
 
-// 1. TempMail domain utilities
 console.log("1. Testing TempMailUtils:");
 ok(
   TempMailUtils.extractOtpCode("Your verification code is 492810. Do not share it.") === "492810",
@@ -92,7 +93,6 @@ ok(TempMailUtils.formatCountdown(125) === "02:05", "Should format 125 seconds to
 ok(TempMailUtils.formatCountdown(0) === "Expired", "Should report Expired for 0 seconds");
 console.log("   ✓ TempMailUtils passed.");
 
-// 2. Shared browser/lib utilities
 console.log("\n2. Testing lib utilities:");
 ok(
   escapeHtml('hello <world> & "quotes"') === "hello &lt;world&gt; &amp; &quot;quotes&quot;",
@@ -110,6 +110,8 @@ ok(
   slugify("Testing AI Toolkit Architecture") === "testing-ai-toolkit-architecture",
   "Should slugify text"
 );
+ok(typeof setInputValue === "function", "setInputValue must be exported");
+ok(typeof setNativeValue === "function", "setNativeValue must be exported");
 console.log("   ✓ lib utilities passed.");
 console.log("\n2.5. Testing Feature Module Colors & Registration:");
 defineFeature({
@@ -196,7 +198,6 @@ await assert.rejects(
 );
 console.log("   ✓ AiToolkitService passed.");
 
-// 4. Formatters
 console.log("\n4. Testing formatters:");
 const mdOutput = MarkdownFormatterUtils.format(sampleConvo);
 ok(
@@ -219,7 +220,6 @@ const printPdfOutput = HtmlFormatterUtils.format(sampleConvo, { autoPrint: true 
 ok(printPdfOutput.includes("window.print()"), "Auto-print HTML should call window.print()");
 console.log("   ✓ Formatters passed.");
 
-// 5. Chat parser platform detection
 console.log("\n5. Testing ChatParserUtils platform detection:");
 ok(ChatParserUtils.detectPlatform("chatgpt.com") === "chatgpt", "Should detect ChatGPT");
 ok(ChatParserUtils.detectPlatform("claude.ai") === "claude", "Should detect Claude");
@@ -228,7 +228,6 @@ ok(ChatParserUtils.detectPlatform("chat.deepseek.com") === "deepseek", "Should d
 ok(ChatParserUtils.detectPlatform("example.com") === "generic", "Should fall back to generic");
 console.log("   ✓ ChatParserUtils passed.");
 
-// 6. Caveman directive builders
 console.log("\n6. Testing CavemanDirectiveUtils:");
 ok(
   CavemanDirectiveUtils.buildReminder("lite").includes("LITE"),
@@ -316,7 +315,6 @@ ok(
 );
 console.log("   ✓ CavemanDirectiveUtils passed.");
 
-// 7. TempMail service (live API — skipped gracefully when offline)
 console.log("\n7. Testing TempMailService with live API (api.tempmail.ing):");
 try {
   const email = await tempMail.generateEmail(60);
@@ -330,5 +328,50 @@ try {
 } catch (err) {
   console.warn(`   ⚠ Live API test skipped (${err instanceof Error ? err.message : String(err)})`);
 }
+
+console.log("\n8. Testing Security & Hardening Validations:");
+
+const dirtyHtml = `
+  <div>
+    <p>Safe paragraph <b>bold</b></p>
+    <script>window.__pwned = true;</script>
+    <img src="https://tracker.com/pixel.png" onerror="alert(1)">
+    <a href="javascript:alert(2)">Click me</a>
+    <iframe src="https://evil.com"></iframe>
+  </div>
+`;
+const cleanHtml = sanitizeEmailHtml(dirtyHtml);
+ok(!cleanHtml.includes("<script"), "Sanitizer must remove <script> tags");
+ok(!cleanHtml.includes("onerror"), "Sanitizer must remove inline event handlers");
+ok(!cleanHtml.includes("javascript:"), "Sanitizer must remove javascript: schemes");
+ok(!cleanHtml.includes("<iframe"), "Sanitizer must remove <iframe> tags");
+ok(
+  cleanHtml.includes("Safe paragraph") && cleanHtml.includes("<b>bold</b>"),
+  "Sanitizer must preserve safe markup"
+);
+
+ok(GmRpcService.isPrivateOrLocalHost("localhost") === true, "localhost must be private");
+ok(GmRpcService.isPrivateOrLocalHost("127.0.0.1") === true, "127.0.0.1 must be private");
+ok(GmRpcService.isPrivateOrLocalHost("0.0.0.0") === true, "0.0.0.0 must be private");
+ok(
+  GmRpcService.isPrivateOrLocalHost("169.254.169.254") === true,
+  "169.254.169.254 must be private"
+);
+ok(GmRpcService.isPrivateOrLocalHost("192.168.1.1") === true, "192.168.x.x must be private");
+ok(GmRpcService.isPrivateOrLocalHost("10.0.0.5") === true, "10.x.x.x must be private");
+ok(GmRpcService.isPrivateOrLocalHost("example.com") === false, "Public domain must not be private");
+ok(
+  GmRpcService.isPrivateOrLocalHost("api.tempmail.ing") === false,
+  "api.tempmail.ing must not be private"
+);
+
+const token1 = UserScriptsService.getScriptToken("test-script-1");
+const token2 = UserScriptsService.getScriptToken("test-script-1");
+ok(token1 === token2, "getScriptToken must be idempotent for the same script");
+ok(token1.startsWith("test-script-1_"), "Token must include script prefix");
+const allTokens = UserScriptsService.getAllScriptTokens();
+ok(allTokens["test-script-1"] === token1, "getAllScriptTokens must include registered token");
+
+console.log("   ✓ Security & Hardening validations passed.");
 
 console.log(`\n[Test] All ${passed} assertions passed. ✓`);

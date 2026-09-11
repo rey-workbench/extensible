@@ -1,8 +1,16 @@
+import {
+  FONT_STACK,
+  INK,
+  BORDER as INK_BORDER,
+  MUTED,
+  SURFACE,
+  WARNING_BG,
+  WARNING_DARK,
+} from "@/lib/design-tokens";
 import { renderIcon } from "@/lib/icons";
 import { isValidCavemanLevel } from "../../constants/ai-toolkit.constants";
 import type { CavemanSettings } from "../../types/ai-toolkit.types";
 
-/** Human-readable export failure reason — the toast shouldn't swallow the real cause. */
 export function formatExportError(err: unknown): string {
   if (err instanceof Error && err.message) return `Export failed: ${err.message}`;
   return "Export failed";
@@ -14,7 +22,6 @@ function cavemanStatusText(settings: CavemanSettings): string {
   return enabled ? (levelValid ? level.toUpperCase() : "STOP") : "OFF";
 }
 
-/** Toolbar innerHTML (bar + caveman toggle + export trigger). */
 export function buildToolbarHtml(settings: CavemanSettings): string {
   const { enabled } = settings;
   const statusText = cavemanStatusText(settings);
@@ -22,10 +29,10 @@ export function buildToolbarHtml(settings: CavemanSettings): string {
     enabled && isValidCavemanLevel(settings.level) ? `aio-lvl-${settings.level}` : "";
   return `
     <div class="aio-composer-bar flex h-7 select-none items-center gap-0.5 whitespace-nowrap rounded-md px-1.5 transition-all"
-      style="font-family: 'Space Grotesk', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; ${
+      style="font-family: ${FONT_STACK}; ${
         enabled
-          ? "background: #FDF3E3; border: 1.5px solid #C48C1E; box-shadow: 2px 2px 0 #1A1A1A;"
-          : "background: #FFFDF7; border: 1.5px solid #2B2B2B; box-shadow: 2px 2px 0 #1A1A1A;"
+          ? `background: ${WARNING_BG}; border: 1.5px solid ${WARNING_DARK}; box-shadow: 2px 2px 0 ${INK};`
+          : `background: ${SURFACE}; border: 1.5px solid ${INK_BORDER}; box-shadow: 2px 2px 0 ${INK};`
       }">
       <!-- Caveman Toggle Button -->
       <button type="button" class="aio-bar-btn aio-caveman-toggle-btn flex h-5.5 cursor-pointer items-center gap-1 rounded-sm border-0 bg-transparent px-1.5 text-[11.5px] font-bold outline-none transition-all hover:bg-[#EDE7DA]" style="color: #1A1A1A;" title="Caveman Mode: ${statusText} (Click to cycle level)">
@@ -52,7 +59,6 @@ export function buildToolbarHtml(settings: CavemanSettings): string {
   `;
 }
 
-/** Export menu innerHTML. */
 export function buildMenuHtml(): string {
   return `
     <div class="aio-composer-menu-header flex items-center justify-between rounded-[5px] px-2.5 py-1 text-[10.5px] font-bold uppercase tracking-wide text-ext-primary" style="background: #EDE7DA;">
@@ -85,7 +91,6 @@ export function buildMenuHtml(): string {
   `;
 }
 
-/** Syncs the caveman badge/bar styles to the given settings. */
 export function updateCavemanButtonUi(
   container: HTMLElement | null,
   settings: CavemanSettings
@@ -101,19 +106,19 @@ export function updateCavemanButtonUi(
 
   if (bar) {
     if (enabled) {
-      bar.style.background = "#FDF3E3";
-      bar.style.border = "1.5px solid #C48C1E";
-      bar.style.boxShadow = "2px 2px 0 #1A1A1A";
+      bar.style.background = WARNING_BG;
+      bar.style.border = `1.5px solid ${WARNING_DARK}`;
+      bar.style.boxShadow = `2px 2px 0 ${INK}`;
       bar.classList.add("aio-caveman-on");
     } else {
-      bar.style.background = "#FFFDF7";
-      bar.style.border = "1.5px solid #2B2B2B";
-      bar.style.boxShadow = "2px 2px 0 #1A1A1A";
+      bar.style.background = SURFACE;
+      bar.style.border = `1.5px solid ${INK_BORDER}`;
+      bar.style.boxShadow = `2px 2px 0 ${INK}`;
       bar.classList.remove("aio-caveman-on");
     }
   }
   if (icon) {
-    icon.style.color = enabled ? "#C48C1E" : "#A89B8C";
+    icon.style.color = enabled ? WARNING_DARK : MUTED;
   }
   if (badge) {
     badge.textContent = statusText;

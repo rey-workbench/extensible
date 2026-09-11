@@ -5,7 +5,7 @@
   interface Props {
     feature: FeatureModule;
     enabled: boolean;
-    /** Accent color for the app icon chip. */
+    
     color: string;
     dropdownOpen: boolean;
     onOpen: () => void;
@@ -38,7 +38,6 @@
   }}
   onkeydown={(e) => e.key === "Enter" && feature.popup && onOpen()}
 >
-  <!-- App Icon -->
   <span
     class="flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-[5px] border-[1.5px] border-solid text-white shadow-[1px_1px_0_#1A1A1A] transition-transform group-hover:scale-105"
     style="background: {color}; border-color: {color}; {enabled ? '' : 'filter: grayscale(100%); opacity: 0.55;'}"
@@ -46,7 +45,6 @@
     <Icon name={feature.icon} size={14} />
   </span>
 
-  <!-- Extension Info -->
   <div class="min-w-0 flex-1">
     <div class="flex items-center gap-1.5">
       <span class="truncate text-[12.5px] font-bold text-ext-text">
@@ -63,7 +61,6 @@
     >
   </div>
 
-  <!-- Settings Gear Button & Options Dropdown -->
   <div class="relative">
     <button
       type="button"
@@ -117,7 +114,6 @@
     {/if}
   </div>
 
-  <!-- Navigable affordance -->
   {#if feature.popup}
     <svg
       class="h-3.5 w-3.5 shrink-0 text-ext-muted transition-all group-hover:translate-x-0.5 group-hover:text-ext-text"

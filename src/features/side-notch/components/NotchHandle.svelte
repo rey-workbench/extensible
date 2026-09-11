@@ -14,7 +14,6 @@
   aria-label="Open Extensible panel"
   title="Open Extensible (Click for drawer, hover for quick panel)"
 >
-  <!-- Top Status Pip -->
   <div class="flex flex-col items-center pt-2">
     <span
       class="h-2.5 w-2.5 rounded-full border-[1.5px] border-ext-border transition-colors duration-200 {masterOn
@@ -24,7 +23,6 @@
     ></span>
   </div>
 
-  <!-- Center Typography & Tactile Grip Lines -->
   <div class="flex flex-col items-center gap-1.5 py-1">
     <div class="flex flex-col items-center gap-0.75 opacity-60">
       <span class="h-[1.5px] w-3 rounded-full bg-ext-border"></span>
@@ -42,7 +40,6 @@
     </div>
   </div>
 
-  <!-- Bottom Bauhaus Anchor Block with New Logo -->
   <div
     class="flex h-8 w-full items-center justify-center border-t-2 border-ext-border bg-ext-surface p-1 transition-colors group-hover/handle:bg-[#EDE7DA]"
   >

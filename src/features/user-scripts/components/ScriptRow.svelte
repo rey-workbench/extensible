@@ -44,9 +44,7 @@
 </script>
 
 <div class="flex flex-col gap-2 p-2.5">
-  <!-- Row 1: Priority + Name & Details + Toggle -->
   <div class="flex items-start gap-2">
-    <!-- Priority controls -->
     <div class="flex flex-col pt-0.5">
       <button
         type="button"
@@ -64,7 +62,6 @@
       >▼</button>
     </div>
 
-    <!-- Title & domain matches -->
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-1.5">
         <span class="truncate text-xs font-bold text-ext-text" title={script.meta.name}>
@@ -77,7 +74,6 @@
       </div>
     </div>
 
-    <!-- Neo-Brutalist Toggle -->
     <Toggle
       checked={script.enabled}
       label={`Toggle ${script.meta.name}`}
@@ -85,9 +81,7 @@
     />
   </div>
 
-  <!-- Row 2: Action Toolbar (Responsive, doesn't crowd Title) -->
   <div class="flex flex-wrap items-center justify-between gap-1 border-t border-ext-border/30 pt-1.5">
-    <!-- Main Actions: Edit, Run, Log -->
     <div class="flex items-center gap-1">
       <Button
         variant={editing ? "primary" : "secondary"}
@@ -118,7 +112,6 @@
       </Button>
     </div>
 
-    <!-- Secondary Actions: Duplicate, Export, Delete -->
     <div class="flex items-center gap-0.5">
       <button
         type="button"

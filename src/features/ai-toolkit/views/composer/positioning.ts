@@ -1,18 +1,13 @@
-/** Pure geometry helpers for placing the floating composer toolbar + menu. */
-
 export interface DockPlacement {
   left: number;
   top: number;
-  /** True when the dock sits below the composer instead of above it. */
   flipped?: boolean;
 }
 
-/** Clamps a number into [min, max]. */
 function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v));
 }
 
-/** Aligns the floating bar just above the composer (or below when no headroom). */
 export function computeDockPlacement(
   composerRect: DOMRect,
   dockWidth: number,
@@ -28,7 +23,6 @@ export function computeDockPlacement(
   return { left: Math.round(left), top: Math.round(top), flipped };
 }
 
-/** Places the export menu above the trigger, flipping below when out of headroom. */
 export function computeMenuPlacement(
   triggerRect: DOMRect,
   menuWidth: number,
@@ -48,12 +42,4 @@ export function computeMenuPlacement(
   }
 
   return { top: Math.round(top), left: Math.round(left) };
-}
-
-/** Anchors a toast near the toolbar. */
-export function computeToastPlacement(anchorRect: DOMRect): { bottom: number; left: number } {
-  return {
-    bottom: Math.max(12, window.innerHeight - anchorRect.top + 8),
-    left: anchorRect.left + anchorRect.width / 2,
-  };
 }

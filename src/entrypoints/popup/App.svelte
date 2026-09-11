@@ -13,7 +13,7 @@
     setFeaturesEnabled,
   } from "@/lib/feature-settings";
 
-  // Mandatory (host) features like Side Notch are always enabled — hide them from the list.
+  
   const features = getToggleableFeatures();
 
   let view = $state<"list" | "detail">("list");
@@ -63,11 +63,9 @@
 
 <div class="ext-container flex h-full min-h-0 flex-col select-none bg-ext-bg text-ext-text">
   {#if view === "list"}
-    <!-- Header -->
     <header
       class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-3"
     >
-      <!-- Brand -->
       <div class="flex items-center gap-2">
         <img
           src="/icon/icon-48.png"
@@ -79,7 +77,6 @@
         </span>
       </div>
 
-      <!-- Right: Master Toggle -->
       <div class="flex items-center gap-1.5">
         <span
           class="text-[10.5px] font-bold uppercase tracking-wider text-ext-muted"
@@ -100,7 +97,6 @@
       onToggleFeature={(f, enabled) => void toggleFeature(f, enabled)}
     />
   {:else}
-    <!-- Detail View -->
     <header
       class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-3"
     >

@@ -2,11 +2,9 @@ import type { ChatMessage, MessageRole } from "../../types/ai-toolkit.types";
 import { cleanElementText, pushMessage } from "./base.parser";
 import { parseGeneric } from "./generic.parser";
 
-/** Gemini DOM extractor */
 export function parseGemini(doc: Document): ChatMessage[] {
   const messages: ChatMessage[] = [];
 
-  // 1. Primary: Gemini web components (user-query and model-response)
   const turns = doc.querySelectorAll("user-query, model-response");
   if (turns.length > 0) {
     turns.forEach((el, index) => {
@@ -26,7 +24,6 @@ export function parseGemini(doc: Document): ChatMessage[] {
     }
   }
 
-  // 2. Secondary fallback: query & response containers by class or data attributes
   const secondaryTurns = doc.querySelectorAll(
     'div[class*="user-query"], div[class*="model-response"], [data-test-id*="user-query"], [data-test-id*="model-response"], .user-query-container, .model-response-container'
   );

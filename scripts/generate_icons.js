@@ -6,13 +6,12 @@ import zlib from "node:zlib";
  * Minimal pure-Node PNG generator without external dependencies.
  */
 function createPng(width, height, drawPixel) {
-  // RGBA buffer with filter byte 0 at start of each scanline
   const rowSize = 1 + width * 4;
   const buffer = Buffer.alloc(rowSize * height);
 
   for (let y = 0; y < height; y++) {
     const rowOffset = y * rowSize;
-    buffer[rowOffset] = 0; // Filter: None
+    buffer[rowOffset] = 0;
     for (let x = 0; x < width; x++) {
       const [r, g, b, a] = drawPixel(x, y, width, height);
       const pxOffset = rowOffset + 1 + x * 4;
@@ -23,25 +22,21 @@ function createPng(width, height, drawPixel) {
     }
   }
 
-  // PNG Signature
   const signature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 
-  // IHDR chunk
   const ihdrData = Buffer.alloc(13);
   ihdrData.writeUInt32BE(width, 0);
   ihdrData.writeUInt32BE(height, 4);
-  ihdrData[8] = 8; // Bit depth: 8
-  ihdrData[9] = 6; // Color type: RGBA
-  ihdrData[10] = 0; // Compression: Deflate
-  ihdrData[11] = 0; // Filter: Standard
-  ihdrData[12] = 0; // Interlace: None
+  ihdrData[8] = 8;
+  ihdrData[9] = 6;
+  ihdrData[10] = 0;
+  ihdrData[11] = 0;
+  ihdrData[12] = 0;
   const ihdrChunk = createChunk("IHDR", ihdrData);
 
-  // IDAT chunk
   const compressed = zlib.deflateSync(buffer);
   const idatChunk = createChunk("IDAT", compressed);
 
-  // IEND chunk
   const iendChunk = createChunk("IEND", Buffer.alloc(0));
 
   return Buffer.concat([signature, ihdrChunk, idatChunk, iendChunk]);
@@ -54,14 +49,12 @@ function createChunk(type, data) {
   chunk.write(type, 4, 4, "ascii");
   data.copy(chunk, 8);
 
-  // Calculate CRC32 on type + data
   const crcTarget = Buffer.concat([Buffer.from(type, "ascii"), data]);
   const crc = crc32(crcTarget);
   chunk.writeUInt32BE(crc, 8 + length);
   return chunk;
 }
 
-// Standard CRC32 table
 const crcTable = new Uint32Array(256);
 for (let n = 0; n < 256; n++) {
   let c = n;
@@ -104,12 +97,10 @@ function distToArc(px, py, cx, cy, r, startAngle, endAngle) {
   return Math.min(Math.hypot(px - p1x, py - p1y), Math.hypot(px - p2x, py - p2y));
 }
 
-// Minimalist developer badge icon for Extensible (inspired by Express.js monochrome elegance)
 function iconDrawer(x, y, w, h) {
   const px = ((x + 0.5) / w) * 24;
   const py = ((y + 0.5) / h) * 24;
 
-  // Outer Squircle Badge (dark matte background #0f172a)
   const rad = 5;
   const boxW = 22.8;
   const boxH = 22.8;
@@ -122,11 +113,9 @@ function iconDrawer(x, y, w, h) {
   }
   const badgeAlpha = Math.max(0, Math.min(1, 0.5 - badgeDist));
 
-  // Geometric 'e'
   const deBar = distToSegment(px, py, 4.5, 12, 11, 12);
   const deArc = distToArc(px, py, 7.7, 12, 3.2, -1.8 * Math.PI, 0.75 * Math.PI);
 
-  // Geometric 'x'
   const dx1 = distToSegment(px, py, 13.5, 9, 19, 15);
   const dx2 = distToSegment(px, py, 13.5, 15, 19, 9);
 
@@ -134,7 +123,6 @@ function iconDrawer(x, y, w, h) {
   const strokeRadius = 0.95;
   const glyphCoverage = Math.max(0, Math.min(1, strokeRadius + 0.5 - minDist));
 
-  // Background #0f172a (15, 23, 42), Glyph #ffffff (255, 255, 255)
   const r = Math.round(15 + (255 - 15) * glyphCoverage);
   const g = Math.round(23 + (255 - 23) * glyphCoverage);
   const b = Math.round(42 + (255 - 42) * glyphCoverage);

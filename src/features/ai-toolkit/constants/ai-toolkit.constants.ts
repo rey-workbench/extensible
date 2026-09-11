@@ -1,6 +1,3 @@
-/**
- * Action and event constants specific to the AiToolkit module.
- */
 import type { CavemanSettings } from "../types/ai-toolkit.types";
 
 export const AI_TOOLKIT_ACTIONS = {
@@ -14,7 +11,6 @@ export const AI_TOOLKIT_STORAGE_KEYS = {
   CAVEMAN_SETTINGS: "local:ai_exporter_caveman",
 } as const;
 
-/** Single source of truth for Caveman defaults — reused by service, controllers, and views. */
 export const DEFAULT_CAVEMAN_SETTINGS: CavemanSettings = {
   enabled: false,
   level: "full",
@@ -24,7 +20,6 @@ export const DEFAULT_CAVEMAN_SETTINGS: CavemanSettings = {
 export const CAVEMAN_LEVELS = ["lite", "full", "ultra"] as const;
 export type CavemanLevel = (typeof CAVEMAN_LEVELS)[number];
 
-/** Runtime guard: is this value a real Caveman level (storage may contain stale/garbage data)? */
 export function isValidCavemanLevel(level: unknown): level is CavemanLevel {
   return typeof level === "string" && (CAVEMAN_LEVELS as readonly string[]).includes(level);
 }

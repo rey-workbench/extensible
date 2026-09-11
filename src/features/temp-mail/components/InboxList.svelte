@@ -12,7 +12,6 @@
   let { emails, isRefreshing, onRefresh, onOpen }: Props = $props();
 </script>
 
-<!-- Inbox Section Bar -->
 <div class="flex h-6 shrink-0 items-center justify-between px-1">
   <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-ext-muted">
     <span>Inbox</span>
@@ -37,7 +36,6 @@
   </button>
 </div>
 
-<!-- Inbox List -->
 <div class="flex flex-col space-y-1">
   {#if emails.length === 0}
     <div

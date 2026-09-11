@@ -7,14 +7,7 @@ import { parseDeepSeek } from "./parsers/deepseek.parser";
 import { parseGemini } from "./parsers/gemini.parser";
 import { parseGeneric } from "./parsers/generic.parser";
 
-/**
- * Chat parser façade: identifies the AI platform, delegates to the matching
- * DOM extractor in utils/parsers/, and assembles a ChatConversation.
- */
 export class ChatParserUtils {
-  /**
-   * Identifies which AI platform corresponds to the given hostname or current location.
-   */
   public static detectPlatform(hostname: string = window.location.hostname): SupportedAiPlatform {
     const host = hostname.toLowerCase();
     for (const [key, config] of Object.entries(AI_PLATFORMS)) {
@@ -26,9 +19,6 @@ export class ChatParserUtils {
     return "generic";
   }
 
-  /**
-   * Scrapes chat messages from the current DOM based on detected or specified platform.
-   */
   public static parseActivePage(doc: Document = document): ChatConversation | null {
     const hostname = doc.defaultView?.location?.hostname || window.location.hostname;
     const platform = this.detectPlatform(hostname);
@@ -53,7 +43,6 @@ export class ChatParserUtils {
     }
 
     if (messages.length === 0) {
-      // Fallback try generic if specialized parser yielded 0
       console.warn(`[AiToolkit] No messages parsed on "${platform}" — falling back to generic.`);
       messages = parseGeneric(doc);
     }
@@ -98,9 +87,6 @@ export class ChatParserUtils {
     return convo;
   }
 
-  /**
-   * Auto-scrolls virtualized scroll containers to hydrate all conversation turns.
-   */
   public static async hydrateVirtualizedChat(doc: Document = document): Promise<void> {
     const scrollContainer = doc.querySelector(
       'main, [class*="react-scroll-to-bottom"], [class*="conversation-container"], [data-scroll-anchor]'
@@ -108,20 +94,13 @@ export class ChatParserUtils {
     if (!scrollContainer) return;
 
     try {
-      // Scroll to top briefly to trigger mount of previous turns
       scrollContainer.scrollTop = 0;
       await delay(250);
-      // Scroll back to bottom
       scrollContainer.scrollTop = scrollContainer.scrollHeight;
       await delay(150);
-    } catch {
-      // Non-critical if scrolling is prevented
-    }
+    } catch {}
   }
 
-  /**
-   * Determines reasonable title from document or conversation content
-   */
   public static extractTitle(doc: Document, messages: readonly ChatMessage[]): string {
     const docTitle = doc.title ? doc.title.replace(/\s*[-–|].*$/, "").trim() : "";
     if (docTitle && !["ChatGPT", "Claude", "Gemini", "DeepSeek", "New Chat"].includes(docTitle)) {

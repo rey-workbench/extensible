@@ -125,8 +125,6 @@
     });
   }
 
-  // ---- Editor ----
-
   function startEditing(script: UserScriptRecord): void {
     editingId = script.id;
     draftCode = script.code;
@@ -142,7 +140,6 @@
   function onDraftInput(): void {
     draftDirty = true;
     if (saveTimer) clearTimeout(saveTimer);
-    // UI-02: debounced auto-save (1s).
     saveTimer = setTimeout(() => void saveDraft(), 1000);
   }
 
@@ -161,8 +158,6 @@
       showStatus(err instanceof Error ? err.message : "Save failed", true);
     }
   }
-
-  // ---- Import / export ----
 
   async function importFromFile(file: File): Promise<void> {
     const code = await file.text();
@@ -228,8 +223,6 @@
     URL.revokeObjectURL(a.href);
   }
 
-  // ---- Run log ----
-
   async function toggleLogs(script: UserScriptRecord): Promise<void> {
     if (expandedId === script.id) {
       expandedId = null;
@@ -274,10 +267,8 @@
     </div>
   {/if}
 
-  <!-- Add Script Card -->
   <Card title="Add Script">
     <div class="flex flex-col gap-2">
-      <!-- Install from URL -->
       <div class="flex items-center gap-1.5">
         <input
           class="h-7 min-w-0 flex-1 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 text-[11.5px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
@@ -295,7 +286,6 @@
         </Button>
       </div>
 
-      <!-- Create blank script -->
       <div class="flex items-center gap-1.5">
         <input
           class="h-7 min-w-0 flex-1 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 text-[11.5px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
@@ -315,7 +305,6 @@
     </div>
   </Card>
 
-  <!-- Script List Header Bar -->
   <div class="flex h-6 shrink-0 items-center justify-between px-1 pt-0.5">
     <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-ext-muted">
       <span>Scripts</span>
@@ -352,7 +341,6 @@
     </div>
   </div>
 
-  <!-- Script list -->
   {#if isLoading}
     <div class="py-8 text-center text-xs font-medium text-ext-muted">Loading scripts…</div>
   {:else if scripts.length === 0}

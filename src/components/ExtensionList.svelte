@@ -6,7 +6,7 @@
   interface Props {
     features: FeatureModule[];
     enabledMap: Record<string, boolean>;
-    /** Accent color per feature id. */
+    
     colorFor: (id: string) => string;
     onOpenDetail: (id: string) => void;
     onToggleFeature: (feature: FeatureModule, enabled: boolean) => void;
@@ -41,7 +41,6 @@
 </script>
 
 <div class="flex min-h-0 flex-1 flex-col">
-  <!-- Search Input -->
   <div class="border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 pb-2.5 pt-2">
     <div
       class="flex h-7.5 items-center gap-1.5 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 shadow-[1px_1px_0_#1A1A1A] transition-all focus-within:ring-2 focus-within:ring-ext-primary/20"
@@ -76,7 +75,6 @@
     </div>
   </div>
 
-  <!-- Category Header Bar -->
   <div class="flex h-6.5 shrink-0 items-center justify-between px-3">
     <span class="text-[10.5px] font-bold uppercase tracking-widest text-ext-muted">
       Extensions
@@ -87,7 +85,6 @@
     >
   </div>
 
-  <!-- Extension List -->
   <div class="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-2.5 pb-2.5">
     {#if filtered.length === 0}
       <div class="flex flex-col items-center gap-2 px-3 py-10 text-center">

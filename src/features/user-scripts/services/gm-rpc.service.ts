@@ -1,13 +1,7 @@
-/**
- * GM RPC bridge handler (ARC-02). Runs in the background: receives RPC
- * payloads relayed from the page world, enforces SEC-04 (grants) and
- * @connect whitelists, performs privileged work, and broadcasts value-change
- * events to other tabs.
- */
 import { browser } from "wxt/browser";
 import { showNotification } from "@/lib/browser";
 import { sendToTab } from "@/lib/messaging";
-import { USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
+import { resolveGrants, USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
 import type {
   GmHttpRequestDetails,
   GmHttpResponse,
@@ -20,11 +14,40 @@ import { UserScriptsService } from "./user-scripts.service";
 export const MENU_PREFIX = "us_menu_";
 
 export class GmRpcService {
-  /** Dispatch one GM RPC from a page world via the relay. */
   static async handle(payload: GmRpcPayload, tabId: number, tabUrl: string): Promise<unknown> {
-    const { scriptId, fn, args } = payload;
+    const { scriptId, fn, args, token } = payload;
     const script = await UserScriptsService.get(scriptId);
     if (!script?.enabled) throw new Error("Script disabled or missing");
+
+    const expectedToken = UserScriptsService.getScriptToken(scriptId);
+    if (!token || token !== expectedToken) {
+      throw new Error(
+        `Unauthorized GM RPC: invalid authentication token for "${script.meta.name}"`
+      );
+    }
+
+    if (tabUrl && !InjectionEngine.urlMatches(script, tabUrl)) {
+      throw new Error(`Unauthorized GM RPC: script "${script.meta.name}" is not active on tab URL`);
+    }
+
+    const allowedApis = resolveGrants(script.meta.grants);
+    const REQUIRED_GRANTS: Record<string, string[]> = {
+      gm_xhr: ["GM_xmlhttpRequest", "GM.xmlHttpRequest"],
+      gm_download: ["GM_download", "GM.download"],
+      gm_get: ["GM_getValue", "GM.getValue"],
+      gm_set: ["GM_setValue", "GM.setValue"],
+      gm_delete: ["GM_deleteValue", "GM.deleteValue"],
+      gm_list: ["GM_listValues", "GM.listValues"],
+      gm_watch: ["GM_addValueChangeListener", "GM.addValueChangeListener"],
+      gm_clipboard: ["GM_setClipboard", "GM.setClipboard"],
+      gm_notify: ["GM_notification", "GM.notification"],
+      gm_resource: ["GM_getResourceURL", "GM.getResourceUrl"],
+      gm_menu: ["GM_registerMenuCommand", "GM.registerMenuCommand"],
+    };
+    const required = REQUIRED_GRANTS[fn];
+    if (required && !required.some((api) => allowedApis.includes(api))) {
+      throw new Error(`Unauthorized: script "${script.meta.name}" lacks @grant for "${fn}"`);
+    }
 
     switch (fn) {
       case "gm_get":
@@ -41,7 +64,7 @@ export class GmRpcService {
       case "gm_list":
         return UserScriptsService.gmList(scriptId);
       case "gm_watch":
-        return null; // relay listens via GM_VALUE_CHANGED broadcasts
+        return null;
       case "gm_unwatch":
         return null;
       case "gm_xhr":
@@ -71,7 +94,6 @@ export class GmRpcService {
           title: caption,
           contexts: ["page"],
         });
-        // Let the relay know the command id so callbacks can be routed.
         await sendToTab(tabId, USER_SCRIPTS_ACTIONS.GM_MENU_REGISTERED, {
           scriptId,
           caption,
@@ -86,7 +108,6 @@ export class GmRpcService {
     }
   }
 
-  /** GM value-change broadcast to every tab except the origin. */
   private static async broadcastValueChanged(
     scriptId: string,
     key: string,
@@ -107,7 +128,6 @@ export class GmRpcService {
     }
   }
 
-  /** GM_xmlhttpRequest: background fetch with @connect enforcement (SEC-04). */
   private static async gmXhr(
     script: UserScriptRecord,
     details: GmHttpRequestDetails
@@ -143,11 +163,51 @@ export class GmRpcService {
     }
   }
 
+  public static isPrivateOrLocalHost(hostname: string): boolean {
+    const h = hostname.toLowerCase();
+    if (
+      h === "localhost" ||
+      h === "127.0.0.1" ||
+      h === "::1" ||
+      h === "0.0.0.0" ||
+      h === "169.254.169.254" ||
+      h.endsWith(".localhost") ||
+      h.endsWith(".local") ||
+      h.endsWith(".internal")
+    ) {
+      return true;
+    }
+    const match = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (match) {
+      const a = Number(match[1]);
+      const b = Number(match[2]);
+      if (a === 10) return true;
+      if (a === 172 && b >= 16 && b <= 31) return true;
+      if (a === 192 && b === 168) return true;
+      if (a === 169 && b === 254) return true;
+      if (a === 127) return true;
+      if (a === 0) return true;
+    }
+    return false;
+  }
+
   private static assertConnectAllowed(script: UserScriptRecord, hostname: string): void {
     const allowed = script.meta.connects;
     if (!allowed.length)
       throw new Error(`GM_xmlhttpRequest: no @connect domains listed in ${script.meta.name}`);
     const host = hostname.toLowerCase();
+    const isPrivate = GmRpcService.isPrivateOrLocalHost(host);
+
+    if (isPrivate) {
+      const explicitMatch = allowed.some((c) => c.toLowerCase() === host);
+      if (!explicitMatch) {
+        throw new Error(
+          `GM_xmlhttpRequest: private/loopback host "${hostname}" blocked unless explicitly granted in @connect`
+        );
+      }
+      return;
+    }
+
     const ok = allowed.some((c) => {
       const pat = c.toLowerCase().replace(/^\*\./, "*");
       if (pat === "*") return true;
@@ -159,7 +219,6 @@ export class GmRpcService {
   }
 
   private static locationHrefForBase(): string {
-    // Background has no location; relative URLs unsupported by design.
     return "https://extensible.invalid/";
   }
 

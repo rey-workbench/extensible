@@ -10,7 +10,6 @@ import type {
   ExportResult,
 } from "./types/ai-toolkit.types";
 
-/** AI Toolkit background handlers: file export (download / printable tab) + history. */
 export function setupAiToolkitBackground(): void {
   const service = new AiToolkitService();
 
@@ -25,14 +24,12 @@ export function setupAiToolkitBackground(): void {
     const filename =
       payload.filename || service.generateFilename(payload.conversation, formatted.extension);
 
-    // PDF opens as a printable tab; everything else downloads directly
     if (payload.format === "pdf") {
       await openAsTab(formatted.content);
     } else {
       await downloadAsFile(formatted.content, filename, formatted.mimeType);
     }
 
-    // Record in history (cached content enables re-download / copy)
     const historyItem: ExportHistoryItem = {
       id: createUniqueId("hist", 6),
       title: payload.conversation.title,
@@ -60,11 +57,6 @@ export function setupAiToolkitBackground(): void {
   );
 }
 
-/**
- * Creates a blob: URL for text content (no 2 MB data-URL limit, no deprecated
- * btoa/unescape). Falls back to a data: URL because Chrome MV3 service workers
- * don't expose URL.createObjectURL; fine for typical chat exports (< 2 MB).
- */
 function toObjectUrl(content: string, mimeType: string): string {
   if (typeof URL.createObjectURL === "function") {
     const blob = new Blob([content], { type: mimeType });
@@ -73,12 +65,10 @@ function toObjectUrl(content: string, mimeType: string): string {
   return `data:${mimeType};charset=utf-8,${encodeURIComponent(content)}`;
 }
 
-/** Revokes an object URL after the browser has had time to consume it. */
 function revokeLater(url: string, ms = 60_000): void {
   setTimeout(() => URL.revokeObjectURL(url), ms);
 }
 
-/** Downloads text content as a file via the Chrome Downloads API (no-op when unavailable). */
 async function downloadAsFile(content: string, filename: string, mimeType: string): Promise<void> {
   if (!browser.downloads?.download) return;
   const url = toObjectUrl(content, mimeType);
@@ -89,7 +79,6 @@ async function downloadAsFile(content: string, filename: string, mimeType: strin
   }
 }
 
-/** Opens HTML content in a new tab (no-op when tabs API unavailable). */
 async function openAsTab(html: string): Promise<void> {
   if (!browser.tabs?.create) return;
   const url = toObjectUrl(html, "text/html");

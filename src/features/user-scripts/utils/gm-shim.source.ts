@@ -1,10 +1,3 @@
-/**
- * ARC-02/03/04 + §4 — Greasemonkey/Tampermonkey polyfill, shipped as source.
- * The composed source runs inside the injected world (USER_SCRIPT or MAIN).
- * Privileged ops travel: script world --postMessage--> ISOLATED relay
- * (relay.ts) --chrome.runtime--> background --> back the same path.
- * Response correlation uses incrementing call ids + pending-promise map.
- */
 const GM_SHIM_SOURCE: string = `
 (function () {
   "use strict";
@@ -22,6 +15,7 @@ const GM_SHIM_SOURCE: string = `
     if (!d || typeof d !== "object") return;
     if (d.__us === RESP && pending.has(d.id)) {
       var p = pending.get(d.id);
+      if (d.token !== p.token) return;
       pending.delete(d.id);
       if (d.ok) p.resolve(d.data);
       else p.reject(new Error(d.error || "GM RPC failed"));
@@ -34,26 +28,26 @@ const GM_SHIM_SOURCE: string = `
     }
   });
 
-  function call(fn, args) {
-    var id = ++seq;
-    return new Promise(function (resolve, reject) {
-      pending.set(id, { resolve: resolve, reject: reject });
-      setTimeout(function () {
-        if (pending.has(id)) {
-          pending.delete(id);
-          reject(new Error("GM RPC timeout: " + fn));
-        }
-      }, 30000);
-      window.postMessage({ __us: CALL, id: id, fn: fn, args: args, scriptId: __US_CONFIG__.scriptId }, "*");
-    });
-  }
-
   function syncOk(v) { return { ok: true, data: v }; }
 
   function buildGM(cfg) {
     var has = function (name) { return cfg.apis.indexOf(name) !== -1; };
     var gm = {};
     var async = function (v) { return Promise.resolve(v).then(syncOk); };
+
+    function call(fn, args) {
+      var id = ++seq;
+      return new Promise(function (resolve, reject) {
+        pending.set(id, { resolve: resolve, reject: reject, token: cfg.rpcToken });
+        setTimeout(function () {
+          if (pending.has(id)) {
+            pending.delete(id);
+            reject(new Error("GM RPC timeout: " + fn));
+          }
+        }, 30000);
+        window.postMessage({ __us: CALL, id: id, fn: fn, args: args, scriptId: cfg.scriptId, token: cfg.rpcToken }, "*");
+      });
+    }
 
     if (has("GM.getValue") || has("GM_getValue")) {
       gm.GM_getValue = function (key, def) { return call("gm_get", [key]).then(function (r) { var v = r.value; return v === undefined ? def : v; }); };
@@ -157,20 +151,25 @@ const GM_SHIM_SOURCE: string = `
 })();
 `;
 
-/** Composes the full injectable source for one script. */
 export function buildScriptSource(parts: {
   scriptId: string;
   apis: string[];
   requires: string[];
   body: string;
+  rpcToken?: string;
 }): string {
-  const config = JSON.stringify({ scriptId: parts.scriptId, apis: parts.apis });
+  const config = JSON.stringify({
+    scriptId: parts.scriptId,
+    apis: parts.apis,
+    rpcToken: parts.rpcToken ?? "",
+  });
   const libs = parts.requires.join("\n;\n");
   return [
     GM_SHIM_SOURCE,
     libs,
     "(function () {",
     `  var __gm = window.__usBuildGM(${config});`,
+    "  try { delete window.__usBuildGM; } catch (e) { window.__usBuildGM = undefined; }",
     "  for (var k in __gm) { try { Object.defineProperty(window, k, { value: __gm[k], configurable: true }); } catch (e) {} }",
     "  try {",
     parts.body,

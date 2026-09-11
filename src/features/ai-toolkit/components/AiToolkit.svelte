@@ -81,7 +81,7 @@
             await delay(200);
             c = await requestConvo(activeTab.id, deepHydrate);
           } catch {
-            // content script not injectable — leave convo as null
+            
           }
         }
       }
@@ -191,9 +191,7 @@
   onMount(async () => {
     try {
       caveman = await service.getCavemanSettings();
-    } catch {
-      // fall back to defaults
-    }
+    } catch {}
     await Promise.all([loadHistory(), detectActiveTabChat(false)]);
   });
 </script>

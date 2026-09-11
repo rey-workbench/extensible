@@ -1,9 +1,3 @@
-/**
- * UserScripts background wiring (ARC-01..04): message routes, tab lifecycle
- * listeners, context menu commands, auto-update alarm. Heavy lifting lives in
- * services/injection.engine.ts, services/gm-rpc.service.ts, and
- * services/update.service.ts.
- */
 import { browser } from "wxt/browser";
 import { onMessage, sendToTab } from "@/lib/messaging";
 import { isBlockedUrl, USER_SCRIPTS_ACTIONS } from "./constants/user-scripts.constants";
@@ -18,11 +12,8 @@ import type {
 } from "./types/user-scripts.types";
 
 export function setupUserScriptsBackground(): void {
-  // Sync scripts to native chrome.userScripts API on startup
   void InjectionEngine.syncUserScriptsApi().catch(() => {});
 
-  // Cache invalidation — must live inside setup(): this module is also bundled
-  // into the content script, where `browser.tabs` is undefined.
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (changeInfo.status === "loading") InjectionEngine.onTabLoading(tabId);
   });
@@ -30,7 +21,6 @@ export function setupUserScriptsBackground(): void {
     InjectionEngine.forgetTab(tabId);
   });
 
-  // ---- Script management routes ----
   onMessage<null, UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST, async () =>
     UserScriptsService.list()
   );
@@ -119,13 +109,15 @@ export function setupUserScriptsBackground(): void {
     UserScriptsService.getRunLog(p?.scriptId ?? "")
   );
 
-  // ---- GM RPC bridge (ARC-02) ----
+  onMessage<null, Record<string, string>>(USER_SCRIPTS_ACTIONS.REGISTER_SESSION_TOKEN, async () =>
+    UserScriptsService.getAllScriptTokens()
+  );
+
   onMessage<GmRpcPayload, unknown>(USER_SCRIPTS_ACTIONS.GM_RPC, (p, sender) => {
     if (!p || !sender.tab?.id) throw new Error("Invalid GM RPC");
     return GmRpcService.handle(p, sender.tab.id, sender.tab.url ?? "");
   });
 
-  // ---- Context menu commands (GM_registerMenuCommand) ----
   browser.contextMenus.onClicked.addListener((info, tab) => {
     const id = String(info.menuItemId);
     if (!id.startsWith(MENU_PREFIX)) return;
@@ -136,8 +128,6 @@ export function setupUserScriptsBackground(): void {
     );
   });
 
-  // ---- Auto-inject on navigation + manual run ----
-  // tabs.onUpdated avoids the extra "webNavigation" permission.
   browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status !== "complete") return;
     const url = changeInfo.url ?? tab.url ?? "";
@@ -145,7 +135,6 @@ export function setupUserScriptsBackground(): void {
     void InjectionEngine.runScriptsInTab(tabId, "auto", url).catch(() => {});
   });
 
-  // ---- Auto-update checks (@updateURL / @downloadURL) ----
   browser.alarms.create("us_auto_update", { periodInMinutes: 360 });
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name !== "us_auto_update") return;

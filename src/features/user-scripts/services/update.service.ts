@@ -25,9 +25,7 @@ export class UpdateService {
             message: `${script.meta.name} → v${meta.version}`,
           });
         }
-      } catch {
-        // Skip unreachable update hosts silently.
-      }
+      } catch {}
     }
   }
 

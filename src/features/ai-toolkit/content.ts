@@ -15,12 +15,7 @@ import { ChatParserUtils } from "./utils/chat-parser.utils";
 import { formatMarkdown } from "./utils/export-formatters";
 import { AiToolkitComposerView } from "./views/composer.view";
 
-/**
- * AI Toolkit content-side setup: DOM scrape handler + floating composer toolbar
- * (Caveman toggle / export menu) + caveman send interceptors on AI chat pages.
- */
 export async function setupAiToolkitContent(): Promise<void> {
-  // 1. Register content script handler for scraping DOM when requested by Popup
   onMessage<{ hydrate?: boolean } | null, { conversation: ChatConversation | null }>(
     AI_TOOLKIT_ACTIONS.SCRAPE_DOM,
     async (payload) => {
@@ -36,16 +31,13 @@ export async function setupAiToolkitContent(): Promise<void> {
     }
   );
 
-  // 2. Composer toolbar + caveman interceptors only on supported AI platforms
   const platform = ChatParserUtils.detectPlatform(window.location.hostname);
   if (platform === "generic") return;
 
   let cavemanSettings: CavemanSettings = DEFAULT_CAVEMAN_SETTINGS;
   try {
     cavemanSettings = readSettings(await cavemanSettingsItem.getValue(), DEFAULT_CAVEMAN_SETTINGS);
-  } catch {
-    // fall back to defaults
-  }
+  } catch {}
 
   const view = new AiToolkitComposerView({
     onExport: async (format: ExportFormat) => {
@@ -91,22 +83,17 @@ export async function setupAiToolkitContent(): Promise<void> {
   });
   view.mount(cavemanSettings);
 
-  // 3. Reactively sync settings changes from the popup / drawer
   void cavemanSettingsItem.watch((next) => {
     const updated = readSettings(next, cavemanSettings);
     cavemanSettings = updated;
     view.updateSettings(updated);
   });
 
-  // 4. Caveman send interceptors (Enter / send-button click)
   let bypass = false;
   let bypassTimer: ReturnType<typeof setTimeout> | null = null;
 
   const handleCavemanInjection = (): void => {
     if (bypass) return;
-
-    const platform = ChatParserUtils.detectPlatform(window.location.hostname);
-    if (platform === "generic") return;
 
     const host = window.location.hostname.replace(/^www\./, "");
     if (cavemanSettings.sites[host] === false) return;

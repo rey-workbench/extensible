@@ -8,13 +8,11 @@ const scriptsItem = storage.defineItem<UserScriptRecord[]>(USER_SCRIPTS_STORAGE_
   defaultValue: [],
 });
 
-/** Run logs, keyed by scriptId (bounded per script). */
 const runLogsItem = storage.defineItem<Record<string, UserScriptRunLogEntry[]>>(
   USER_SCRIPTS_STORAGE_KEYS.RUN_LOGS,
   { defaultValue: {} }
 );
 
-/** GM storage values, keyed by scriptId → key → value. */
 const gmValuesItem = storage.defineItem<Record<string, Record<string, unknown>>>(
   USER_SCRIPTS_STORAGE_KEYS.GM_VALUES,
   { defaultValue: {} }
@@ -23,7 +21,21 @@ const gmValuesItem = storage.defineItem<Record<string, Record<string, unknown>>>
 const RUN_LOG_LIMIT = 30;
 
 export class UserScriptsService {
-  /** All stored scripts, in priority order (SM-02, SM-08). */
+  private static scriptTokens = new Map<string, string>();
+
+  static getScriptToken(scriptId: string): string {
+    let token = UserScriptsService.scriptTokens.get(scriptId);
+    if (!token) {
+      token = `${scriptId}_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
+      UserScriptsService.scriptTokens.set(scriptId, token);
+    }
+    return token;
+  }
+
+  static getAllScriptTokens(): Record<string, string> {
+    return Object.fromEntries(UserScriptsService.scriptTokens.entries());
+  }
+
   static list(): Promise<UserScriptRecord[]> {
     return scriptsItem.getValue();
   }
@@ -33,7 +45,6 @@ export class UserScriptsService {
     return all.find((s) => s.id === id) ?? null;
   }
 
-  /** Insert or update by id; re-parses metadata from the current code. */
   static async save(record: UserScriptRecord): Promise<UserScriptRecord> {
     const all = await scriptsItem.getValue();
     const idx = all.findIndex((s) => s.id === record.id);
@@ -44,7 +55,6 @@ export class UserScriptsService {
     return updated;
   }
 
-  /** Adds a new script; returns its record. */
   static async add(record: UserScriptRecord): Promise<UserScriptRecord> {
     await UserScriptsService.save(record);
     return record;
@@ -55,7 +65,6 @@ export class UserScriptsService {
     const next = all.filter((s) => s.id !== id);
     if (next.length === all.length) return false;
     await scriptsItem.setValue(next);
-    // SM-04: drop the script's run history and GM values too.
     const logs = await runLogsItem.getValue();
     if (logs[id]) {
       delete logs[id];
@@ -69,7 +78,6 @@ export class UserScriptsService {
     return true;
   }
 
-  /** SM-05: duplicate as a starting point for a new script. */
   static async duplicate(id: string): Promise<UserScriptRecord | null> {
     const src = await UserScriptsService.get(id);
     if (!src) return null;
@@ -78,7 +86,6 @@ export class UserScriptsService {
     return copy;
   }
 
-  /** SM-08: reorder (priority = array order). */
   static async move(id: string, toIndex: number): Promise<UserScriptRecord[]> {
     const all = await scriptsItem.getValue();
     const from = all.findIndex((s) => s.id === id);
@@ -90,7 +97,6 @@ export class UserScriptsService {
     return all;
   }
 
-  /** UI-03: enable/disable toggle. */
   static async setEnabled(id: string, enabled: boolean): Promise<UserScriptRecord[]> {
     const all = await scriptsItem.getValue();
     const rec = all.find((s) => s.id === id);
@@ -101,12 +107,9 @@ export class UserScriptsService {
     return all;
   }
 
-  /** Persist scripts replaced wholesale (import). */
   static async replaceAll(records: UserScriptRecord[]): Promise<void> {
     await scriptsItem.setValue(records);
   }
-
-  // ---- Run log (UI-04) ----
 
   static async appendRunLog(entry: UserScriptRunLogEntry & { scriptId: string }): Promise<void> {
     const { scriptId, ...rest } = entry;
@@ -127,8 +130,6 @@ export class UserScriptsService {
     delete logs[scriptId];
     await runLogsItem.setValue(logs);
   }
-
-  // ---- GM value storage (SM via GM_getValue/GM_setValue) ----
 
   static async gmGet(scriptId: string, key: string): Promise<unknown> {
     const all = await gmValuesItem.getValue();
@@ -157,7 +158,6 @@ export class UserScriptsService {
   }
 }
 
-/** Clone with a fresh id/name and reset run state. */
 function newScriptCopy(src: UserScriptRecord): UserScriptRecord {
   const now = Date.now();
   return {
@@ -170,7 +170,6 @@ function newScriptCopy(src: UserScriptRecord): UserScriptRecord {
   };
 }
 
-/** Builds a fresh record by parsing code (used by install-from-URL and import). */
 export function recordFromCode(code: string): UserScriptRecord {
   const now = Date.now();
   const meta = parseUserScriptHeader(code);

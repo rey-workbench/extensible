@@ -1,7 +1,6 @@
 import type { ChatMessage, MessageRole } from "../../types/ai-toolkit.types";
 import { cleanElementText, pushMessage } from "./base.parser";
 
-/** DeepSeek DOM extractor */
 export function parseDeepSeek(doc: Document): ChatMessage[] {
   const messages: ChatMessage[] = [];
   const elements = doc.querySelectorAll(
