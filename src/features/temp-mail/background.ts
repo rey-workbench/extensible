@@ -48,7 +48,7 @@ async function updateBadge(): Promise<void> {
   else await setBadge("");
 }
 
-export function setupTempMailBackground(): void {
+export function setupBackground(): void {
   onMessage<
     { autoGenerate?: boolean; duration?: number } | null,
     Awaited<ReturnType<typeof getCurrentState>>

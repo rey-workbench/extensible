@@ -1,12 +1,27 @@
-export const INK = "#1A1A1A";
-export const BORDER = "#2B2B2B";
-export const SURFACE = "#FFFDF7";
-export const MUTED = "#A89B8C";
-export const SUCCESS = "#2D8C4E";
-export const DANGER = "#D63230";
-export const DANGER_DARK = "#A82624";
-export const WARNING_DARK = "#C48C1E";
-export const WARNING_BG = "#FDF3E3";
+export const DESIGN_TOKENS = {
+  bg: "#F5F0E8",
+  surface: "#FFFDF7",
+  surfaceHover: "#EDE7DA",
+  border: "#2B2B2B",
+  text: "#1A1A1A",
+  textSecondary: "#5A544C",
+  muted: "#A89B8C",
+  primary: "#1B4DDB",
+  success: "#2D8C4E",
+  danger: "#D63230",
+  dangerDark: "#A82624",
+  warning: "#C48C1E",
+  warningBg: "#FDF3E3",
+  fontStack: "'Space Grotesk', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
+} as const;
 
-export const FONT_STACK =
-  "'Space Grotesk', system-ui, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif";
+export const INK = DESIGN_TOKENS.text;
+export const BORDER = DESIGN_TOKENS.border;
+export const SURFACE = DESIGN_TOKENS.surface;
+export const MUTED = DESIGN_TOKENS.muted;
+export const SUCCESS = DESIGN_TOKENS.success;
+export const DANGER = DESIGN_TOKENS.danger;
+export const DANGER_DARK = DESIGN_TOKENS.dangerDark;
+export const WARNING_DARK = DESIGN_TOKENS.warning;
+export const WARNING_BG = DESIGN_TOKENS.warningBg;
+export const FONT_STACK = DESIGN_TOKENS.fontStack;

@@ -24,12 +24,10 @@
   const logo32 = browser.runtime.getURL("/icon/icon-32.png");
 
   interface Props {
-    
     shadowRoot: ShadowRoot;
   }
   let { shadowRoot }: Props = $props();
 
-  
   const modules = getToggleableFeatures();
 
   let isOpen = $state(false);
@@ -63,9 +61,7 @@
     try {
       const state = await tempMailApi.getCurrentState({ autoGenerate: false });
       activeTempAddress = state?.email?.address ?? null;
-    } catch {
-      
-    }
+    } catch {}
   }
 
   async function handleQuickGenerate(): Promise<void> {
@@ -110,7 +106,6 @@
   onMount(() => {
     window.addEventListener("keydown", onKeyDown, true);
 
-    
     const style = document.createElement("style");
     style.textContent = `
       ${globalCss}
@@ -246,8 +241,10 @@
   ></div>
 
   <div
-    class="fixed top-0 right-0 z-2147483647 flex h-full w-[330px] max-w-[90vw] flex-col overflow-hidden border-l-[1.5px] border-ext-border bg-ext-bg text-ext-text shadow-[-4px_4px_0_#1A1A1A] transition-transform duration-300 ease-out"
-    style="transform: translateX({isOpen ? '0%' : '100%'}); pointer-events: {isOpen ? 'auto' : 'none'};"
+    class="fixed top-0 right-0 z-2147483647 flex h-full w-82.5 max-w-[90vw] flex-col overflow-hidden border-l-[1.5px] border-ext-border bg-ext-bg text-ext-text shadow-[-4px_4px_0_#1A1A1A] transition-transform duration-300 ease-out"
+    style="transform: translateX({isOpen
+      ? '0%'
+      : '100%'}); pointer-events: {isOpen ? 'auto' : 'none'};"
     role="dialog"
     aria-label="Extensible drawer"
   >
@@ -264,7 +261,11 @@
         onToggleFeature={(m, enabled) => void toggleFeature(m.id, enabled)}
       />
     {:else}
-      <DrawerDetail feature={activeModule} onBack={showList} onClose={closeDrawer} />
+      <DrawerDetail
+        feature={activeModule}
+        onBack={showList}
+        onClose={closeDrawer}
+      />
     {/if}
   </div>
 </div>

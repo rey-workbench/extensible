@@ -7,8 +7,8 @@ export const AI_TOOLKIT_ACTIONS = {
 } as const;
 
 export const AI_TOOLKIT_STORAGE_KEYS = {
-  HISTORY: "local:ai_exporter_history",
-  CAVEMAN_SETTINGS: "local:ai_exporter_caveman",
+  HISTORY: "local:ai_toolkit_history",
+  CAVEMAN_SETTINGS: "local:ai_toolkit_caveman",
 } as const;
 
 export const DEFAULT_CAVEMAN_SETTINGS: CavemanSettings = {

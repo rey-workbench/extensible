@@ -1,5 +1,5 @@
 import { defineFeature } from "@/lib/feature-registry";
-import { setupUserScriptsBackground } from "./background";
+import { setupBackground } from "./background";
 import UserScripts from "./components/UserScripts.svelte";
 
 defineFeature({
@@ -8,7 +8,7 @@ defineFeature({
   description: "Tampermonkey-like userscript engine (GM_* APIs, auto-inject)",
   icon: "puzzle",
   color: "#C48C1E",
-  background: setupUserScriptsBackground,
-  content: () => import("./content").then((m) => m.setupUserScriptsContent()),
+  background: setupBackground,
+  content: () => import("./content").then((m) => m.setupContent()),
   popup: UserScripts,
 });

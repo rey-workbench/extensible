@@ -51,7 +51,16 @@ function createFakeBrowser(): Record<string, unknown> {
 const [
   { extractOtpCode, formatCountdown, sanitizeEmailHtml },
   { escapeHtml, formatRelativeTime, isContextInvalidated, slugify, setInputValue, setNativeValue },
-  { AiToolkitService },
+  {
+    clearHistory,
+    deleteHistoryItem,
+    formatConversation,
+    generateFilename,
+    getCavemanSettings,
+    getHistory,
+    recordHistory,
+    updateCavemanSettings,
+  },
   { detectPlatform },
   {
     buildPrimer,
@@ -67,8 +76,9 @@ const [
   { formatHtml, formatJson, formatMarkdown, formatPlainText },
   tempMail,
   { defineFeature, getFeatureColor },
-  { GmRpcService },
-  { UserScriptsService },
+  { isPrivateOrLocalHost },
+  { getAllScriptTokens, getScriptToken },
+  { DESIGN_TOKENS },
 ] = await Promise.all([
   import("@/features/temp-mail/utils/temp-mail.utils"),
   import("@/lib/browser"),
@@ -80,6 +90,7 @@ const [
   import("@/lib/feature-registry"),
   import("@/features/user-scripts/services/gm-rpc.service"),
   import("@/features/user-scripts/services/user-scripts.service"),
+  import("@/lib/design-tokens"),
 ]);
 let passed = 0;
 
@@ -122,6 +133,9 @@ ok(
 );
 ok(typeof setInputValue === "function", "setInputValue must be exported");
 ok(typeof setNativeValue === "function", "setNativeValue must be exported");
+ok(DESIGN_TOKENS.primary === "#1B4DDB", "DESIGN_TOKENS.primary should match theme");
+ok(DESIGN_TOKENS.bg === "#F5F0E8", "DESIGN_TOKENS.bg should match theme");
+ok(DESIGN_TOKENS.surface === "#FFFDF7", "DESIGN_TOKENS.surface should match theme");
 console.log("   ✓ lib utilities passed.");
 console.log("\n2.5. Testing Feature Module Colors & Registration:");
 defineFeature({
@@ -140,7 +154,7 @@ ok(
   "Unknown feature should fall back to default color #1B4DDB",
 );
 console.log("   ✓ Feature module colors passed.");
-console.log("\n3. Testing AiToolkitService:");
+console.log("\n3. Testing ai-toolkit service functions:");
 const sampleConvo = {
   id: "test_chat_1",
   title: "Testing AI Toolkit Architecture",
@@ -154,23 +168,21 @@ const sampleConvo = {
   totalWords: 11,
 };
 
-const service = new AiToolkitService();
-
-const formattedPdf = service.formatConversation(sampleConvo, "pdf");
+const formattedPdf = formatConversation(sampleConvo, "pdf");
 ok(formattedPdf.mimeType === "text/html", "PDF should map to text/html");
 ok(formattedPdf.content.includes("window.print()"), "PDF content should trigger window.print()");
 
-const generatedFilename = service.generateFilename(sampleConvo, ".md");
+const generatedFilename = generateFilename(sampleConvo, ".md");
 ok(
   generatedFilename.startsWith("chatgpt_testing-ai-toolkit-architecture_"),
   "Filename should start with platform + slugified title",
 );
 ok(generatedFilename.endsWith(".md"), "Filename should end with .md");
 
-await service.clearHistory();
-ok((await service.getHistory()).length === 0, "History should be empty after clear");
+await clearHistory();
+ok((await getHistory()).length === 0, "History should be empty after clear");
 
-await service.recordHistory({
+await recordHistory({
   id: "hist_1",
   title: sampleConvo.title,
   platform: "chatgpt",
@@ -180,33 +192,30 @@ await service.recordHistory({
   url: sampleConvo.url,
   content: formatMarkdown(sampleConvo),
 });
-const hist = await service.getHistory();
+const hist = await getHistory();
 ok(hist.length === 1, "History should contain one item");
 ok(hist[0].title === sampleConvo.title, "History item title should match");
 
-await service.deleteHistoryItem("hist_1");
-ok((await service.getHistory()).length === 0, "History should be empty after delete");
+await deleteHistoryItem("hist_1");
+ok((await getHistory()).length === 0, "History should be empty after delete");
 
-let cavemanSettings = await service.getCavemanSettings();
+let cavemanSettings = await getCavemanSettings();
 ok(cavemanSettings.enabled === false, "Caveman should default to disabled");
 ok(cavemanSettings.level === "full", "Caveman should default to full level");
 
-cavemanSettings = await service.updateCavemanSettings({ enabled: true, level: "ultra" });
+cavemanSettings = await updateCavemanSettings({ enabled: true, level: "ultra" });
 ok(
   cavemanSettings.enabled === true && cavemanSettings.level === "ultra",
   "Caveman update should persist",
 );
 
-ok(
-  (await service.getCavemanSettings()).level === "ultra",
-  "Caveman settings should survive across calls",
-);
+ok((await getCavemanSettings()).level === "ultra", "Caveman settings should survive across calls");
 await assert.rejects(
-  () => service.updateCavemanSettings({ level: "bogus" as never }),
+  () => updateCavemanSettings({ level: "bogus" as never }),
   /Invalid caveman level/,
   "Invalid caveman level should be rejected",
 );
-console.log("   ✓ AiToolkitService passed.");
+console.log("   ✓ ai-toolkit service passed.");
 
 console.log("\n4. Testing formatters:");
 const mdOutput = formatMarkdown(sampleConvo);
@@ -339,26 +348,20 @@ ok(
   "Sanitizer must preserve safe markup",
 );
 
-ok(GmRpcService.isPrivateOrLocalHost("localhost") === true, "localhost must be private");
-ok(GmRpcService.isPrivateOrLocalHost("127.0.0.1") === true, "127.0.0.1 must be private");
-ok(GmRpcService.isPrivateOrLocalHost("0.0.0.0") === true, "0.0.0.0 must be private");
-ok(
-  GmRpcService.isPrivateOrLocalHost("169.254.169.254") === true,
-  "169.254.169.254 must be private",
-);
-ok(GmRpcService.isPrivateOrLocalHost("192.168.1.1") === true, "192.168.x.x must be private");
-ok(GmRpcService.isPrivateOrLocalHost("10.0.0.5") === true, "10.x.x.x must be private");
-ok(GmRpcService.isPrivateOrLocalHost("example.com") === false, "Public domain must not be private");
-ok(
-  GmRpcService.isPrivateOrLocalHost("api.tempmail.ing") === false,
-  "api.tempmail.ing must not be private",
-);
+ok(isPrivateOrLocalHost("localhost") === true, "localhost must be private");
+ok(isPrivateOrLocalHost("127.0.0.1") === true, "127.0.0.1 must be private");
+ok(isPrivateOrLocalHost("0.0.0.0") === true, "0.0.0.0 must be private");
+ok(isPrivateOrLocalHost("169.254.169.254") === true, "169.254.169.254 must be private");
+ok(isPrivateOrLocalHost("192.168.1.1") === true, "192.168.x.x must be private");
+ok(isPrivateOrLocalHost("10.0.0.5") === true, "10.x.x.x must be private");
+ok(isPrivateOrLocalHost("example.com") === false, "Public domain must not be private");
+ok(isPrivateOrLocalHost("api.tempmail.ing") === false, "api.tempmail.ing must not be private");
 
-const token1 = UserScriptsService.getScriptToken("test-script-1");
-const token2 = UserScriptsService.getScriptToken("test-script-1");
+const token1 = getScriptToken("test-script-1");
+const token2 = getScriptToken("test-script-1");
 ok(token1 === token2, "getScriptToken must be idempotent for the same script");
 ok(token1.startsWith("test-script-1_"), "Token must include script prefix");
-const allTokens = UserScriptsService.getAllScriptTokens();
+const allTokens = getAllScriptTokens();
 ok(allTokens["test-script-1"] === token1, "getAllScriptTokens must include registered token");
 
 console.log("   ✓ Security & Hardening validations passed.");

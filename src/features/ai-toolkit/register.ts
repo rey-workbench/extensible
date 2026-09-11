@@ -1,5 +1,5 @@
 import { defineFeature } from "@/lib/feature-registry";
-import { setupAiToolkitBackground } from "./background";
+import { setupBackground } from "./background";
 import AiToolkit from "./components/AiToolkit.svelte";
 
 defineFeature({
@@ -8,7 +8,7 @@ defineFeature({
   description: "Export AI chats & Caveman mode",
   icon: "markdown",
   color: "#2D8C4E",
-  background: setupAiToolkitBackground,
-  content: () => import("./content").then((m) => m.setupAiToolkitContent()),
+  background: setupBackground,
+  content: () => import("./content").then((m) => m.setupContent()),
   popup: AiToolkit,
 });

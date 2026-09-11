@@ -2,7 +2,7 @@ import { browser } from "wxt/browser";
 import { onMessage } from "@/lib/messaging";
 import { createUniqueId } from "@/lib/utils";
 import { AI_TOOLKIT_ACTIONS } from "./constants/ai-toolkit.constants";
-import { AiToolkitService } from "./services/ai-toolkit.service";
+import { formatConversation, generateFilename, recordHistory } from "./services/ai-toolkit.service";
 import type {
   ChatConversation,
   ExportFormat,
@@ -10,9 +10,7 @@ import type {
   ExportResult,
 } from "./types/ai-toolkit.types";
 
-export function setupAiToolkitBackground(): void {
-  const service = new AiToolkitService();
-
+export function setupBackground(): void {
   onMessage<
     { conversation: ChatConversation; format: ExportFormat; filename?: string },
     ExportResult
@@ -20,9 +18,9 @@ export function setupAiToolkitBackground(): void {
     if (!payload?.conversation || !payload?.format) {
       throw new Error("Missing conversation or format");
     }
-    const formatted = service.formatConversation(payload.conversation, payload.format);
+    const formatted = formatConversation(payload.conversation, payload.format);
     const filename =
-      payload.filename || service.generateFilename(payload.conversation, formatted.extension);
+      payload.filename || generateFilename(payload.conversation, formatted.extension);
 
     if (payload.format === "pdf") {
       await openAsTab(formatted.content);
@@ -40,7 +38,7 @@ export function setupAiToolkitBackground(): void {
       url: payload.conversation.url,
       content: formatted.content,
     };
-    await service.recordHistory(historyItem);
+    await recordHistory(historyItem);
 
     return { success: true, filename, format: payload.format };
   });

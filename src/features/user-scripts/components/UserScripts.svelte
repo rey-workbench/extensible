@@ -9,9 +9,9 @@
   import { showToast } from "@/lib/toast";
   import { createUniqueId } from "@/lib/utils";
   import { USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
-  import { recordFromCode } from "../services/user-scripts.service";
   import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
   import { makeScriptTemplate, parseUserScriptHeader } from "../utils/header-parser.utils";
+  import { recordFromCode } from "../utils/record-factory.utils";
   import ScriptEditor from "./ScriptEditor.svelte";
   import ScriptRow from "./ScriptRow.svelte";
 
@@ -213,7 +213,7 @@
   }
 
   async function loadRunLog(script: UserScriptRecord): Promise<void> {
-    const logs = await sendMessage<UserScriptRunLogEntry[]>("user_scripts:run_log", {
+    const logs = await sendMessage<UserScriptRunLogEntry[]>(USER_SCRIPTS_ACTIONS.RUN_LOG, {
       scriptId: script.id,
     }).catch(() => [] as UserScriptRunLogEntry[]);
     runLogs = { ...runLogs, [script.id]: logs };

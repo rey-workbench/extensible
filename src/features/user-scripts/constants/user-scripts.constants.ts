@@ -19,6 +19,7 @@ export const USER_SCRIPTS_ACTIONS = {
   GM_MENU_COMMAND: "user_scripts:gm_menu_command",
   GM_MENU_REGISTERED: "user_scripts:gm_menu_registered",
   REGISTER_SESSION_TOKEN: "user_scripts:register_session_token",
+  RUN_LOG: "user_scripts:run_log",
 } as const;
 
 export const USER_SCRIPTS_STORAGE_KEYS = {

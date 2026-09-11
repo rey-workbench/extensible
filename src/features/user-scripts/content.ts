@@ -1,5 +1,5 @@
-import { setupGmRelay } from "./content/relay";
+import { setupGmRelay } from "./utils/relay";
 
-export function setupUserScriptsContent(): void {
+export function setupContent(): void {
   setupGmRelay();
 }

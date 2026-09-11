@@ -7,7 +7,7 @@ import {
 } from "@/lib/shadow-ui";
 import SideNotch from "./components/SideNotch.svelte";
 
-export function setupSideNotchContent(): void {
+export function setupContent(): void {
   const ui = createShadowHost("aio-side-notch-host");
   if (!ui) return;
   const { host, shadow } = ui;

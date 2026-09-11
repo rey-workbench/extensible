@@ -7,5 +7,5 @@ defineFeature({
   icon: "sidebar",
   color: "#1B4DDB",
   mandatory: true,
-  content: () => import("./content").then((m) => m.setupSideNotchContent()),
+  content: () => import("./content").then((m) => m.setupContent()),
 });

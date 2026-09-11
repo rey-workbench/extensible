@@ -5,11 +5,19 @@
   import { sendMessage, sendToTab } from "@/lib/messaging";
   import { delay } from "@/lib/utils";
   import { AI_TOOLKIT_ACTIONS } from "../constants/ai-toolkit.constants";
-  import { AiToolkitService } from "../services/ai-toolkit.service";
+  import {
+    clearHistory,
+    deleteHistoryItem,
+    formatMeta,
+    getCavemanSettings,
+    getHistory,
+    updateCavemanSettings,
+  } from "../services/ai-toolkit.service";
   import type {
     CavemanSettings,
     ChatConversation,
     ExportFormat,
+    ExportHistoryItem,
   } from "../types/ai-toolkit.types";
   import { hydrateVirtualizedChat, parseActivePage } from "../utils/chat-parser.utils";
   import { formatMarkdown } from "../utils/export-formatters";
@@ -17,10 +25,8 @@
   import CavemanCard from "./CavemanCard.svelte";
   import HistoryList from "./HistoryList.svelte";
 
-  const service = new AiToolkitService();
-
   let convo = $state<ChatConversation | null>(null);
-  let history = $state<Awaited<ReturnType<AiToolkitService["getHistory"]>>>([]);
+  let history = $state<ExportHistoryItem[]>([]);
   let caveman = $state<CavemanSettings | null>(null);
   let isLoading = $state(false);
   let status = $state<{ text: string; isError?: boolean } | null>(null);
@@ -95,7 +101,7 @@
 
   async function loadHistory(): Promise<void> {
     try {
-      history = await service.getHistory();
+      history = await getHistory();
     } catch (err) {
       console.warn("[AiToolkit] Failed to load history:", err);
     }
@@ -145,7 +151,7 @@
   async function handleDownloadHistory(id: string): Promise<void> {
     const item = history.find((x) => x.id === id);
     if (!item?.content) return;
-    const { mimeType, extension } = AiToolkitService.formatMeta(item.format);
+    const { mimeType, extension } = formatMeta(item.format);
     const filename = `${item.platform}_${slugify(item.title).slice(0, 40) || "chat"}_${item.exportedAt}${extension}`;
     try {
       await sendMessage(AI_TOOLKIT_ACTIONS.DOWNLOAD_CONTENT, {
@@ -167,30 +173,30 @@
   }
 
   async function handleDeleteHistory(id: string): Promise<void> {
-    await service.deleteHistoryItem(id);
+    await deleteHistoryItem(id);
     await loadHistory();
     showStatus("Item removed");
   }
 
   async function handleClearHistory(): Promise<void> {
-    await service.clearHistory();
+    await clearHistory();
     await loadHistory();
     showStatus("History cleared");
   }
 
   async function handleToggleCaveman(enabled: boolean): Promise<void> {
-    caveman = await service.updateCavemanSettings({ enabled });
+    caveman = await updateCavemanSettings({ enabled });
     showStatus(enabled ? "Caveman Mode enabled" : "Caveman Mode disabled");
   }
 
   async function handleSetLevel(level: CavemanSettings["level"]): Promise<void> {
-    caveman = await service.updateCavemanSettings({ level });
+    caveman = await updateCavemanSettings({ level });
     showStatus(`Caveman level: ${level.toUpperCase()}`);
   }
 
   onMount(async () => {
     try {
-      caveman = await service.getCavemanSettings();
+      caveman = await getCavemanSettings();
     } catch {}
     await Promise.all([loadHistory(), detectActiveTabChat(false)]);
   });

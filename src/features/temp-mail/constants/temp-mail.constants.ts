@@ -5,19 +5,19 @@ export const DEFAULT_TEMPMAIL_SETTINGS: TempMailSettings = {
 };
 
 export const TEMPMAIL_ACTIONS = {
-  GET_CURRENT: "tempmail:get_current",
-  GENERATE_NEW: "tempmail:generate_new",
-  GET_INBOX: "tempmail:get_inbox",
-  DELETE_MESSAGE: "tempmail:delete_message",
-  AUTOFILL_ACTIVE_TAB: "tempmail:autofill_active_tab",
-  AUTOFILL_EMAIL: "tempmail:autofill_email",
-  UPDATE_SETTINGS: "tempmail:update_settings",
+  GET_CURRENT: "temp_mail:get_current",
+  GENERATE_NEW: "temp_mail:generate_new",
+  GET_INBOX: "temp_mail:get_inbox",
+  DELETE_MESSAGE: "temp_mail:delete_message",
+  AUTOFILL_ACTIVE_TAB: "temp_mail:autofill_active_tab",
+  AUTOFILL_EMAIL: "temp_mail:autofill_email",
+  UPDATE_SETTINGS: "temp_mail:update_settings",
 } as const;
 
 export const TEMPMAIL_STORAGE_KEYS = {
-  STATE: "local:tempmail:state",
-  INBOX_CACHE: "local:tempmail:inbox",
-  SETTINGS: "local:tempmail:settings",
+  STATE: "local:temp_mail:state",
+  INBOX_CACHE: "local:temp_mail:inbox",
+  SETTINGS: "local:temp_mail:settings",
 } as const;
 
 export const TEMPMAIL_CONFIG = {

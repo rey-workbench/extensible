@@ -1,59 +1,74 @@
 import { browser } from "wxt/browser";
 import { onMessage, sendToTab } from "@/lib/messaging";
 import { isBlockedUrl, USER_SCRIPTS_ACTIONS } from "./constants/user-scripts.constants";
-import { GmRpcService, MENU_PREFIX } from "./services/gm-rpc.service";
-import { InjectionEngine } from "./services/injection.engine";
-import { UpdateService } from "./services/update.service";
-import { recordFromCode, UserScriptsService } from "./services/user-scripts.service";
+import { handleGmRpc, MENU_PREFIX } from "./services/gm-rpc.service";
+import {
+  forgetTab,
+  onTabLoading,
+  reinjectAll,
+  runScriptsInTab,
+  syncUserScriptsApi,
+} from "./services/injection.engine";
+import { checkAll } from "./services/update.service";
+import {
+  duplicate,
+  get,
+  getAllScriptTokens,
+  getRunLog,
+  list,
+  move,
+  remove,
+  save,
+  setEnabled,
+} from "./services/user-scripts.service";
 import type {
   GmRpcPayload,
   UserScriptRecord,
   UserScriptRunLogEntry,
 } from "./types/user-scripts.types";
+import { recordFromCode } from "./utils/record-factory.utils";
 
-export function setupUserScriptsBackground(): void {
-  void InjectionEngine.syncUserScriptsApi().catch(() => {});
+export function setupBackground(): void {
+  void syncUserScriptsApi().catch(() => {});
 
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === "loading") InjectionEngine.onTabLoading(tabId);
+    if (changeInfo.status === "loading") onTabLoading(tabId);
   });
   browser.tabs.onRemoved.addListener((tabId) => {
-    InjectionEngine.forgetTab(tabId);
+    forgetTab(tabId);
   });
 
-  onMessage<null, UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST, async () =>
-    UserScriptsService.list(),
-  );
+  onMessage<null, UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST, async () => list());
 
   onMessage<{ id: string }, UserScriptRecord | null>(USER_SCRIPTS_ACTIONS.GET, async (p) =>
-    UserScriptsService.get(p?.id ?? ""),
+    get(p?.id ?? ""),
   );
 
   onMessage<{ record: UserScriptRecord }, UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, (p) => {
     if (!p?.record) throw new Error("Missing record");
-    return UserScriptsService.save(p.record);
+    return save(p.record);
   });
 
   onMessage<{ id: string }, boolean>(USER_SCRIPTS_ACTIONS.DELETE, async (p) => {
-    const ok = await UserScriptsService.remove(p?.id ?? "");
-    if (ok) await InjectionEngine.reinjectAll();
+    const ok = await remove(p?.id ?? "");
+    if (ok) await reinjectAll();
     return ok;
   });
 
   onMessage<{ id: string }, UserScriptRecord | null>(USER_SCRIPTS_ACTIONS.DUPLICATE, async (p) =>
-    UserScriptsService.duplicate(p?.id ?? ""),
+    duplicate(p?.id ?? ""),
   );
 
   onMessage<{ id: string; index: number }, UserScriptRecord[]>(
     USER_SCRIPTS_ACTIONS.MOVE,
-    async (p) => UserScriptsService.move(p?.id ?? "", p?.index ?? 0),
+    async (p) => move(p?.id ?? "", p?.index ?? 0),
   );
 
   onMessage<{ id: string; enabled: boolean }, UserScriptRecord[]>(
     USER_SCRIPTS_ACTIONS.TOGGLE,
     async (p) => {
-      const all = await UserScriptsService.setEnabled(p?.id ?? "", p?.enabled ?? false);
-      await InjectionEngine.reinjectAll();
+      const all = await setEnabled(p?.id ?? "", p?.enabled ?? false);
+      await reinjectAll();
       return all;
     },
   );
@@ -62,12 +77,12 @@ export function setupUserScriptsBackground(): void {
     USER_SCRIPTS_ACTIONS.IMPORT_FILE,
     (p) => {
       if (!p?.record) throw new Error("Missing record");
-      return UserScriptsService.save(p.record);
+      return save(p.record);
     },
   );
 
   onMessage<null, string>(USER_SCRIPTS_ACTIONS.EXPORT, async () =>
-    JSON.stringify(await UserScriptsService.list(), null, 2),
+    JSON.stringify(await list(), null, 2),
   );
 
   onMessage<{ url: string }, UserScriptRecord>(USER_SCRIPTS_ACTIONS.INSTALL_FROM_URL, async (p) => {
@@ -76,8 +91,8 @@ export function setupUserScriptsBackground(): void {
     const res = await fetch(url, { credentials: "omit" });
     if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
     const record = recordFromCode(await res.text());
-    await UserScriptsService.save(record);
-    await InjectionEngine.reinjectAll();
+    await save(record);
+    await reinjectAll();
     return record;
   });
 
@@ -94,28 +109,29 @@ export function setupUserScriptsBackground(): void {
         }
       }
       if (tabId == null) throw new Error("No active tab");
-      return InjectionEngine.runScriptsInTab(tabId, "manual", undefined, p?.scriptId);
+      return runScriptsInTab(tabId, "manual", undefined, p?.scriptId);
     },
   );
 
   onMessage<{ scriptId: string }, void>(USER_SCRIPTS_ACTIONS.OPEN_EDITOR, async (p) => {
-    const script = await UserScriptsService.get(p?.scriptId ?? "");
+    const script = await get(p?.scriptId ?? "");
     if (!script) throw new Error("Script not found");
     const url = browser.runtime.getURL("/popup.html#/user-scripts-editor");
     await browser.tabs.create({ url: `${url}?id=${encodeURIComponent(script.id)}` });
   });
 
-  onMessage<{ scriptId: string }, UserScriptRunLogEntry[]>("user_scripts:run_log", async (p) =>
-    UserScriptsService.getRunLog(p?.scriptId ?? ""),
+  onMessage<{ scriptId: string }, UserScriptRunLogEntry[]>(
+    USER_SCRIPTS_ACTIONS.RUN_LOG,
+    async (p) => getRunLog(p?.scriptId ?? ""),
   );
 
   onMessage<null, Record<string, string>>(USER_SCRIPTS_ACTIONS.REGISTER_SESSION_TOKEN, async () =>
-    UserScriptsService.getAllScriptTokens(),
+    getAllScriptTokens(),
   );
 
   onMessage<GmRpcPayload, unknown>(USER_SCRIPTS_ACTIONS.GM_RPC, (p, sender) => {
     if (!p || !sender.tab?.id) throw new Error("Invalid GM RPC");
-    return GmRpcService.handle(p, sender.tab.id, sender.tab.url ?? "");
+    return handleGmRpc(p, sender.tab.id, sender.tab.url ?? "");
   });
 
   browser.contextMenus.onClicked.addListener((info, tab) => {
@@ -132,12 +148,12 @@ export function setupUserScriptsBackground(): void {
     if (changeInfo.status !== "complete") return;
     const url = changeInfo.url ?? tab.url ?? "";
     if (!url || isBlockedUrl(url)) return;
-    void InjectionEngine.runScriptsInTab(tabId, "auto", url).catch(() => {});
+    void runScriptsInTab(tabId, "auto", url).catch(() => {});
   });
 
   browser.alarms.create("us_auto_update", { periodInMinutes: 360 });
   browser.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name !== "us_auto_update") return;
-    void UpdateService.checkAll().catch((err) => console.debug("[UserScripts] update tick:", err));
+    void checkAll().catch((err) => console.debug("[UserScripts] update tick:", err));
   });
 }

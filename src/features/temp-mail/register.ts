@@ -1,5 +1,5 @@
 import { defineFeature } from "@/lib/feature-registry";
-import { setupTempMailBackground } from "./background";
+import { setupBackground } from "./background";
 import TempMail from "./components/TempMail.svelte";
 
 defineFeature({
@@ -8,7 +8,7 @@ defineFeature({
   description: "Disposable email with live inbox & OTP reader",
   icon: "mail",
   color: "#D63230",
-  background: setupTempMailBackground,
-  content: () => import("./content").then((m) => m.setupTempMailContent()),
+  background: setupBackground,
+  content: () => import("./content").then((m) => m.setupContent()),
   popup: TempMail,
 });

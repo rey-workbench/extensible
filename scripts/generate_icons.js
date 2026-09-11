@@ -2,9 +2,6 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 
-/**
- * Minimal pure-Node PNG generator without external dependencies.
- */
 function createPng(width, height, drawPixel) {
   const rowSize = 1 + width * 4;
   const buffer = Buffer.alloc(rowSize * height);

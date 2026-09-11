@@ -97,7 +97,7 @@
       <div class="flex items-center gap-1">
         <button
           type="button"
-          class="flex h-5 w-5 cursor-pointer items-center justify-center rounded-[4px] border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+          class="flex h-5 w-5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
           title="Generate New Address"
           onclick={onQuickGenerate}
         >
@@ -110,7 +110,7 @@
 
         <button
           type="button"
-          class="flex h-5 cursor-pointer items-center gap-1 rounded-[4px] border-[1.5px] border-solid border-ext-border bg-ext-surface px-1.5 text-[9px] font-bold uppercase tracking-wide text-ext-text-secondary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+          class="flex h-5 cursor-pointer items-center gap-1 rounded-sm border-[1.5px] border-solid border-ext-border bg-ext-surface px-1.5 text-[9px] font-bold uppercase tracking-wide text-ext-text-secondary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
           title="Copy Address"
           onclick={onQuickCopy}
         >
@@ -121,7 +121,7 @@
 
       <button
         type="button"
-        class="flex h-5 cursor-pointer items-center rounded-[4px] border-[1.5px] border-solid border-ext-primary bg-[#EDE7DA] px-1.5 text-[9px] font-bold uppercase tracking-wide text-ext-primary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-ext-primary hover:text-white active:translate-x-px active:translate-y-px"
+        class="flex h-5 cursor-pointer items-center rounded-sm border-[1.5px] border-solid border-ext-primary bg-[#EDE7DA] px-1.5 text-[9px] font-bold uppercase tracking-wide text-ext-primary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-ext-primary hover:text-white active:translate-x-px active:translate-y-px"
         onclick={() => onOpenDetail("temp-mail")}
       >
         Inbox ›
@@ -151,7 +151,7 @@
     <div class="mt-1.5 flex items-center justify-between border-t border-solid border-ext-border/25 pt-1.5">
       <button
         type="button"
-        class="flex h-5 cursor-pointer items-center gap-1 rounded-[4px] border-[1.5px] border-solid border-[#C48C1E] bg-[#FDF3E3] px-2 text-[9px] font-bold uppercase tracking-wide text-[#C48C1E] shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#F8E5C4] active:translate-x-px active:translate-y-px"
+        class="flex h-5 cursor-pointer items-center gap-1 rounded-sm border-[1.5px] border-solid border-[#C48C1E] bg-[#FDF3E3] px-2 text-[9px] font-bold uppercase tracking-wide text-[#C48C1E] shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#F8E5C4] active:translate-x-px active:translate-y-px"
         onclick={() => onOpenDetail("ai-toolkit")}
       >
         <span>Caveman</span>
@@ -159,7 +159,7 @@
 
       <button
         type="button"
-        class="flex h-5 cursor-pointer items-center rounded-[4px] border-[1.5px] border-solid border-ext-primary bg-[#EDE7DA] px-2 text-[9px] font-bold uppercase tracking-wide text-ext-primary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-ext-primary hover:text-white active:translate-x-px active:translate-y-px"
+        class="flex h-5 cursor-pointer items-center rounded-sm border-[1.5px] border-solid border-ext-primary bg-[#EDE7DA] px-2 text-[9px] font-bold uppercase tracking-wide text-ext-primary shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-ext-primary hover:text-white active:translate-x-px active:translate-y-px"
         onclick={() => onOpenDetail("ai-toolkit")}
       >
         Export ›

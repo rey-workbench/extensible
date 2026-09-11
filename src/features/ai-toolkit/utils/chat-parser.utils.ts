@@ -67,11 +67,6 @@ export function parseActivePage(doc: Document = document): ChatConversation | nu
   };
 }
 
-/**
- * One-shot scrape: optional virtualized-list hydration, parse, and validation.
- * Shared by content controller, popup controller, and popup callbacks.
- * @throws Error when no messages are detected (message names the action via `actionLabel`).
- */
 export async function scrapeConvo(
   doc: Document,
   options: { hydrate?: boolean; actionLabel?: string } = {},
