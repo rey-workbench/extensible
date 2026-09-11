@@ -4,7 +4,7 @@ import { cleanElementText, pushMessage } from "./base.parser";
 export function parseGeneric(doc: Document): ChatMessage[] {
   const messages: ChatMessage[] = [];
   const candidates = doc.querySelectorAll(
-    '[role="article"], [role="listitem"], .message, .chat-item, [class*="message-item"]'
+    '[role="article"], [role="listitem"], .message, .chat-item, [class*="message-item"]',
   );
 
   candidates.forEach((el, index) => {

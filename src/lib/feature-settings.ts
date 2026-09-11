@@ -4,7 +4,7 @@ const FEATURE_ENABLED_STORAGE_KEY = "local:feature:enabled";
 
 export const featureEnabledItem = storage.defineItem<Record<string, boolean>>(
   FEATURE_ENABLED_STORAGE_KEY,
-  { defaultValue: {} }
+  { defaultValue: {} },
 );
 
 export async function isFeatureEnabled(id: string): Promise<boolean> {

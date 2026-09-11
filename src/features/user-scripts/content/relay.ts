@@ -97,7 +97,7 @@ async function handleCall(msg: GmCallMessage): Promise<void> {
         ok: false,
         error: err instanceof Error ? err.message : String(err),
       },
-      "*"
+      "*",
     );
   }
 }

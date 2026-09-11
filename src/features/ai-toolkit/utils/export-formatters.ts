@@ -10,7 +10,7 @@ export class JsonFormatterUtils {
         conversation: convo,
       },
       null,
-      2
+      2,
     );
   }
 }
@@ -18,7 +18,7 @@ export class JsonFormatterUtils {
 export class MarkdownFormatterUtils {
   public static format(
     convo: ChatConversation,
-    options: { includeMetadata?: boolean } = {}
+    options: { includeMetadata?: boolean } = {},
   ): string {
     const { includeMetadata = true } = options;
     const lines: string[] = [];

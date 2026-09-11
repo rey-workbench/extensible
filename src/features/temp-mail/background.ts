@@ -36,7 +36,7 @@ async function executeInboxPoll(): Promise<void> {
     nextAllowedPollTime = Date.now() + backoffSec * 1000;
     console.debug(
       `[TempMail] poll failed (${consecutiveErrors} consecutive); backing off ${backoffSec}s:`,
-      err
+      err,
     );
   }
 }
@@ -69,7 +69,7 @@ export function setupTempMailBackground(): void {
       lastFetchTime = Date.now();
       await updateBadge();
       return email;
-    }
+    },
   );
 
   onMessage<null, InboxState>(TEMPMAIL_ACTIONS.GET_INBOX, async () => {
@@ -88,7 +88,7 @@ export function setupTempMailBackground(): void {
       const ok = await deleteMessage(payload.messageId);
       await updateBadge();
       return ok;
-    }
+    },
   );
 
   onMessage<Partial<TempMailSettings>, TempMailSettings>(
@@ -98,7 +98,7 @@ export function setupTempMailBackground(): void {
       const updated = mergeSettings(current, payload);
       await tempMailSettings.setValue(updated);
       return updated;
-    }
+    },
   );
 
   onMessage<null, boolean>(TEMPMAIL_ACTIONS.AUTOFILL_ACTIVE_TAB, async () => fillActiveTab(null));

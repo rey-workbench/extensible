@@ -3,7 +3,7 @@ import { BORDER, DANGER, DANGER_DARK, FONT_STACK, INK, SURFACE } from "@/lib/des
 export function showToast(
   mountInto: HTMLElement | ShadowRoot,
   message: string,
-  opts: { isError?: boolean; anchor?: HTMLElement; durationMs?: number } = {}
+  opts: { isError?: boolean; anchor?: HTMLElement; durationMs?: number } = {},
 ): void {
   const { isError = false, anchor, durationMs = 2000 } = opts;
 

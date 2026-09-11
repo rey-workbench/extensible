@@ -45,7 +45,7 @@ export class ChatComposerUtils {
     if (form && form instanceof HTMLElement) return form;
 
     const unified = editor.closest<HTMLElement>(
-      '[data-type="unified-composer"], [data-composer-grid], [data-composer-surface], [class*="chat-input-area"], [class*="input-area"]'
+      '[data-type="unified-composer"], [data-composer-grid], [data-composer-surface], [class*="chat-input-area"], [class*="input-area"]',
     );
     if (unified) return unified;
 
@@ -59,7 +59,7 @@ export class ChatComposerUtils {
 
       if (!isEditorContainer) {
         const hasButton = current.querySelector(
-          'button:not(.aio-bar-btn):not(.aio-composer-menu-item), [role="button"]:not(.aio-bar-btn)'
+          'button:not(.aio-bar-btn):not(.aio-composer-menu-item), [role="button"]:not(.aio-bar-btn)',
         );
         if (hasButton && current.clientWidth > 150) {
           return current;

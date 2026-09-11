@@ -28,7 +28,7 @@ export async function setupAiToolkitContent(): Promise<void> {
         console.warn("[AiToolkit] SCRAPE_DOM failed:", err);
         return { conversation: null };
       }
-    }
+    },
   );
 
   const platform = ChatParserUtils.detectPlatform(window.location.hostname);
@@ -108,7 +108,7 @@ export async function setupAiToolkitContent(): Promise<void> {
 
     const mainChat =
       document.querySelector(
-        'main, #chat-history, [class*="conversation"], [class*="chat-container"]'
+        'main, #chat-history, [class*="conversation"], [class*="chat-container"]',
       ) || document.body;
     const chatText = mainChat?.textContent ?? "";
 

@@ -227,7 +227,7 @@ export class AiToolkitComposerView {
     });
 
     const formatButtons = this.menuEl.querySelectorAll<HTMLButtonElement>(
-      ".aio-composer-menu-item[data-format]"
+      ".aio-composer-menu-item[data-format]",
     );
     formatButtons.forEach((btn) => {
       btn.addEventListener("click", async (e) => {
@@ -259,7 +259,7 @@ export class AiToolkitComposerView {
         console.warn("[AiToolkit] Copy failed:", err);
         this.showToast(
           err instanceof Error && err.message ? `Copy failed: ${err.message}` : "Copy failed",
-          true
+          true,
         );
       }
     });

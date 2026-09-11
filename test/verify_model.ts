@@ -8,7 +8,7 @@ function createFakeBrowser(): Record<string, unknown> {
 
   const area = {
     get(
-      keys: string | string[] | Record<string, unknown> | null | undefined
+      keys: string | string[] | Record<string, unknown> | null | undefined,
     ): Record<string, unknown> {
       const wanted = Array.isArray(keys)
         ? keys
@@ -81,13 +81,13 @@ function ok(cond: unknown, label: string): void {
 console.log("1. Testing TempMailUtils:");
 ok(
   TempMailUtils.extractOtpCode("Your verification code is 492810. Do not share it.") === "492810",
-  "Should extract 6-digit verification code"
+  "Should extract 6-digit verification code",
 );
 ok(
   TempMailUtils.extractOtpCode(
-    "<style>p { color: #555555; font-size: 14px; }</style><p>Click this link: https://app.faceless.video/auth/confirm?token_hash=pkce_4a686446df7117ce7f7d25cd7c55edb230587c7c779ccdb04595105a&type=signup</p>"
+    "<style>p { color: #555555; font-size: 14px; }</style><p>Click this link: https://app.faceless.video/auth/confirm?token_hash=pkce_4a686446df7117ce7f7d25cd7c55edb230587c7c779ccdb04595105a&type=signup</p>",
   ) === null,
-  "Should return null for magic link email without OTP"
+  "Should return null for magic link email without OTP",
 );
 ok(TempMailUtils.formatCountdown(125) === "02:05", "Should format 125 seconds to 02:05");
 ok(TempMailUtils.formatCountdown(0) === "Expired", "Should report Expired for 0 seconds");
@@ -96,19 +96,19 @@ console.log("   ✓ TempMailUtils passed.");
 console.log("\n2. Testing lib utilities:");
 ok(
   escapeHtml('hello <world> & "quotes"') === "hello &lt;world&gt; &amp; &quot;quotes&quot;",
-  "Should escape HTML"
+  "Should escape HTML",
 );
 ok(
   formatRelativeTime(new Date(Date.now() - 5000)) === "just now",
-  "Should format recent time as just now"
+  "Should format recent time as just now",
 );
 ok(
   isContextInvalidated(new Error("Extension context invalidated.")) === true,
-  "Should detect invalidated extension context"
+  "Should detect invalidated extension context",
 );
 ok(
   slugify("Testing AI Toolkit Architecture") === "testing-ai-toolkit-architecture",
-  "Should slugify text"
+  "Should slugify text",
 );
 ok(typeof setInputValue === "function", "setInputValue must be exported");
 ok(typeof setNativeValue === "function", "setNativeValue must be exported");
@@ -123,11 +123,11 @@ defineFeature({
 });
 ok(
   getFeatureColor("test-module") === "#FF4400",
-  "Custom registered feature should report registered color"
+  "Custom registered feature should report registered color",
 );
 ok(
   getFeatureColor("unknown-feature") === "#1B4DDB",
-  "Unknown feature should fall back to default color #1B4DDB"
+  "Unknown feature should fall back to default color #1B4DDB",
 );
 console.log("   ✓ Feature module colors passed.");
 console.log("\n3. Testing AiToolkitService:");
@@ -153,7 +153,7 @@ ok(formattedPdf.content.includes("window.print()"), "PDF content should trigger 
 const generatedFilename = service.generateFilename(sampleConvo, ".md");
 ok(
   generatedFilename.startsWith("chatgpt_testing-ai-toolkit-architecture_"),
-  "Filename should start with platform + slugified title"
+  "Filename should start with platform + slugified title",
 );
 ok(generatedFilename.endsWith(".md"), "Filename should end with .md");
 
@@ -184,17 +184,17 @@ ok(cavemanSettings.level === "full", "Caveman should default to full level");
 cavemanSettings = await service.updateCavemanSettings({ enabled: true, level: "ultra" });
 ok(
   cavemanSettings.enabled === true && cavemanSettings.level === "ultra",
-  "Caveman update should persist"
+  "Caveman update should persist",
 );
 
 ok(
   (await service.getCavemanSettings()).level === "ultra",
-  "Caveman settings should survive across calls"
+  "Caveman settings should survive across calls",
 );
 await assert.rejects(
   () => service.updateCavemanSettings({ level: "bogus" as never }),
   /Invalid caveman level/,
-  "Invalid caveman level should be rejected"
+  "Invalid caveman level should be rejected",
 );
 console.log("   ✓ AiToolkitService passed.");
 
@@ -202,7 +202,7 @@ console.log("\n4. Testing formatters:");
 const mdOutput = MarkdownFormatterUtils.format(sampleConvo);
 ok(
   mdOutput.includes('title: "Testing AI Toolkit Architecture"'),
-  "Markdown should include title frontmatter"
+  "Markdown should include title frontmatter",
 );
 ok(mdOutput.includes("### 🧑 User"), "Markdown should include user role heading");
 ok(mdOutput.includes("### 🤖 Assistant"), "Markdown should include assistant role heading");
@@ -231,28 +231,28 @@ console.log("   ✓ ChatParserUtils passed.");
 console.log("\n6. Testing CavemanDirectiveUtils:");
 ok(
   CavemanDirectiveUtils.buildReminder("lite").includes("LITE"),
-  "Lite reminder should mention LITE"
+  "Lite reminder should mention LITE",
 );
 ok(
   CavemanDirectiveUtils.buildReminder("full").includes("FULL"),
-  "Full reminder should mention FULL"
+  "Full reminder should mention FULL",
 );
 ok(
   CavemanDirectiveUtils.buildPrimer("ultra").includes("Intensity ULTRA"),
-  "Ultra primer should mention ULTRA"
+  "Ultra primer should mention ULTRA",
 );
 
 ok(
   CavemanDirectiveUtils.isPrefixed("[Caveman mode is ON] Hello") === true,
-  "Should detect primer prefix"
+  "Should detect primer prefix",
 );
 ok(
   CavemanDirectiveUtils.isPrefixed("[stay in caveman mode — FULL] Hello") === true,
-  "Should detect reminder prefix"
+  "Should detect reminder prefix",
 );
 ok(
   CavemanDirectiveUtils.isPrefixed("Hello world") === false,
-  "Should not detect prefix on plain text"
+  "Should not detect prefix on plain text",
 );
 
 ok(CavemanDirectiveUtils.needsPrimer([]) === true, "Empty history requires primer");
@@ -262,14 +262,14 @@ ok(
     { role: "user", content: "Halo apa kabar" },
     { role: "assistant", content: "Kabar baik!" },
   ]) === true,
-  "Ongoing chat with no caveman prefix must require primer"
+  "Ongoing chat with no caveman prefix must require primer",
 );
 ok(
   CavemanDirectiveUtils.needsPrimer([
     { role: "user", content: "[Caveman mode is ON for this whole conversation...] Halo" },
     { role: "assistant", content: "Halo." },
   ]) === false,
-  "Already-primed chat should not require primer"
+  "Already-primed chat should not require primer",
 );
 
 const wrappedPrimer = CavemanDirectiveUtils.wrapText("Explain recursion", true, "full");
@@ -279,7 +279,7 @@ ok(wrappedPrimer.includes("Explain recursion"), "wrapText should keep original t
 const wrappedReminder = CavemanDirectiveUtils.wrapText("Explain recursion", false, "full");
 ok(
   wrappedReminder.startsWith("[stay in caveman mode — FULL]"),
-  "wrapText(false) should prepend reminder"
+  "wrapText(false) should prepend reminder",
 );
 
 const stopWrapped = CavemanDirectiveUtils.wrapText("Explain recursion", false, "bogus" as never);
@@ -287,11 +287,11 @@ ok(stopWrapped.startsWith("[stop caveman mode"), "Unknown level must inject the 
 ok(CavemanDirectiveUtils.buildStop().includes("normal"), "Stop directive resumes normal replies");
 ok(
   CavemanDirectiveUtils.isPrefixed("[stop caveman mode] Please clarify") === true,
-  "Should detect stop prefix"
+  "Should detect stop prefix",
 );
 ok(
   CavemanDirectiveUtils.isStopPrefixed("[stop caveman mode] Please clarify") === true,
-  "isStopPrefixed true"
+  "isStopPrefixed true",
 );
 ok(CavemanDirectiveUtils.isStopPrefixed("normal text") === false, "isStopPrefixed false");
 
@@ -299,19 +299,19 @@ ok(
   CavemanDirectiveUtils.hasStop([
     { role: "user", content: "[stop caveman mode] Resume normal" },
   ]) === true,
-  "hasStop should find stop directive"
+  "hasStop should find stop directive",
 );
 ok(
   CavemanDirectiveUtils.hasStop([{ role: "user", content: "[stay in caveman mode — LITE]" }]) ===
     false,
-  "hasStop should ignore reminders"
+  "hasStop should ignore reminders",
 );
 const stopOff = CavemanDirectiveUtils.wrapStop("Continue explaining");
 ok(stopOff.startsWith("[stop caveman mode"), "wrapStop must prepend the stop directive");
 ok(
   CavemanDirectiveUtils.wrapStop("[stop caveman mode] already stopped") ===
     "[stop caveman mode] already stopped",
-  "wrapStop must be idempotent"
+  "wrapStop must be idempotent",
 );
 console.log("   ✓ CavemanDirectiveUtils passed.");
 
@@ -347,7 +347,7 @@ ok(!cleanHtml.includes("javascript:"), "Sanitizer must remove javascript: scheme
 ok(!cleanHtml.includes("<iframe"), "Sanitizer must remove <iframe> tags");
 ok(
   cleanHtml.includes("Safe paragraph") && cleanHtml.includes("<b>bold</b>"),
-  "Sanitizer must preserve safe markup"
+  "Sanitizer must preserve safe markup",
 );
 
 ok(GmRpcService.isPrivateOrLocalHost("localhost") === true, "localhost must be private");
@@ -355,14 +355,14 @@ ok(GmRpcService.isPrivateOrLocalHost("127.0.0.1") === true, "127.0.0.1 must be p
 ok(GmRpcService.isPrivateOrLocalHost("0.0.0.0") === true, "0.0.0.0 must be private");
 ok(
   GmRpcService.isPrivateOrLocalHost("169.254.169.254") === true,
-  "169.254.169.254 must be private"
+  "169.254.169.254 must be private",
 );
 ok(GmRpcService.isPrivateOrLocalHost("192.168.1.1") === true, "192.168.x.x must be private");
 ok(GmRpcService.isPrivateOrLocalHost("10.0.0.5") === true, "10.x.x.x must be private");
 ok(GmRpcService.isPrivateOrLocalHost("example.com") === false, "Public domain must not be private");
 ok(
   GmRpcService.isPrivateOrLocalHost("api.tempmail.ing") === false,
-  "api.tempmail.ing must not be private"
+  "api.tempmail.ing must not be private",
 );
 
 const token1 = UserScriptsService.getScriptToken("test-script-1");

@@ -25,7 +25,7 @@ export function parseGemini(doc: Document): ChatMessage[] {
   }
 
   const secondaryTurns = doc.querySelectorAll(
-    'div[class*="user-query"], div[class*="model-response"], [data-test-id*="user-query"], [data-test-id*="model-response"], .user-query-container, .model-response-container'
+    'div[class*="user-query"], div[class*="model-response"], [data-test-id*="user-query"], [data-test-id*="model-response"], .user-query-container, .model-response-container',
   );
   if (secondaryTurns.length > 0) {
     secondaryTurns.forEach((el, index) => {

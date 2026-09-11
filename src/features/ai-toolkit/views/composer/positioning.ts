@@ -11,7 +11,7 @@ function clamp(v: number, min: number, max: number): number {
 export function computeDockPlacement(
   composerRect: DOMRect,
   dockWidth: number,
-  dockHeight: number
+  dockHeight: number,
 ): DockPlacement {
   let left = composerRect.left + 6;
   left = clamp(left, 8, window.innerWidth - dockWidth - 8);
@@ -26,7 +26,7 @@ export function computeDockPlacement(
 export function computeMenuPlacement(
   triggerRect: DOMRect,
   menuWidth: number,
-  menuHeight: number
+  menuHeight: number,
 ): { top: number; left: number } {
   let top = triggerRect.top - menuHeight - 8;
   if (top < 10) {

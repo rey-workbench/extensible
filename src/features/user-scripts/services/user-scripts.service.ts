@@ -10,12 +10,12 @@ const scriptsItem = storage.defineItem<UserScriptRecord[]>(USER_SCRIPTS_STORAGE_
 
 const runLogsItem = storage.defineItem<Record<string, UserScriptRunLogEntry[]>>(
   USER_SCRIPTS_STORAGE_KEYS.RUN_LOGS,
-  { defaultValue: {} }
+  { defaultValue: {} },
 );
 
 const gmValuesItem = storage.defineItem<Record<string, Record<string, unknown>>>(
   USER_SCRIPTS_STORAGE_KEYS.GM_VALUES,
-  { defaultValue: {} }
+  { defaultValue: {} },
 );
 
 const RUN_LOG_LIMIT = 30;

@@ -19,7 +19,7 @@ export class InjectionEngine {
     tabId: number,
     trigger: "auto" | "manual",
     navUrl?: string,
-    targetScriptId?: string
+    targetScriptId?: string,
   ): Promise<number> {
     if (!(await isFeatureEnabled("user-scripts"))) return 0;
     const tab = await browser.tabs.get(tabId);
@@ -117,7 +117,7 @@ export class InjectionEngine {
   private static async injectScript(
     tabId: number,
     script: UserScriptRecord,
-    url: string
+    url: string,
   ): Promise<boolean> {
     const apis = resolveGrants(script.meta.grants);
     const requires: string[] = [];
@@ -224,7 +224,7 @@ export class InjectionEngine {
           browser.tabs as unknown as {
             executeScript: (
               id: number,
-              details: { code: string; runAt?: string }
+              details: { code: string; runAt?: string },
             ) => Promise<unknown>;
           }
         ).executeScript(tabId, {

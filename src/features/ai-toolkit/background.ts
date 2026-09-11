@@ -53,7 +53,7 @@ export function setupAiToolkitBackground(): void {
       }
       await downloadAsFile(payload.content, payload.filename, payload.mimeType || "text/plain");
       return { success: true };
-    }
+    },
   );
 }
 

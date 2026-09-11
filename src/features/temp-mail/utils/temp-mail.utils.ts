@@ -96,7 +96,7 @@ export class TempMailUtils {
         .replace(/\son\w+\s*=\s*[^\s>]+/gi, "")
         .replace(
           /(href|src|action|formaction)\s*=\s*(['"])\s*(javascript|vbscript|data:text\/html):.*?\2/gi,
-          ""
+          "",
         );
     }
   }

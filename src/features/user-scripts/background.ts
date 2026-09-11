@@ -22,11 +22,11 @@ export function setupUserScriptsBackground(): void {
   });
 
   onMessage<null, UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST, async () =>
-    UserScriptsService.list()
+    UserScriptsService.list(),
   );
 
   onMessage<{ id: string }, UserScriptRecord | null>(USER_SCRIPTS_ACTIONS.GET, async (p) =>
-    UserScriptsService.get(p?.id ?? "")
+    UserScriptsService.get(p?.id ?? ""),
   );
 
   onMessage<{ record: UserScriptRecord }, UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, (p) => {
@@ -41,12 +41,12 @@ export function setupUserScriptsBackground(): void {
   });
 
   onMessage<{ id: string }, UserScriptRecord | null>(USER_SCRIPTS_ACTIONS.DUPLICATE, async (p) =>
-    UserScriptsService.duplicate(p?.id ?? "")
+    UserScriptsService.duplicate(p?.id ?? ""),
   );
 
   onMessage<{ id: string; index: number }, UserScriptRecord[]>(
     USER_SCRIPTS_ACTIONS.MOVE,
-    async (p) => UserScriptsService.move(p?.id ?? "", p?.index ?? 0)
+    async (p) => UserScriptsService.move(p?.id ?? "", p?.index ?? 0),
   );
 
   onMessage<{ id: string; enabled: boolean }, UserScriptRecord[]>(
@@ -55,7 +55,7 @@ export function setupUserScriptsBackground(): void {
       const all = await UserScriptsService.setEnabled(p?.id ?? "", p?.enabled ?? false);
       await InjectionEngine.reinjectAll();
       return all;
-    }
+    },
   );
 
   onMessage<{ record: UserScriptRecord }, UserScriptRecord>(
@@ -63,11 +63,11 @@ export function setupUserScriptsBackground(): void {
     (p) => {
       if (!p?.record) throw new Error("Missing record");
       return UserScriptsService.add(p.record);
-    }
+    },
   );
 
   onMessage<null, string>(USER_SCRIPTS_ACTIONS.EXPORT, async () =>
-    JSON.stringify(await UserScriptsService.list(), null, 2)
+    JSON.stringify(await UserScriptsService.list(), null, 2),
   );
 
   onMessage<{ url: string }, UserScriptRecord>(USER_SCRIPTS_ACTIONS.INSTALL_FROM_URL, async (p) => {
@@ -95,7 +95,7 @@ export function setupUserScriptsBackground(): void {
       }
       if (tabId == null) throw new Error("No active tab");
       return InjectionEngine.runScriptsInTab(tabId, "manual", undefined, p?.scriptId);
-    }
+    },
   );
 
   onMessage<{ scriptId: string }, void>(USER_SCRIPTS_ACTIONS.OPEN_EDITOR, async (p) => {
@@ -106,11 +106,11 @@ export function setupUserScriptsBackground(): void {
   });
 
   onMessage<{ scriptId: string }, UserScriptRunLogEntry[]>("user_scripts:run_log", async (p) =>
-    UserScriptsService.getRunLog(p?.scriptId ?? "")
+    UserScriptsService.getRunLog(p?.scriptId ?? ""),
   );
 
   onMessage<null, Record<string, string>>(USER_SCRIPTS_ACTIONS.REGISTER_SESSION_TOKEN, async () =>
-    UserScriptsService.getAllScriptTokens()
+    UserScriptsService.getAllScriptTokens(),
   );
 
   onMessage<GmRpcPayload, unknown>(USER_SCRIPTS_ACTIONS.GM_RPC, (p, sender) => {
@@ -124,7 +124,7 @@ export function setupUserScriptsBackground(): void {
     const [scriptId, commandId] = id.slice(MENU_PREFIX.length).split(":");
     if (tab?.id == null) return;
     void sendToTab(tab.id, USER_SCRIPTS_ACTIONS.GM_MENU_COMMAND, { scriptId, commandId }).catch(
-      () => {}
+      () => {},
     );
   });
 

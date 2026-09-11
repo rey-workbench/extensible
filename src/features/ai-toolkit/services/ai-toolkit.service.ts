@@ -25,7 +25,7 @@ const historyItem = storage.defineItem<ExportHistoryItem[]>(AI_TOOLKIT_STORAGE_K
 
 export const cavemanSettingsItem = storage.defineItem<CavemanSettings>(
   AI_TOOLKIT_STORAGE_KEYS.CAVEMAN_SETTINGS,
-  { defaultValue: DEFAULT_CAVEMAN_SETTINGS }
+  { defaultValue: DEFAULT_CAVEMAN_SETTINGS },
 );
 
 export class AiToolkitService {
@@ -107,7 +107,7 @@ export class AiToolkitService {
 
   public formatConversation(
     convo: ChatConversation,
-    format: ExportFormat
+    format: ExportFormat,
   ): { content: string; mimeType: string; extension: string } {
     const meta = AiToolkitService.FORMAT_META[format] ?? AiToolkitService.FORMAT_META.markdown;
     return { content: meta.build(convo), mimeType: meta.mimeType, extension: meta.extension };

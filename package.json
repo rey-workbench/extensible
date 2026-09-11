@@ -30,9 +30,9 @@
     "icons": "node scripts/generate_icons.js",
     "typecheck": "wxt prepare && tsc --noEmit",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "lint": "biome check src test scripts",
-    "lint:fix": "biome check --write src test scripts",
-    "format": "biome format --write src test scripts",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "format": "biome format --write",
     "test": "npx -y tsx test/verify_model.ts"
   },
   "keywords": [

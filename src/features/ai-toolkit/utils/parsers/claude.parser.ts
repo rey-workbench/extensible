@@ -5,7 +5,7 @@ import { parseGeneric } from "./generic.parser";
 export function parseClaude(doc: Document): ChatMessage[] {
   const messages: ChatMessage[] = [];
   const turns = doc.querySelectorAll(
-    'div[data-is-streaming], div[class*="font-claude-message"], div[class*="font-user-message"], div[data-test-render-count]'
+    'div[data-is-streaming], div[class*="font-claude-message"], div[class*="font-user-message"], div[data-test-render-count]',
   );
 
   if (turns.length > 0) {

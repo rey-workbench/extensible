@@ -93,7 +93,7 @@ export function buildMenuHtml(): string {
 
 export function updateCavemanButtonUi(
   container: HTMLElement | null,
-  settings: CavemanSettings
+  settings: CavemanSettings,
 ): void {
   if (!container) return;
   const bar = container.querySelector<HTMLElement>(".aio-composer-bar");

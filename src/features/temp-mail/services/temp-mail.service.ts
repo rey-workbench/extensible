@@ -20,7 +20,7 @@ export const inboxItem = storage.defineItem<EmailMessage[]>(TEMPMAIL_STORAGE_KEY
 });
 export const tempMailSettings = storage.defineItem<TempMailSettings>(
   TEMPMAIL_STORAGE_KEYS.SETTINGS,
-  { defaultValue: DEFAULT_TEMPMAIL_SETTINGS }
+  { defaultValue: DEFAULT_TEMPMAIL_SETTINGS },
 );
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -131,7 +131,7 @@ export async function deleteMessage(messageId: string | number): Promise<boolean
       {
         method: "DELETE",
         signal: AbortSignal.timeout(TEMPMAIL_CONFIG.REQUEST_TIMEOUT_MS),
-      }
+      },
     );
   } catch (err) {
     console.warn("[TempMail] server delete failed:", err);

@@ -22,7 +22,7 @@ export class GmRpcService {
     const expectedToken = UserScriptsService.getScriptToken(scriptId);
     if (!token || token !== expectedToken) {
       throw new Error(
-        `Unauthorized GM RPC: invalid authentication token for "${script.meta.name}"`
+        `Unauthorized GM RPC: invalid authentication token for "${script.meta.name}"`,
       );
     }
 
@@ -112,7 +112,7 @@ export class GmRpcService {
     scriptId: string,
     key: string,
     value: unknown,
-    originTab: number
+    originTab: number,
   ): Promise<void> {
     const tabs = await browser.tabs.query({ url: ["http://*/*", "https://*/*"] });
     for (const tab of tabs) {
@@ -130,7 +130,7 @@ export class GmRpcService {
 
   private static async gmXhr(
     script: UserScriptRecord,
-    details: GmHttpRequestDetails
+    details: GmHttpRequestDetails,
   ): Promise<GmHttpResponse> {
     if (!details?.url) throw new Error("GM_xhr: missing url");
     const target = new URL(details.url, GmRpcService.locationHrefForBase());
@@ -202,7 +202,7 @@ export class GmRpcService {
       const explicitMatch = allowed.some((c) => c.toLowerCase() === host);
       if (!explicitMatch) {
         throw new Error(
-          `GM_xmlhttpRequest: private/loopback host "${hostname}" blocked unless explicitly granted in @connect`
+          `GM_xmlhttpRequest: private/loopback host "${hostname}" blocked unless explicitly granted in @connect`,
         );
       }
       return;
@@ -224,7 +224,7 @@ export class GmRpcService {
 
   private static async gmDownload(
     script: UserScriptRecord,
-    details: { url: string; name?: string }
+    details: { url: string; name?: string },
   ): Promise<null> {
     const target = new URL(details.url, GmRpcService.locationHrefForBase());
     GmRpcService.assertConnectAllowed(script, target.hostname);
@@ -238,7 +238,7 @@ export class GmRpcService {
 
   private static async fetchResourceAsDataUrl(
     script: UserScriptRecord,
-    name: string
+    name: string,
   ): Promise<string> {
     const url = script.meta.resources[name];
     if (!url) throw new Error(`Unknown @resource: ${name}`);

@@ -4,7 +4,7 @@ export function pushMessage(
   messages: ChatMessage[],
   id: string,
   role: MessageRole,
-  content: string
+  content: string,
 ): void {
   messages.push({ id, role, content, timestamp: Date.now() });
 }
@@ -14,7 +14,7 @@ export function cleanElementText(element: Element): string {
   const doc = element.ownerDocument || document;
 
   const unwanted = clone.querySelectorAll(
-    'button, svg, [role="button"], .copy-code-button, [aria-hidden="true"], [class*="action-bar"], [class*="copy-button"], [class*="feedback"], [data-testid*="copy"], [class*="response-footer"], [class*="bottom-actions"], [class*="actions-container"], sources-list, [class*="sources-list"], [class*="citation"], mat-icon'
+    'button, svg, [role="button"], .copy-code-button, [aria-hidden="true"], [class*="action-bar"], [class*="copy-button"], [class*="feedback"], [data-testid*="copy"], [class*="response-footer"], [class*="bottom-actions"], [class*="actions-container"], sources-list, [class*="sources-list"], [class*="citation"], mat-icon',
   );
   unwanted.forEach((el) => {
     el.remove();

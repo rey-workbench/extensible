@@ -6,7 +6,7 @@ export function markUiClicks(shadow: ShadowRoot): void {
     (e) => {
       (e as UiHandledEvent).__usUiHandled = true;
     },
-    true
+    true,
   );
 }
 
@@ -20,7 +20,7 @@ export function rescueClicksIn(host: HTMLElement): () => void {
       const target = e.target as Element | null;
       if (!target || !path.includes(target)) return;
       target.dispatchEvent(
-        new MouseEvent("click", { bubbles: true, composed: true, cancelable: true })
+        new MouseEvent("click", { bubbles: true, composed: true, cancelable: true }),
       );
     }, 0);
   };
@@ -30,7 +30,7 @@ export function rescueClicksIn(host: HTMLElement): () => void {
 
 export function createShadowHost(
   id: string,
-  extraCss = ""
+  extraCss = "",
 ): { host: HTMLElement; shadow: ShadowRoot } | null {
   if (document.getElementById(id)) return null;
   const host = document.createElement("div");

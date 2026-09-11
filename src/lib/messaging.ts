@@ -27,7 +27,7 @@ function startMessageListener(): void {
         (err: unknown): ApiResponse => ({
           success: false,
           error: err instanceof Error ? err.message : String(err),
-        })
+        }),
       );
   });
 }
@@ -36,7 +36,7 @@ let listeners = 0;
 
 export function onMessage<TReq = unknown, TRes = unknown>(
   action: string,
-  handler: (payload: TReq, sender: Browser.runtime.MessageSender) => TRes | Promise<TRes>
+  handler: (payload: TReq, sender: Browser.runtime.MessageSender) => TRes | Promise<TRes>,
 ): void {
   handlers.set(action, handler as unknown as Handler);
   startMessageListener();
@@ -56,7 +56,7 @@ export function sendMessage<TRes = unknown>(action: string, payload?: unknown): 
 export function sendToTab<TRes = unknown>(
   tabId: number,
   action: string,
-  payload?: unknown
+  payload?: unknown,
 ): Promise<TRes> {
   return browser.tabs
     .sendMessage(tabId, { action, payload })

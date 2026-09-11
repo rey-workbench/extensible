@@ -4,7 +4,7 @@ import { cleanElementText, pushMessage } from "./base.parser";
 export function parseDeepSeek(doc: Document): ChatMessage[] {
   const messages: ChatMessage[] = [];
   const elements = doc.querySelectorAll(
-    '.ds-message, div[class*="chat-message"], div[class*="message-bubble"]'
+    '.ds-message, div[class*="chat-message"], div[class*="message-bubble"]',
   );
 
   elements.forEach((el, index) => {

@@ -56,18 +56,18 @@ export class CavemanDirectiveUtils {
   }
 
   public static hasPrimer(
-    history?: readonly { role?: string; content?: string }[] | null
+    history?: readonly { role?: string; content?: string }[] | null,
   ): boolean {
     if (!history || history.length === 0) return false;
     return history.some(
-      (m) => typeof m.content === "string" && m.content.includes(this.PRIMER_PREFIX)
+      (m) => typeof m.content === "string" && m.content.includes(this.PRIMER_PREFIX),
     );
   }
 
   public static hasStop(history?: readonly { role?: string; content?: string }[] | null): boolean {
     if (!history || history.length === 0) return false;
     return history.some(
-      (m) => typeof m.content === "string" && m.content.includes(this.STOP_PREFIX)
+      (m) => typeof m.content === "string" && m.content.includes(this.STOP_PREFIX),
     );
   }
 
@@ -77,7 +77,7 @@ export class CavemanDirectiveUtils {
   }
 
   public static needsPrimer(
-    history?: readonly { role?: string; content?: string }[] | null
+    history?: readonly { role?: string; content?: string }[] | null,
   ): boolean {
     return !this.hasPrimer(history);
   }

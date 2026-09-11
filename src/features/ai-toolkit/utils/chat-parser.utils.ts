@@ -54,7 +54,7 @@ export class ChatParserUtils {
     const title = this.extractTitle(doc, messages);
     const totalWords = messages.reduce(
       (acc, m) => acc + m.content.split(/\s+/).filter(Boolean).length,
-      0
+      0,
     );
 
     return {
@@ -75,7 +75,7 @@ export class ChatParserUtils {
    */
   public static async scrapeConvo(
     doc: Document,
-    options: { hydrate?: boolean; actionLabel?: string } = {}
+    options: { hydrate?: boolean; actionLabel?: string } = {},
   ): Promise<ChatConversation> {
     if (options.hydrate) {
       await this.hydrateVirtualizedChat(doc);
@@ -89,7 +89,7 @@ export class ChatParserUtils {
 
   public static async hydrateVirtualizedChat(doc: Document = document): Promise<void> {
     const scrollContainer = doc.querySelector(
-      'main, [class*="react-scroll-to-bottom"], [class*="conversation-container"], [data-scroll-anchor]'
+      'main, [class*="react-scroll-to-bottom"], [class*="conversation-container"], [data-scroll-anchor]',
     ) as HTMLElement | null;
     if (!scrollContainer) return;
 
