@@ -40,7 +40,8 @@ export function askSelect(
   let active = defaultIndex;
   renderSelect(items, active);
   return new Promise((resolve) => {
-    // @ts-ignore - TS 5.3 IDE language server AsyncIterator return mismatch with @types/node 26
+    // biome-ignore lint/suspicious/noTsIgnore: TS 5.3 IDE language server AsyncIterator return mismatch with @types/node 26
+    // @ts-ignore
     readline.emitKeypressEvents(stdin);
     stdin.setRawMode(true);
     stdin.resume();
@@ -86,7 +87,8 @@ export function askYesNo(label: string, defaultYes: boolean): Promise<boolean> {
   if (!stdin.isTTY) return Promise.resolve(defaultYes);
   stdin.resume();
   return new Promise((resolve) => {
-    // @ts-ignore - TS 5.3 IDE language server AsyncIterator return mismatch with @types/node 26
+    // biome-ignore lint/suspicious/noTsIgnore: TS 5.3 IDE language server AsyncIterator return mismatch with @types/node 26
+    // @ts-ignore
     const rl = readline.createInterface({ input: stdin, output: stdout });
     const suffix = defaultYes ? "[Y/n]" : "[y/N]";
     rl.question(`${CYAN}?${RESET} ${label} ${suffix} `, (answer) => {
