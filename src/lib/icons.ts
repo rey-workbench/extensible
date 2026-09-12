@@ -1,26 +1,29 @@
-export type IconName =
-  | "copy"
-  | "check"
-  | "trash"
-  | "mail"
-  | "refresh"
-  | "download"
-  | "markdown"
-  | "pdf"
-  | "json"
-  | "html"
-  | "flame"
-  | "close"
-  | "search"
-  | "autofill"
-  | "gear"
-  | "sidebar"
-  | "puzzle"
-  | "user"
-  | "twitter"
-  | "facebook"
-  | "star"
-  | "spinner";
+export const ICON_NAMES = [
+  "copy",
+  "check",
+  "trash",
+  "mail",
+  "refresh",
+  "download",
+  "markdown",
+  "pdf",
+  "json",
+  "html",
+  "flame",
+  "close",
+  "search",
+  "autofill",
+  "gear",
+  "sidebar",
+  "puzzle",
+  "user",
+  "twitter",
+  "facebook",
+  "star",
+  "spinner",
+] as const;
+
+export type IconName = (typeof ICON_NAMES)[number];
 
 const ICON_PATHS: Record<Exclude<IconName, "spinner">, string> = {
   copy: "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z",

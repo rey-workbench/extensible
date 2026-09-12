@@ -60,7 +60,8 @@ for (const feature of listFeatures()) {
     if (!src.includes("defineFeature(")) {
       find("register-define", rel(registerPath), "does not call defineFeature()");
     }
-    if (!src.includes(`import("./content")`)) {
+
+    if (existsSync(contentPath) && !src.includes(`import("./content")`)) {
       find("register-lazy-content", rel(registerPath), 'content must be lazy: import("./content")');
     }
     if (/setup[A-Za-z]*Content/.test(src) && !src.includes("m.setupContent()")) {
@@ -142,7 +143,6 @@ for (const feature of listFeatures()) {
     }
   }
 
-  // Aturan storage & URL berlaku untuk semua file kode non-constants (.ts/.svelte).
   const codeFiles = files.filter((f) => /\.(ts|svelte)$/.test(f) && !f.endsWith(".d.ts"));
   for (const f of codeFiles) {
     if (/[\\/]constants[\\/]/.test(f)) continue;
@@ -158,9 +158,9 @@ for (const feature of listFeatures()) {
 
     for (const m of src.matchAll(/https?:\/\/[^\s"'`<>\\,;)"]+/gi)) {
       const url = m[0];
-      if (url.includes("*")) continue; // match pattern browser, mis. https://*/*
-      if (/\.(invalid|test|example|localhost)([/:?#]|$)/i.test(url)) continue; // TLD reserved (RFC 2606)
-      if (/^https?:\/\/(www\.)?w3\.org\//i.test(url)) continue; // identifier namespace XML, bukan endpoint
+      if (url.includes("*")) continue;
+      if (/\.(invalid|test|example|localhost)([/:?#]|$)/i.test(url)) continue;
+      if (/^https?:\/\/(www\.)?w3\.org\//i.test(url)) continue;
       find(
         "no-hardcoded-urls",
         rel(f),
