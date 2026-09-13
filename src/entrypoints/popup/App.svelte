@@ -81,7 +81,22 @@
         </span>
       </div>
 
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-solid border-ext-border bg-[#EDE7DA] text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-colors hover:bg-white"
+          title="Open Dashboard in full tab"
+          onclick={() => {
+            void chrome.tabs.create({ url: chrome.runtime.getURL("/dashboard.html") });
+          }}
+        >
+          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+            <polyline points="15 3 21 3 21 9" />
+            <line x1="10" y1="14" x2="21" y2="3" />
+          </svg>
+        </button>
+
         <span
           class="text-[10.5px] font-bold uppercase tracking-wider text-ext-muted"
         >{masterOn ? "All on" : "All off"}</span>
@@ -125,7 +140,20 @@
       <span class="max-w-42.5 truncate text-[12.5px] font-bold text-ext-text">
         {activeFeature?.name ?? ""}
       </span>
-      <div class="w-14"></div>
+      <button
+        type="button"
+        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-solid border-ext-border bg-[#EDE7DA] text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-colors hover:bg-white"
+        title="Open Dashboard in full tab"
+        onclick={() => {
+          void chrome.tabs.create({ url: chrome.runtime.getURL("/dashboard.html") });
+        }}
+      >
+        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <polyline points="15 3 21 3 21 9" />
+          <line x1="10" y1="14" x2="21" y2="3" />
+        </svg>
+      </button>
     </header>
     <div class="min-h-0 flex-1 overflow-y-auto">
       {#if activeFeature?.popup}

@@ -116,7 +116,7 @@ export function setupBackground(): void {
   onMessage<{ scriptId: string }, void>(USER_SCRIPTS_ACTIONS.OPEN_EDITOR, async (p) => {
     const script = await get(p?.scriptId ?? "");
     if (!script) throw new Error("Script not found");
-    const url = browser.runtime.getURL("/popup.html#/user-scripts-editor");
+    const url = browser.runtime.getURL("/dashboard.html#/user-scripts-editor");
     await browser.tabs.create({ url: `${url}?id=${encodeURIComponent(script.id)}` });
   });
 

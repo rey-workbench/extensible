@@ -25,6 +25,12 @@ export default defineConfig({
       cssMinify: true,
       reportCompressedSize: false,
       chunkSizeWarningLimit: 1000,
+      rollupOptions: {
+        onwarn(warning, warn) {
+          if (warning.code === "SOURCEMAP_BROKEN") return;
+          warn(warning);
+        },
+      },
     },
     esbuild: env.mode === "production" ? esbuildOptions : undefined,
   }),
