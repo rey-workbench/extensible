@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import Badge from "@/components/Badge.svelte";
   import ExtensionList from "@/components/ExtensionList.svelte";
   import Toggle from "@/components/Toggle.svelte";
   import {
@@ -72,8 +73,11 @@
           alt="Extensible Logo"
           class="h-6 w-6 rounded-[5px] border-[1.5px] border-solid border-ext-border bg-ext-surface object-contain shadow-[1.5px_1.5px_0_#1A1A1A]"
         />
-        <span class="text-[13px] font-bold uppercase tracking-wider text-ext-text">
+        <span class="flex items-center gap-1.5 text-[13px] font-bold uppercase tracking-wider text-ext-text">
           Extensible
+          {#if import.meta.env.DEV}
+            <Badge text="DEV" variant="warning" class="px-1 py-0 text-[9px] leading-3" />
+          {/if}
         </span>
       </div>
 
