@@ -13,14 +13,14 @@ const handlers = new Map<string, Handler>();
 function startMessageListener(): void {
   if (listeners > 0) return;
   listeners++;
-  browser.runtime.onMessage.addListener((raw: unknown, sender) => {
+  browser.runtime.onMessage.addListener((raw: unknown, sender, sendResponse) => {
     const msg = raw as { action?: unknown; payload?: unknown } | null;
-    if (!msg || typeof msg.action !== "string") return undefined;
+    if (!msg || typeof msg.action !== "string") return false;
 
     const handler = handlers.get(msg.action);
-    if (!handler) return undefined;
+    if (!handler) return false;
 
-    return Promise.resolve()
+    Promise.resolve()
       .then(() => handler(msg.payload, sender))
       .then(
         (data): ApiResponse => ({ success: true, data }),
@@ -28,7 +28,16 @@ function startMessageListener(): void {
           success: false,
           error: err instanceof Error ? err.message : String(err),
         }),
-      );
+      )
+      .then((res) => {
+        try {
+          sendResponse(res);
+        } catch {
+          // Channel may have closed
+        }
+      });
+
+    return true;
   });
 }
 

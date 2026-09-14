@@ -28,6 +28,21 @@ import type {
 } from "./types/user-scripts.types";
 import { recordFromCode } from "./utils/record-factory.utils";
 
+async function openOrFocusDashboard(pathWithQuery: `/dashboard.html${string}`): Promise<void> {
+  const targetUrl = browser.runtime.getURL(pathWithQuery);
+  const allTabs = await browser.tabs.query({});
+  const existingTab = allTabs.find((t) => t.url?.includes("/dashboard.html"));
+
+  if (existingTab?.id != null) {
+    await browser.tabs.update(existingTab.id, { url: targetUrl, active: true });
+    if (existingTab.windowId != null) {
+      await browser.windows.update(existingTab.windowId, { focused: true });
+    }
+  } else {
+    await browser.tabs.create({ url: targetUrl });
+  }
+}
+
 export function setupBackground(): void {
   void syncUserScriptsApi().catch(() => {});
 
@@ -51,7 +66,7 @@ export function setupBackground(): void {
 
   onMessage<{ id: string }, boolean>(USER_SCRIPTS_ACTIONS.DELETE, async (p) => {
     const ok = await remove(p?.id ?? "");
-    if (ok) await reinjectAll();
+    if (ok) void reinjectAll();
     return ok;
   });
 
@@ -68,7 +83,7 @@ export function setupBackground(): void {
     USER_SCRIPTS_ACTIONS.TOGGLE,
     async (p) => {
       const all = await setEnabled(p?.id ?? "", p?.enabled ?? false);
-      await reinjectAll();
+      void reinjectAll();
       return all;
     },
   );
@@ -88,12 +103,18 @@ export function setupBackground(): void {
   onMessage<{ url: string }, UserScriptRecord>(USER_SCRIPTS_ACTIONS.INSTALL_FROM_URL, async (p) => {
     const url = p?.url?.trim();
     if (!url) throw new Error("Missing URL");
-    const res = await fetch(url, { credentials: "omit" });
-    if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-    const record = recordFromCode(await res.text());
-    await save(record);
-    await reinjectAll();
-    return record;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 12000);
+    try {
+      const res = await fetch(url, { credentials: "omit", signal: controller.signal });
+      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+      const record = recordFromCode(await res.text());
+      await save(record);
+      void reinjectAll();
+      return record;
+    } finally {
+      clearTimeout(timer);
+    }
   });
 
   onMessage<{ tabId?: number; scriptId?: string }, number>(
@@ -113,11 +134,32 @@ export function setupBackground(): void {
     },
   );
 
+  onMessage<{ url: string }, void>(USER_SCRIPTS_ACTIONS.CAPTURE_URL, async (p) => {
+    const url = p?.url?.trim();
+    if (!url) return;
+    await openOrFocusDashboard(`/dashboard.html?installUrl=${encodeURIComponent(url)}`);
+  });
+
+  if (browser.downloads?.onCreated) {
+    browser.downloads.onCreated.addListener(async (item) => {
+      const url = item.finalUrl || item.url || "";
+      const filename = item.filename || "";
+      if (/\.user\.js($|\?)/i.test(url) || filename.endsWith(".user.js")) {
+        try {
+          await browser.downloads.cancel(item.id);
+          await browser.downloads.erase({ id: item.id });
+        } catch {
+          // Ignore if download already handled
+        }
+        await openOrFocusDashboard(`/dashboard.html?installUrl=${encodeURIComponent(url)}`);
+      }
+    });
+  }
+
   onMessage<{ scriptId: string }, void>(USER_SCRIPTS_ACTIONS.OPEN_EDITOR, async (p) => {
     const script = await get(p?.scriptId ?? "");
     if (!script) throw new Error("Script not found");
-    const url = browser.runtime.getURL("/dashboard.html#/user-scripts-editor");
-    await browser.tabs.create({ url: `${url}?id=${encodeURIComponent(script.id)}` });
+    await openOrFocusDashboard(`/dashboard.html?editId=${encodeURIComponent(script.id)}`);
   });
 
   onMessage<{ scriptId: string }, UserScriptRunLogEntry[]>(

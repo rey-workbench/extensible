@@ -60,6 +60,21 @@
   function showList(): void {
     view = "list";
   }
+
+  async function openDashboardTab(): Promise<void> {
+    const targetUrl = chrome.runtime.getURL("/dashboard.html");
+    const allTabs = await chrome.tabs.query({});
+    const existingTab = allTabs.find((t) => t.url?.includes("/dashboard.html"));
+
+    if (existingTab?.id != null) {
+      await chrome.tabs.update(existingTab.id, { active: true });
+      if (existingTab.windowId != null) {
+        await chrome.windows.update(existingTab.windowId, { focused: true });
+      }
+    } else {
+      await chrome.tabs.create({ url: targetUrl });
+    }
+  }
 </script>
 
 <div class="ext-container flex h-full min-h-0 flex-col select-none bg-ext-bg text-ext-text">
@@ -86,9 +101,7 @@
           type="button"
           class="flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-solid border-ext-border bg-[#EDE7DA] text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-colors hover:bg-white"
           title="Open Dashboard in full tab"
-          onclick={() => {
-            void chrome.tabs.create({ url: chrome.runtime.getURL("/dashboard.html") });
-          }}
+          onclick={() => void openDashboardTab()}
         >
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -144,9 +157,7 @@
         type="button"
         class="flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-solid border-ext-border bg-[#EDE7DA] text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-colors hover:bg-white"
         title="Open Dashboard in full tab"
-        onclick={() => {
-          void chrome.tabs.create({ url: chrome.runtime.getURL("/dashboard.html") });
-        }}
+        onclick={() => void openDashboardTab()}
       >
         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />

@@ -44,12 +44,19 @@ export async function runScriptsInTab(
 }
 
 export async function reinjectAll(): Promise<void> {
-  await syncUserScriptsApi().catch(() => {});
-  const tabs = await browser.tabs.query({ url: ["http://*/*", "https://*/*"] });
-  for (const tab of tabs) {
-    if (tab.id == null) continue;
-    injectedTabs.delete(tab.id);
-    await runScriptsInTab(tab.id, "auto", tab.url ?? undefined).catch(() => {});
+  void syncUserScriptsApi().catch(() => {});
+  try {
+    const activeTabs = await browser.tabs.query({
+      active: true,
+      url: ["http://*/*", "https://*/*"],
+    });
+    for (const tab of activeTabs) {
+      if (tab.id == null) continue;
+      injectedTabs.delete(tab.id);
+      void runScriptsInTab(tab.id, "auto", tab.url ?? undefined).catch(() => {});
+    }
+  } catch (err) {
+    console.debug("[UserScripts] reinjectAll error:", err);
   }
 }
 

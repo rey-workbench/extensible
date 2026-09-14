@@ -11,6 +11,7 @@ export const USER_SCRIPTS_ACTIONS = {
   IMPORT_FILE: "user_scripts:import",
   EXPORT: "user_scripts:export",
   INSTALL_FROM_URL: "user_scripts:install_url",
+  CAPTURE_URL: "user_scripts:capture_url",
   RUN_IN_TAB: "user_scripts:run_in_tab",
   OPEN_EDITOR: "user_scripts:open_editor",
 

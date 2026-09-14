@@ -7,7 +7,9 @@ import { parseDeepSeek } from "./parsers/deepseek.parser";
 import { parseGemini } from "./parsers/gemini.parser";
 import { parseGeneric } from "./parsers/generic.parser";
 
-export function detectPlatform(hostname: string = window.location.hostname): SupportedAiPlatform {
+export function detectPlatform(
+  hostname: string = typeof window !== "undefined" ? window.location.hostname : "",
+): SupportedAiPlatform {
   const host = hostname.toLowerCase();
   for (const [key, config] of Object.entries(AI_PLATFORMS)) {
     if (key === "generic") continue;
@@ -18,39 +20,43 @@ export function detectPlatform(hostname: string = window.location.hostname): Sup
   return "generic";
 }
 
-export function parseActivePage(doc: Document = document): ChatConversation | null {
-  const hostname = doc.defaultView?.location?.hostname || window.location.hostname;
+export function parseActivePage(doc?: Document): ChatConversation | null {
+  const targetDoc = doc ?? (typeof document !== "undefined" ? document : null);
+  if (!targetDoc) return null;
+  const hostname =
+    targetDoc.defaultView?.location?.hostname ||
+    (typeof window !== "undefined" ? window.location.hostname : "");
   const platform = detectPlatform(hostname);
   let messages: ChatMessage[] = [];
 
   switch (platform) {
     case "chatgpt":
-      messages = parseChatGPT(doc);
+      messages = parseChatGPT(targetDoc);
       break;
     case "claude":
-      messages = parseClaude(doc);
+      messages = parseClaude(targetDoc);
       break;
     case "gemini":
-      messages = parseGemini(doc);
+      messages = parseGemini(targetDoc);
       break;
     case "deepseek":
-      messages = parseDeepSeek(doc);
+      messages = parseDeepSeek(targetDoc);
       break;
     default:
-      messages = parseGeneric(doc);
+      messages = parseGeneric(targetDoc);
       break;
   }
 
   if (messages.length === 0) {
     console.warn(`[AiToolkit] No messages parsed on "${platform}" — falling back to generic.`);
-    messages = parseGeneric(doc);
+    messages = parseGeneric(targetDoc);
   }
 
   if (messages.length === 0) {
     return null;
   }
 
-  const title = extractTitle(doc, messages);
+  const title = extractTitle(targetDoc, messages);
   const totalWords = messages.reduce(
     (acc, m) => acc + m.content.split(/\s+/).filter(Boolean).length,
     0,
@@ -60,7 +66,9 @@ export function parseActivePage(doc: Document = document): ChatConversation | nu
     id: createUniqueId("chat", 7),
     title,
     platform,
-    url: doc.defaultView?.location?.href || window.location.href,
+    url:
+      targetDoc.defaultView?.location?.href ||
+      (typeof window !== "undefined" ? window.location.href : ""),
     createdAt: Date.now(),
     messages,
     totalWords,

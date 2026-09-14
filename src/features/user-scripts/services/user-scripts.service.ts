@@ -3,9 +3,12 @@ import { USER_SCRIPTS_STORAGE_KEYS } from "../constants/user-scripts.constants";
 import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
 import { newScriptCopy } from "../utils/record-factory.utils";
 
-const scriptsItem = storage.defineItem<UserScriptRecord[]>(USER_SCRIPTS_STORAGE_KEYS.SCRIPTS, {
-  defaultValue: [],
-});
+export const scriptsItem = storage.defineItem<UserScriptRecord[]>(
+  USER_SCRIPTS_STORAGE_KEYS.SCRIPTS,
+  {
+    defaultValue: [],
+  },
+);
 
 const runLogsItem = storage.defineItem<Record<string, UserScriptRunLogEntry[]>>(
   USER_SCRIPTS_STORAGE_KEYS.RUN_LOGS,
