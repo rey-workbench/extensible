@@ -43,7 +43,7 @@
       if (!q) return true;
       return (
         f.name.toLowerCase().includes(q) ||
-        f.description.toLowerCase().includes(q) ||
+        (f.description ?? "").toLowerCase().includes(q) ||
         f.id.toLowerCase().includes(q)
       );
     }),
@@ -243,41 +243,80 @@
           </span>
         </div>
 
-        <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {#each filteredFeatures as feature (feature.id)}
             {@const isEnabled = enabledMap[feature.id] !== false}
-            <div
-              class="group flex flex-col items-center gap-2.5 rounded-2xl border border-slate-200/70 bg-white px-2 py-3.5 text-center transition-all hover:border-blue-400 hover:shadow-md {isEnabled
-                ? ''
-                : 'opacity-65'}"
-            >
-              <button
-                type="button"
-                class="flex w-full min-w-0 cursor-pointer flex-col items-center gap-2 border-0 bg-transparent p-0"
-                onclick={() => onOpenDetail(feature.id)}
-                title={feature.description}
-                aria-label="Open {feature.name}"
+            {@const hasDescription = !!feature.description?.trim()}
+            {#if hasDescription}
+              
+              <div
+                class="group col-span-2 flex min-h-28 items-center gap-3.5 rounded-2xl border border-slate-200/70 bg-white px-4 py-3.5 transition-all hover:border-blue-400 hover:shadow-md {isEnabled
+                  ? ''
+                  : 'opacity-65'}"
               >
-                <span
-                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 {isEnabled
-                    ? ''
-                    : 'grayscale'}"
-                  style="background: {feature.color ? `${feature.color}15` : '#1A73E815'}; color: {feature.color || '#1A73E8'};"
+                <button
+                  type="button"
+                  class="flex min-w-0 flex-1 cursor-pointer items-center gap-3.5 border-0 bg-transparent p-0 text-left"
+                  onclick={() => onOpenDetail(feature.id)}
+                  title={feature.description}
+                  aria-label="Open {feature.name}"
                 >
-                  <Icon name={feature.icon} size={22} />
-                </span>
-                <span
-                  class="line-clamp-2 text-label font-semibold text-slate-900 transition-colors group-hover:text-blue-600"
+                  <span
+                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 {isEnabled
+                      ? ''
+                      : 'grayscale'}"
+                    style="background: {feature.color ? `${feature.color}15` : '#1A73E815'}; color: {feature.color || '#1A73E8'};"
+                  >
+                    <Icon name={feature.icon} size={22} />
+                  </span>
+                  <span class="flex min-w-0 flex-col gap-0.5">
+                    <span
+                      class="truncate text-sm font-bold text-slate-900 transition-colors group-hover:text-blue-600"
+                    >
+                      {feature.name}
+                    </span>
+                    <span class="line-clamp-2 text-body font-medium text-ext-text-secondary">
+                      {feature.description}
+                    </span>
+                  </span>
+                </button>
+                <Toggle
+                  checked={isEnabled}
+                  label="{isEnabled ? 'Disable' : 'Enable'} {feature.name}"
+                  onchange={(v) => onToggleFeature(feature, v)}
+                />
+              </div>
+            {:else}
+              
+              <div
+                class="group flex min-h-28 flex-col items-center justify-center gap-2.5 rounded-2xl border border-slate-200/70 bg-white px-2 py-3.5 transition-all hover:border-blue-400 hover:shadow-md {isEnabled
+                  ? ''
+                  : 'opacity-65'}"
+              >
+                <button
+                  type="button"
+                  class="flex cursor-pointer flex-col items-center gap-2 border-0 bg-transparent p-0"
+                  onclick={() => onOpenDetail(feature.id)}
+                  title={feature.name}
+                  aria-label="Open {feature.name}"
                 >
-                  {feature.name}
-                </span>
-              </button>
-              <Toggle
-                checked={isEnabled}
-                label="{isEnabled ? 'Disable' : 'Enable'} {feature.name}"
-                onchange={(v) => onToggleFeature(feature, v)}
-              />
-            </div>
+                  <span
+                    class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 {isEnabled
+                      ? ''
+                      : 'grayscale'}"
+                    style="background: {feature.color ? `${feature.color}15` : '#1A73E815'}; color: {feature.color || '#1A73E8'};"
+                  >
+                    <Icon name={feature.icon} size={22} />
+                  </span>
+                  <span class="sr-only">{feature.name}</span>
+                </button>
+                <Toggle
+                  checked={isEnabled}
+                  label="{isEnabled ? 'Disable' : 'Enable'} {feature.name}"
+                  onchange={(v) => onToggleFeature(feature, v)}
+                />
+              </div>
+            {/if}
           {/each}
         </div>
       </div>

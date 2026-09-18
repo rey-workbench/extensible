@@ -47,12 +47,12 @@ export class AiToolkitComposerView {
     if (this.shadow && this.hostEl && document.body.contains(this.hostEl)) {
       return this.shadow;
     }
-    let host = document.getElementById("aio-composer-overlay-host");
+    let host = document.getElementById("ext-composer-overlay-host");
     if (host) {
       host.remove();
     }
     host = document.createElement("div");
-    host.id = "aio-composer-overlay-host";
+    host.id = "ext-composer-overlay-host";
     host.style.position = "fixed";
     host.style.inset = "0";
     host.style.width = "100vw";
@@ -79,12 +79,12 @@ export class AiToolkitComposerView {
 
   private renderToolbar(): void {
     const shadow = this.ensureShadowHost();
-    const existing = shadow.querySelector("#aio-composer-bar-root");
+    const existing = shadow.querySelector("#ext-composer-bar-root");
     if (existing) existing.remove();
 
     this.container = document.createElement("div");
-    this.container.id = "aio-composer-bar-root";
-    this.container.className = "aio-composer-bar-root";
+    this.container.id = "ext-composer-bar-root";
+    this.container.className = "ext-composer-bar-root";
     this.container.style.pointerEvents = "auto";
     this.container.innerHTML = buildToolbarHtml(this.currentSettings);
 
@@ -95,14 +95,14 @@ export class AiToolkitComposerView {
 
   private renderMenu(): void {
     const shadow = this.ensureShadowHost();
-    const existing = shadow.querySelector("#aio-composer-menu-root");
+    const existing = shadow.querySelector("#ext-composer-menu-root");
     if (existing) existing.remove();
-    const existingBackdrop = shadow.querySelector("#aio-composer-backdrop-root");
+    const existingBackdrop = shadow.querySelector("#ext-composer-backdrop-root");
     if (existingBackdrop) existingBackdrop.remove();
 
     this.backdropEl = document.createElement("div");
-    this.backdropEl.id = "aio-composer-backdrop-root";
-    this.backdropEl.className = "aio-menu-backdrop";
+    this.backdropEl.id = "ext-composer-backdrop-root";
+    this.backdropEl.className = "ext-menu-backdrop";
     this.backdropEl.style.position = "fixed";
     this.backdropEl.style.inset = "0";
     this.backdropEl.style.zIndex = "2147483642";
@@ -121,9 +121,9 @@ export class AiToolkitComposerView {
     shadow.appendChild(this.backdropEl);
 
     this.menuEl = document.createElement("div");
-    this.menuEl.id = "aio-composer-menu-root";
+    this.menuEl.id = "ext-composer-menu-root";
     this.menuEl.className =
-      "aio-composer-menu fixed z-2147483647 flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-1.5 shadow-[0_12px_32px_-8px_rgba(15,23,42,0.2)]";
+      "ext-composer-menu fixed z-2147483647 flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-1.5 shadow-[0_12px_32px_-8px_rgba(15,23,42,0.2)]";
     this.menuEl.style.position = "fixed";
     this.menuEl.style.zIndex = "2147483643";
     this.menuEl.style.pointerEvents = "auto";
@@ -144,8 +144,8 @@ export class AiToolkitComposerView {
       return;
     }
 
-    this.container.classList.remove("aio-fallback-dock");
-    this.container.classList.add("aio-composer-floating");
+    this.container.classList.remove("ext-fallback-dock");
+    this.container.classList.add("ext-composer-floating");
     this.container.style.position = "fixed";
     this.container.style.zIndex = "2147483641";
     this.container.style.pointerEvents = "auto";
@@ -179,8 +179,8 @@ export class AiToolkitComposerView {
 
   private applyFallbackDock(): void {
     if (!this.container) return;
-    this.container.classList.remove("aio-composer-floating");
-    this.container.classList.add("aio-fallback-dock");
+    this.container.classList.remove("ext-composer-floating");
+    this.container.classList.add("ext-fallback-dock");
     this.container.style.position = "fixed";
     this.container.style.zIndex = "2147483640";
     this.container.style.pointerEvents = "auto";
@@ -201,7 +201,7 @@ export class AiToolkitComposerView {
       this.alignScheduled = false;
       if (!this.container) return;
       const composerBox = getComposerBox(document);
-      if (composerBox && this.container.classList.contains("aio-composer-floating")) {
+      if (composerBox && this.container.classList.contains("ext-composer-floating")) {
         this.alignDockTo(composerBox);
       } else {
         this.positionDock();
@@ -220,7 +220,7 @@ export class AiToolkitComposerView {
   private bindMenuEvents(): void {
     if (!this.menuEl) return;
 
-    const closeBtn = this.menuEl.querySelector(".aio-composer-menu-close");
+    const closeBtn = this.menuEl.querySelector(".ext-composer-menu-close");
     closeBtn?.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -228,7 +228,7 @@ export class AiToolkitComposerView {
     });
 
     const formatButtons = this.menuEl.querySelectorAll<HTMLButtonElement>(
-      ".aio-composer-menu-item[data-format]",
+      ".ext-composer-menu-item[data-format]",
     );
     formatButtons.forEach((btn) => {
       btn.addEventListener("click", async (e) => {
@@ -248,7 +248,7 @@ export class AiToolkitComposerView {
       });
     });
 
-    const copyBtn = this.menuEl.querySelector(".aio-composer-copy-btn");
+    const copyBtn = this.menuEl.querySelector(".ext-composer-copy-btn");
     copyBtn?.addEventListener("click", async (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -270,7 +270,7 @@ export class AiToolkitComposerView {
     if (!this.isOpen) return;
     const path = e.composedPath ? e.composedPath() : [];
     if (this.menuEl && path.includes(this.menuEl)) return;
-    const trigger = this.container?.querySelector(".aio-export-trigger-btn");
+    const trigger = this.container?.querySelector(".ext-export-trigger-btn");
     if (trigger && path.includes(trigger)) return;
 
     this.closeMenu();
@@ -294,7 +294,7 @@ export class AiToolkitComposerView {
   private bindEvents(): void {
     if (!this.container) return;
 
-    const cavemanBtn = this.container.querySelector(".aio-caveman-toggle-btn");
+    const cavemanBtn = this.container.querySelector(".ext-caveman-toggle-btn");
     cavemanBtn?.addEventListener("click", async (e) => {
       e.stopPropagation();
       const updated = await this.callbacks.onCycleCavemanLevel();
@@ -302,7 +302,7 @@ export class AiToolkitComposerView {
       this.showToast(updated.enabled ? `Caveman: ${updated.level.toUpperCase()}` : "Caveman: OFF");
     });
 
-    const exportBtn = this.container.querySelector(".aio-export-trigger-btn");
+    const exportBtn = this.container.querySelector(".ext-export-trigger-btn");
     exportBtn?.addEventListener("click", (e) => {
       e.stopPropagation();
       this.toggleMenu();
@@ -325,7 +325,7 @@ export class AiToolkitComposerView {
     }
     if (!this.menuEl || !this.container) return;
 
-    const trigger = this.container.querySelector<HTMLElement>(".aio-export-trigger-btn");
+    const trigger = this.container.querySelector<HTMLElement>(".ext-export-trigger-btn");
     if (!trigger) return;
 
     const rect = trigger.getBoundingClientRect();
@@ -350,7 +350,7 @@ export class AiToolkitComposerView {
 
     this.isOpen = true;
 
-    const caret = this.container.querySelector<HTMLElement>(".aio-export-caret");
+    const caret = this.container.querySelector<HTMLElement>(".ext-export-caret");
     if (caret) caret.style.transform = "rotate(180deg)";
   }
 
@@ -360,7 +360,7 @@ export class AiToolkitComposerView {
       this.menuEl.style.display = "none";
       this.isOpen = false;
     }
-    const caret = this.container?.querySelector<HTMLElement>(".aio-export-caret");
+    const caret = this.container?.querySelector<HTMLElement>(".ext-export-caret");
     if (caret) caret.style.transform = "";
   }
 
@@ -378,7 +378,7 @@ export class AiToolkitComposerView {
     window.removeEventListener("keydown", this.onKeyDown, true);
     this.backdropEl?.remove();
     this.backdropEl = null;
-    document.getElementById("aio-space-grotesk-font")?.remove();
+    document.getElementById("ext-space-grotesk-font")?.remove();
     this.hostEl?.remove();
     this.hostEl = null;
     this.shadow = null;

@@ -63,7 +63,7 @@ export function getComposerBox(root: Document | HTMLElement = document): HTMLEle
 
     if (!isEditorContainer) {
       const hasButton = current.querySelector(
-        'button:not(.aio-bar-btn):not(.aio-composer-menu-item), [role="button"]:not(.aio-bar-btn)',
+        'button:not(.ext-bar-btn):not(.ext-composer-menu-item), [role="button"]:not(.ext-bar-btn)',
       );
       if (hasButton && current.clientWidth > 150) {
         return current;

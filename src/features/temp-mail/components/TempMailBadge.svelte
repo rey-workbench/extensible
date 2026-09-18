@@ -118,7 +118,7 @@
     onclick={handleClick}
   >
     {#if phase === "loading"}
-      <span style:display="flex" style:animation="aio-badge-spin 0.9s linear infinite">
+      <span style:display="flex" style:animation="ext-badge-spin 0.9s linear infinite">
         <Icon name="spinner" size={13} />
       </span>
     {:else if phase === "filled"}

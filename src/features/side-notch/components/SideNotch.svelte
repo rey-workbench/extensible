@@ -6,7 +6,6 @@
   import {
     copyToClipboard,
   } from "@/lib/browser";
-  import { sendMessage } from "@/lib/messaging";
   import {
     type FeatureModule,
     getFeatureColor,
@@ -17,6 +16,7 @@
     setFeatureEnabled,
     setFeaturesEnabled,
   } from "@/lib/feature-settings";
+  import { sendMessage } from "@/lib/messaging";
   import { showToast } from "@/lib/toast";
   import globalCss from "@/styles/global.css?inline";
   import BentoLauncher from "./BentoLauncher.svelte";
@@ -229,7 +229,7 @@
 </script>
 
 <div
-  class="aio-notch-root select-none text-sm"
+  class="ext-notch-root select-none text-sm"
   style="font-family: 'Plus Jakarta Sans', 'Inter', system-ui, 'Segoe UI', Roboto, Ubuntu, sans-serif; font-size: 14px; line-height: 1.5; color: #0F172A;"
 >
   <div

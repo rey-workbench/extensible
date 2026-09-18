@@ -4,7 +4,8 @@ import type { IconName } from "@/lib/icons";
 export interface FeatureModule {
   id: string;
   name: string;
-  description: string;
+
+  description?: string;
   icon: IconName;
   mandatory?: boolean;
   background?: () => void | Promise<void>;

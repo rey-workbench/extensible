@@ -57,9 +57,11 @@
         >
       {/if}
     </div>
-    <div class="truncate text-body font-medium text-ext-text-secondary"
-      >{feature.description}</div
-    >
+    {#if feature.description}
+      <div class="truncate text-body font-medium text-ext-text-secondary">
+        {feature.description}
+      </div>
+    {/if}
   </div>
 
   <div class="relative">

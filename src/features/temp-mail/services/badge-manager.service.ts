@@ -13,7 +13,7 @@ import { isEmailField } from "../utils/temp-mail.utils";
 import { tempMailSettings } from "./temp-mail.service";
 
 const BADGE_CSS = `
-  @keyframes aio-badge-spin {
+  @keyframes ext-badge-spin {
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
   }
@@ -28,7 +28,7 @@ export async function setupBadges(): Promise<void> {
   let settings = await tempMailSettings.getValue();
   const badges = new Map<HTMLInputElement, BadgeEntry>();
 
-  const ui = createShadowHost("aio-tempmail-badge-host", BADGE_CSS);
+  const ui = createShadowHost("ext-tempmail-badge-host", BADGE_CSS);
   if (!ui) return;
   const { host, shadow } = ui;
   markUiClicks(shadow);

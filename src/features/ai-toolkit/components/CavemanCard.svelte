@@ -15,7 +15,7 @@
   const cavemanHint = $derived(CAVEMAN_HINTS[caveman.level] || "");
 </script>
 
-<Card title="Caveman Mode">
+<Card title="Caveman Mode" icon="caveman">
   {#snippet headerAction()}<Badge
       text={caveman.enabled ? "ON" : "OFF"}
       variant={caveman.enabled ? "warning" : "neutral"}

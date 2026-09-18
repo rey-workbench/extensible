@@ -9,7 +9,7 @@ export const ICON_NAMES = [
   "pdf",
   "json",
   "html",
-  "flame",
+  "caveman",
   "close",
   "search",
   "autofill",
@@ -25,7 +25,64 @@ export const ICON_NAMES = [
 
 export type IconName = (typeof ICON_NAMES)[number];
 
-const ICON_PATHS: Record<Exclude<IconName, "spinner">, string> = {
+/**
+ * Caveman logo: an 8x8 pixel grid ("#" = block) drawn as rounded squares.
+ * These are the blocks read off the original mark, row by row.
+ */
+const CAVEMAN_PIXEL_GRID: readonly string[] = [
+  "...##...",
+  "..####..",
+  "..####..",
+  ".##..##.",
+  ".##..##.",
+  "##....##",
+  ".##..##.",
+  "..####..",
+];
+
+/** One rounded block of the Caveman logo, in 24x24 viewBox units. */
+export interface CavemanBlock {
+  x: number;
+  y: number;
+  size: number;
+  radius: number;
+}
+
+/** How much of each grid cell the block fills — the rest is the pixel gap. */
+const CAVEMAN_BLOCK_FILL = 0.78;
+
+/**
+ * The Caveman mark as positioned blocks. Kept as data (not a path) so both the
+ * Svelte `Icon` component and the injected-composer string builder can render
+ * the exact same art, and so the mark scales cleanly at any size.
+ */
+export function cavemanBlocks(): CavemanBlock[] {
+  const rows = CAVEMAN_PIXEL_GRID.length;
+  const pitch = 24 / rows;
+  const size = pitch * CAVEMAN_BLOCK_FILL;
+  const inset = (pitch - size) / 2;
+  const round = (n: number) => Math.round(n * 100) / 100;
+
+  const blocks: CavemanBlock[] = [];
+  CAVEMAN_PIXEL_GRID.forEach((row, y) => {
+    for (let x = 0; x < row.length; x++) {
+      if (row[x] !== "#") continue;
+      blocks.push({
+        x: round(x * pitch + inset),
+        y: round(y * pitch + inset),
+        size: round(size),
+        radius: round(size * 0.3),
+      });
+    }
+  });
+  return blocks;
+}
+
+/** Marks built from primitives instead of a single path. */
+const COMPOSITE_ICONS = ["spinner", "caveman"] as const;
+type CompositeIcon = (typeof COMPOSITE_ICONS)[number];
+
+const ICON_PATHS: Record<Exclude<IconName, CompositeIcon>, string> = {
   copy: "M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z",
   check: "M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z",
   trash: "M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z",
@@ -38,8 +95,6 @@ const ICON_PATHS: Record<Exclude<IconName, "spinner">, string> = {
   pdf: "M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z",
   json: "M5 3h2v2H5v5a2 2 0 01-2 2 2 2 0 012 2v5h2v2H5c-1.1 0-2-.9-2-2v-4a2 2 0 00-2-2 2 2 0 002-2V5c0-1.1.9-2 2-2zm14 0c1.1 0 2 .9 2 2v4a2 2 0 002 2 2 2 0 00-2 2v4c0 1.1-.9 2-2 2h-2v-2h2v-5a2 2 0 012-2 2 2 0 01-2-2V5h-2V3h2z",
   html: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z",
-  flame:
-    "M12 23c-4.97 0-9-4.03-9-9 0-3.32 1.8-6.19 4.47-7.68.27-.15.61-.13.86.06.25.18.36.49.28.79-.44 1.76-.04 3.71 1.09 5.09.17.21.43.32.7.3.27-.02.51-.17.63-.41.86-1.74 2.38-3.05 4.19-3.76.3-.12.64-.04.86.2.22.24.26.59.1.87-1.12 1.95-1.16 4.35-.12 6.34.14.26.4.42.7.42.06 0 .12 0 .18-.02.35-.08.6-.37.6-.73 0-2.3 1.15-4.46 3.09-5.78.28-.19.65-.18.91.03.26.21.35.56.23.88C20.67 13.91 21 15.42 21 17c0 3.31-2.69 6-6 6z",
   close:
     "M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z",
   autofill:
@@ -59,12 +114,25 @@ const ICON_PATHS: Record<Exclude<IconName, "spinner">, string> = {
 };
 
 export function iconPath(name: IconName): string {
-  return ICON_PATHS[name as Exclude<IconName, "spinner">] ?? "";
+  return ICON_PATHS[name as Exclude<IconName, CompositeIcon>] ?? "";
+}
+
+/** Serialised `<rect>` markup for the Caveman mark, for string-built DOM. */
+export function cavemanRects(): string {
+  return cavemanBlocks()
+    .map(
+      (b) => `<rect x="${b.x}" y="${b.y}" width="${b.size}" height="${b.size}" rx="${b.radius}"/>`,
+    )
+    .join("");
 }
 
 export function renderIcon(name: IconName, size = 16, classNames = ""): string {
+  const open = `<svg viewBox="0 0 24 24" width="${size}" height="${size}"`;
   if (name === "spinner") {
-    return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" class="${classNames}" role="img"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>`;
+    return `${open} fill="none" class="${classNames}" role="img"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="31.4 31.4" stroke-linecap="round"/></svg>`;
   }
-  return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="currentColor" class="${classNames}" role="img"><path d="${iconPath(name)}"/></svg>`;
+  if (name === "caveman") {
+    return `${open} fill="currentColor" class="${classNames}" role="img">${cavemanRects()}</svg>`;
+  }
+  return `${open} fill="currentColor" class="${classNames}" role="img"><path d="${iconPath(name)}"/></svg>`;
 }

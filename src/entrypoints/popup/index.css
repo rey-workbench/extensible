@@ -8,7 +8,8 @@ body {
   overflow-y: auto;
   background-color: #e8eef5;
   font-family:
-    "Plus Jakarta Sans", "Inter", system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+    "Plus Jakarta Sans", "Inter", system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 

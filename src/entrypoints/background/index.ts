@@ -1,9 +1,9 @@
 import { browser } from "wxt/browser";
 import "@/features";
 import { APP_ACTIONS } from "@/lib/browser";
-import { onMessage, sendToTab } from "@/lib/messaging";
 import { getFeatures } from "@/lib/feature-registry";
 import { isFeatureEnabled } from "@/lib/feature-settings";
+import { onMessage, sendToTab } from "@/lib/messaging";
 
 export default defineBackground({
   type: "module",

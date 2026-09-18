@@ -30,7 +30,7 @@
       if (!q) return true;
       return (
         f.name.toLowerCase().includes(q) ||
-        f.description.toLowerCase().includes(q) ||
+        (f.description ?? "").toLowerCase().includes(q) ||
         f.id.toLowerCase().includes(q)
       );
     }),

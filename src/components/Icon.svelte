@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type IconName, iconPath } from "@/lib/icons";
+  import { cavemanBlocks, type IconName, iconPath } from "@/lib/icons";
 
   interface Props {
     name: IconName;
@@ -39,6 +39,22 @@
       stroke-linecap="round"
     /></svg
   >
+{:else if name === "caveman"}
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    fill="currentColor"
+    class={cls}
+    id={id || undefined}
+    style={style || undefined}
+    role="img"
+    aria-hidden="true"
+  >
+    {#each cavemanBlocks() as block}
+      <rect x={block.x} y={block.y} width={block.size} height={block.size} rx={block.radius} />
+    {/each}
+  </svg>
 {:else}
   <svg
     viewBox="0 0 24 24"
