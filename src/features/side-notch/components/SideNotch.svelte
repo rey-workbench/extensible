@@ -2,7 +2,11 @@
   import { onDestroy, onMount } from "svelte";
   import { browser } from "wxt/browser";
   import { tempMailApi } from "@/features/temp-mail/api";
-  import { copyToClipboard } from "@/lib/browser";
+  import { USER_SCRIPTS_ACTIONS } from "@/features/user-scripts/constants/user-scripts.constants";
+  import {
+    copyToClipboard,
+  } from "@/lib/browser";
+  import { sendMessage } from "@/lib/messaging";
   import {
     type FeatureModule,
     getFeatureColor,
@@ -15,10 +19,9 @@
   } from "@/lib/feature-settings";
   import { showToast } from "@/lib/toast";
   import globalCss from "@/styles/global.css?inline";
+  import BentoLauncher from "./BentoLauncher.svelte";
   import DrawerDetail from "./DrawerDetail.svelte";
-  import DrawerList from "./DrawerList.svelte";
   import NotchHandle from "./NotchHandle.svelte";
-  import QuickDock from "./QuickDock.svelte";
 
   const logo48 = browser.runtime.getURL("/icon/icon-48.png");
   const logo32 = browser.runtime.getURL("/icon/icon-32.png");
@@ -31,8 +34,6 @@
   const modules = getToggleableFeatures();
 
   let isOpen = $state(false);
-  let isHovered = $state(false);
-  let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   let activeTempAddress = $state<string | null>(null);
   let isGeneratingMail = $state(false);
 
@@ -40,21 +41,20 @@
   let activeId = $state<string | null>(null);
   let masterOn = $state(true);
   let enabledMap = $state<Record<string, boolean>>({});
+  let scriptStats = $state<{ total: number; enabled: number }>({ total: 0, enabled: 0 });
 
-  function onNotchMouseEnter(): void {
-    if (hoverTimeout) {
-      clearTimeout(hoverTimeout);
-      hoverTimeout = null;
+  async function loadScriptStats(): Promise<void> {
+    try {
+      const scripts = await sendMessage<{ enabled: boolean }[]>(
+        USER_SCRIPTS_ACTIONS.LIST,
+      );
+      scriptStats = {
+        total: scripts.length,
+        enabled: scripts.filter((s) => s.enabled).length,
+      };
+    } catch {
+      scriptStats = { total: 0, enabled: 0 };
     }
-    isHovered = true;
-    void syncTempMail();
-  }
-
-  function onNotchMouseLeave(): void {
-    if (hoverTimeout) clearTimeout(hoverTimeout);
-    hoverTimeout = setTimeout(() => {
-      isHovered = false;
-    }, 320);
   }
 
   async function syncTempMail(): Promise<void> {
@@ -95,7 +95,6 @@
   }
 
   onDestroy(() => {
-    if (hoverTimeout) clearTimeout(hoverTimeout);
     window.removeEventListener("keydown", onKeyDown, true);
   });
 
@@ -109,49 +108,77 @@
     const style = document.createElement("style");
     style.textContent = `
       ${globalCss}
-      .ext-quick-dock {
+      .ext-notch-handle-wrapper {
         position: fixed;
         right: 0;
         top: 50%;
         transform: translateY(-50%);
         z-index: 2147483645;
-        background: #FFFDF7;
-        border: 2px solid #1A1A1A;
+        width: 34px;
+        height: 120px;
+        border-radius: 16px 0 0 16px;
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(226, 232, 240, 0.85);
         border-right: none;
-        box-shadow: -3px 3px 0 #1A1A1A;
-        transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                    height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-                    border-radius 0.3s ease,
-                    box-shadow 0.3s ease;
+        box-shadow: -4px 10px 30px -4px rgba(15, 23, 42, 0.12), -1px 0 3px rgba(15, 23, 42, 0.04);
         box-sizing: border-box;
         overflow: hidden;
-      }
-      .ext-quick-dock.is-idle {
-        width: 30px;
-        height: 112px;
-        border-radius: 6px 0 0 6px;
         cursor: pointer;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, background 0.2s ease;
       }
-      .ext-quick-dock.is-idle:hover {
-        width: 34px;
-        box-shadow: -4px 4px 0 #1A1A1A;
-      }
-      .ext-quick-dock.is-expanded {
-        width: 384px;
-        height: 196px;
-        border-radius: 8px 0 0 8px;
-        box-shadow: -5px 5px 0 #1A1A1A;
+      .ext-notch-handle-wrapper:hover {
+        transform: translateY(-50%) translateX(-4px);
+        background: #ffffff;
+        box-shadow: -6px 14px 36px -4px rgba(15, 23, 42, 0.18);
       }
       ::-webkit-scrollbar { width: 6px; }
       ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #A89B8C; border-radius: 3px; }
-      ::-webkit-scrollbar-thumb:hover { background: #8A7D6F; }
+      ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
+      ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
     `;
     shadowRoot.appendChild(style);
 
     void syncFromStorage();
+    void syncTempMail();
+    void loadScriptStats();
     void featureEnabledItem.watch(() => void syncFromStorage());
+
+    // Deep-open requests from the background (captured .user.js downloads,
+    // popup "open launcher", etc.). Payload: { feature?, editId?, installUrl? }
+    browser.runtime.onMessage.addListener(
+      (msg: { action?: string; payload?: Record<string, unknown> } | undefined) => {
+        if (!msg || msg.action !== "app:open_launcher") return;
+        void handleDeepOpen(msg.payload ?? {});
+      },
+    );
   });
+
+  type ModuleApi = {
+    openEditorFor?: (scriptId: string) => void;
+    installFromCapturedUrl?: (url: string) => void;
+  };
+
+  let moduleApi = $state<ModuleApi | null>(null);
+
+  async function handleDeepOpen(payload: Record<string, unknown>): Promise<void> {
+    const featureId = typeof payload.feature === "string" ? payload.feature : null;
+    const editId = typeof payload.editId === "string" ? payload.editId : null;
+    const installUrl = typeof payload.installUrl === "string" ? payload.installUrl : null;
+
+    if (featureId) {
+      openDetail(featureId);
+    } else if (!isOpen) {
+      openDrawer();
+    }
+
+    if (featureId === "user-scripts" && (editId || installUrl)) {
+      // Wait for the module component to mount and register its API.
+      await new Promise((r) => setTimeout(r, 150));
+      if (editId) moduleApi?.openEditorFor?.(editId);
+      if (installUrl) moduleApi?.installFromCapturedUrl?.(installUrl);
+    }
+  }
 
   async function syncFromStorage(): Promise<void> {
     const map = await featureEnabledItem.getValue();
@@ -175,8 +202,9 @@
 
   function openDrawer(): void {
     isOpen = true;
-    isHovered = false;
     void syncFromStorage();
+    void syncTempMail();
+    void loadScriptStats();
   }
 
   function closeDrawer(): void {
@@ -191,81 +219,71 @@
     view = "detail";
     isOpen = true;
     void syncFromStorage();
+    if (id === "temp-mail") void syncTempMail();
   }
 
   function showList(): void {
     view = "list";
+    void loadScriptStats();
   }
 </script>
 
 <div
-  class="aio-notch-root select-none text-[14px]"
-  style="font-family: 'Space Grotesk', system-ui, 'Segoe UI', Roboto, Ubuntu, sans-serif; font-size: 14px; line-height: 1.5; color: #1A1A1A;"
+  class="aio-notch-root select-none text-sm"
+  style="font-family: 'Plus Jakarta Sans', 'Inter', system-ui, 'Segoe UI', Roboto, Ubuntu, sans-serif; font-size: 14px; line-height: 1.5; color: #0F172A;"
 >
   <div
-    class="ext-quick-dock group {isHovered ? 'is-expanded' : 'is-idle'} {isOpen
+    class="ext-notch-handle-wrapper {isOpen
       ? 'pointer-events-none opacity-0'
       : 'opacity-100'}"
     role="region"
-    aria-label="Extensible quick access panel"
-    onmouseenter={onNotchMouseEnter}
-    onmouseleave={onNotchMouseLeave}
+    aria-label="Extensible Notch"
   >
-    {#if isHovered}
-      <QuickDock
-        {logo48}
-        {masterOn}
-        {activeTempAddress}
-        {isGeneratingMail}
-        {modules}
-        {enabledMap}
-        onToggleAll={(v) => void toggleAll(v)}
-        onQuickGenerate={() => void handleQuickGenerate()}
-        onQuickCopy={() => void handleQuickCopy()}
-        onOpenDetail={(id) => openDetail(id)}
-        onOpenDrawer={openDrawer}
-      />
-    {:else}
-      <NotchHandle {logo32} {masterOn} onOpen={openDrawer} />
-    {/if}
+    <NotchHandle {logo32} {masterOn} onOpen={openDrawer} />
   </div>
 
   <div
-    class="fixed inset-0 z-2147483646 bg-ext-text/40 backdrop-blur-[2px] transition-opacity duration-300 {isOpen
+    class="fixed inset-0 z-2147483646 flex items-center justify-center p-4 md:p-8 overflow-y-auto bg-[#E2E8F0]/75 backdrop-blur-xl transition-all duration-300 {isOpen
       ? 'pointer-events-auto opacity-100'
       : 'pointer-events-none opacity-0'}"
     role="presentation"
     tabindex="-1"
-    onclick={closeDrawer}
+    onclick={(e) => {
+      if (e.target === e.currentTarget) closeDrawer();
+    }}
     onkeydown={(e) => e.key === "Escape" && closeDrawer()}
-  ></div>
-
-  <div
-    class="fixed top-0 right-0 z-2147483647 flex h-full w-82.5 max-w-[90vw] flex-col overflow-hidden border-l-[1.5px] border-ext-border bg-ext-bg text-ext-text shadow-[-4px_4px_0_#1A1A1A] transition-transform duration-300 ease-out"
-    style="transform: translateX({isOpen
-      ? '0%'
-      : '100%'}); pointer-events: {isOpen ? 'auto' : 'none'};"
-    role="dialog"
-    aria-label="Extensible drawer"
   >
-    {#if view === "list"}
-      <DrawerList
-        {logo48}
-        features={modules}
-        {enabledMap}
-        {masterOn}
-        colorFor={getFeatureColor}
-        onToggleAll={(v) => void toggleAll(v)}
-        onClose={closeDrawer}
-        onOpenDetail={openDetail}
-        onToggleFeature={(m, enabled) => void toggleFeature(m.id, enabled)}
-      />
-    {:else}
-      <DrawerDetail
-        feature={activeModule}
-        onBack={showList}
-        onClose={closeDrawer}
-      />
-    {/if}
+    <div
+      class="relative w-full max-w-5xl transition-all duration-300 ease-out {isOpen
+        ? 'scale-100 opacity-100 translate-y-0'
+        : 'scale-95 opacity-0 translate-y-4'}"
+      role="dialog"
+      aria-label="Extensible Hub"
+    >
+      {#if view === "list"}
+        <BentoLauncher
+          {logo48}
+          features={modules}
+          {enabledMap}
+          {masterOn}
+          {activeTempAddress}
+          {isGeneratingMail}
+          {scriptStats}
+          onToggleAll={(v) => void toggleAll(v)}
+          onClose={closeDrawer}
+          onOpenDetail={openDetail}
+          onToggleFeature={(m, enabled) => void toggleFeature(m.id, enabled)}
+          onQuickGenerate={() => void handleQuickGenerate()}
+          onQuickCopy={() => void handleQuickCopy()}
+        />
+      {:else}
+        <DrawerDetail
+          feature={activeModule}
+          onBack={showList}
+          onClose={closeDrawer}
+          onModuleApi={(api) => (moduleApi = api)}
+        />
+      {/if}
+    </div>
   </div>
 </div>

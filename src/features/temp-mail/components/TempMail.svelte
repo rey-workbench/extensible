@@ -163,7 +163,7 @@
   });
 </script>
 
-<div bind:this={rootEl} class="flex flex-col gap-2.5 p-2.5">
+<div bind:this={rootEl} class="flex flex-col gap-4 p-2.5 sm:p-3.5">
   <AddressCard
     {email}
     {remainingSeconds}

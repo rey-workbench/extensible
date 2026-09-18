@@ -24,7 +24,7 @@
   <Card title="Active AI Session">
     {#snippet headerAction()}<Badge text="Not Detected" variant="neutral" />{/snippet}
     <div class="flex flex-col items-center gap-2 py-2 text-center">
-      <p class="text-xs font-medium text-ext-text-secondary">
+      <p class="text-body font-medium text-ext-text-secondary">
         Navigate to ChatGPT, Claude, Gemini, or DeepSeek to export your
         conversations.
       </p>
@@ -47,7 +47,7 @@
         <h4 class="truncate text-sm font-bold text-ext-text" title={convo.title}>
           {convo.title}
         </h4>
-        <div class="flex items-center gap-1.5 text-[11px] text-ext-text-secondary">
+        <div class="flex items-center gap-1.5 text-label text-ext-text-secondary">
           <Badge text={`${convo.messages.length} messages`} variant="primary" />
           {#if convo.totalWords}
             <span class="text-ext-muted">•</span><span class="font-semibold"

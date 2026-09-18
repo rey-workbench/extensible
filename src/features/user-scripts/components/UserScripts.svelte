@@ -4,7 +4,7 @@
   import Card from "@/components/Card.svelte";
   import EmptyState from "@/components/EmptyState.svelte";
   import Icon from "@/components/Icon.svelte";
-  import { openOrFocusDashboardTab, slugify } from "@/lib/browser";
+  import { slugify } from "@/lib/browser";
   import { sendMessage } from "@/lib/messaging";
   import { showToast } from "@/lib/toast";
 
@@ -53,28 +53,35 @@
     editingId ? (scripts.find((s) => s.id === editingId) ?? null) : null,
   );
 
-  const isDashboard = $derived(
+  // The drawer/bento context shows the wide inline editor next to the list.
+  const isExpanded = $derived(
     typeof window !== "undefined" &&
-      window.location.pathname.includes("dashboard"),
+      !window.location.pathname.includes("popup"),
   );
 
   function handleEdit(script: UserScriptRecord): void {
-    if (isDashboard) {
-      if (editingId === script.id) {
-        cancelEditing();
-      } else {
-        startEditing(script);
-      }
+    if (editingId === script.id) {
+      cancelEditing();
     } else {
-      void openFullDashboard(script.id);
+      startEditing(script);
     }
   }
 
-  async function openFullDashboard(editScriptId?: string): Promise<void> {
-    const query = editScriptId
-      ? `?editId=${encodeURIComponent(editScriptId)}`
-      : "";
-    await openOrFocusDashboardTab(query);
+  /** Called by SideNotch when the bento deep-opens the module with an editId. */
+  export function openEditorFor(scriptId: string): void {
+    void (async () => {
+      const all = await sendMessage<UserScriptRecord[]>(
+        USER_SCRIPTS_ACTIONS.LIST,
+      );
+      const found = all.find((s) => s.id === scriptId);
+      if (found) startEditing(found);
+    })();
+  }
+
+  /** Called by SideNotch to prefill the URL installer from a captured download. */
+  export function installFromCapturedUrl(url: string): void {
+    installUrl = url;
+    void inspectUrl(url);
   }
 
   onMount(() => {
@@ -86,23 +93,6 @@
         isLoading = false;
       }
     });
-
-    const params = new URLSearchParams(window.location.search);
-    const targetUrl = params.get("installUrl");
-    if (targetUrl) {
-      installUrl = targetUrl;
-      void inspectUrl(targetUrl);
-    }
-    const editId = params.get("editId");
-    if (editId) {
-      void (async () => {
-        const all = await sendMessage<UserScriptRecord[]>(
-          USER_SCRIPTS_ACTIONS.LIST,
-        );
-        const found = all.find((s) => s.id === editId);
-        if (found) startEditing(found);
-      })();
-    }
 
     return () => {
       unwatch?.();
@@ -224,11 +214,7 @@
       },
     );
     scripts = [...scripts, record];
-    if (isDashboard) {
-      startEditing(record);
-    } else {
-      void openFullDashboard(record.id);
-    }
+    startEditing(record);
   }
 
   async function duplicateScript(script: UserScriptRecord): Promise<void> {
@@ -405,45 +391,44 @@
 
 <div
   bind:this={rootEl}
-  class="flex flex-col gap-3 p-1.5 sm:p-2 w-full max-w-full overflow-x-hidden box-border"
+  class="flex flex-col gap-4 p-2.5 sm:p-3.5 w-full max-w-full overflow-x-hidden box-border"
 >
-  {#if pendingInstall}
-    <div
-      class="rounded-lg border-[1.5px] border-solid border-amber-600/50 bg-amber-500/10 p-2.5 shadow-[1.5px_1.5px_0_#1A1A1A] w-full max-w-full overflow-hidden"
+  {#if pendingInstall}      <div
+      class="rounded-2xl border border-amber-200/70 bg-amber-50/80 p-3 shadow-sm w-full max-w-full overflow-hidden"
     >
       <div class="flex items-center justify-between">
         <span
-          class="rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm"
+          class="rounded-full bg-amber-400 px-2.5 py-0.5 text-label font-bold uppercase tracking-wider text-[#0f172a] shadow-sm"
         >
           Auto-Captured UserScript
         </span>
-        <span class="text-[10.5px] font-mono text-ext-text-secondary"
+        <span class="text-xs font-mono text-ext-text-secondary"
           >v{pendingInstall.version}</span
         >
       </div>
 
-      <h4 class="mt-2 text-[12.5px] font-bold text-ext-text truncate">
+      <h4 class="mt-2 text-body-lg font-bold text-ext-text truncate">
         {pendingInstall.name}
       </h4>
-      <p class="mt-0.5 text-[10.5px] text-ext-text-secondary line-clamp-2">
+      <p class="mt-0.5 text-xs text-ext-text-secondary line-clamp-2">
         {pendingInstall.description}
       </p>
       {#if pendingInstall.namespace}
-        <div class="mt-1 text-[9.5px] text-ext-muted truncate">
+        <div class="mt-1 text-label text-ext-muted truncate">
           Namespace: {pendingInstall.namespace}
         </div>
       {/if}
 
       <div class="mt-2 space-y-1">
         <div
-          class="font-bold uppercase tracking-wider text-ext-text-secondary text-[9px]"
+          class="font-bold uppercase tracking-wider text-ext-text-secondary text-label"
         >
           Applies To:
         </div>
-        <div class="flex flex-wrap gap-1 max-h-14 overflow-y-auto">
+        <div class="flex flex-wrap gap-1.5 max-h-14 overflow-y-auto">
           {#each pendingInstall.matches as m}
             <span
-              class="rounded bg-[#EDE7DA] px-1 py-0.2 font-mono text-[8.5px] text-ext-text border border-ext-border/40 truncate max-w-[180px]"
+              class="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 font-mono text-label text-ext-text-secondary truncate max-w-45"
               >{m}</span
             >
           {/each}
@@ -451,14 +436,14 @@
       </div>
 
       <div
-        class="mt-2.5 flex items-center justify-end gap-2 border-t border-solid border-amber-600/20 pt-2"
+        class="mt-2.5 flex items-center justify-end gap-2 border-t border-amber-200/50 pt-2.5"
       >
         <Button
           size="sm"
           variant="secondary"
           onclick={cancelInstall}
           disabled={installing}
-          class="h-6 px-2 text-[10.5px]"
+          class="h-7 px-2.5 text-label"
         >
           Cancel
         </Button>
@@ -467,7 +452,7 @@
           variant="primary"
           onclick={confirmInstall}
           disabled={installing}
-          class="h-6 px-2 text-[10.5px]"
+          class="h-7 px-2.5 text-label"
         >
           {installing ? "Installing..." : "Install Script"}
         </Button>
@@ -475,22 +460,26 @@
     </div>
   {/if}
 
-  <div
-    class="w-full max-w-full {isDashboard
-      ? 'flex flex-col lg:flex-row gap-4 items-start'
-      : 'flex flex-col gap-3'}"
-  >
-    <!-- Left Column: Add Script + Script List -->
-    <div
-      class="{isDashboard
-        ? 'w-full lg:w-[380px] lg:shrink-0'
-        : 'w-full'} flex flex-col gap-2.5 min-w-0"
-    >
+  {#if isExpanded && editingScript}
+    <!-- Full-width editor takeover: list hidden while editing (drawer only) -->
+    <ScriptEditor
+      script={editingScript}
+      bind:code={draftCode}
+      dirty={draftDirty}
+      onInput={onDraftInput}
+      onSave={() => void saveDraft()}
+      onClose={cancelEditing}
+      onRun={() => void runInTab(editingScript)}
+    />
+  {:else}
+  <div class="flex w-full max-w-full flex-col gap-3">
+    <!-- Add Script + Script List -->
+    <div class="flex w-full flex-col gap-2.5 min-w-0">
       <Card title="Add Script">
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-1.5 w-full">
             <input
-              class="h-7 w-0 flex-1 min-w-0 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2 text-[11px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
+              class="ext-field h-9 w-0 flex-1 min-w-0 rounded-lg px-3 text-body font-medium"
               placeholder="Install from URL (.user.js)..."
               bind:value={installUrl}
               onkeydown={(e) => e.key === "Enter" && void installFromUrl()}
@@ -498,7 +487,7 @@
             <Button
               size="sm"
               variant="secondary"
-              class="h-7 shrink-0 px-2.5 text-[10.5px]"
+              class="h-9 shrink-0 px-3.5"
               disabled={installing || !installUrl.trim()}
               onclick={installFromUrl}
             >
@@ -508,7 +497,7 @@
 
           <div class="flex items-center gap-1.5 w-full">
             <input
-              class="h-7 w-0 flex-1 min-w-0 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2 text-[11px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
+              class="ext-field h-9 w-0 flex-1 min-w-0 rounded-lg px-3 text-body font-medium"
               placeholder="New script name..."
               bind:value={newScriptName}
               onkeydown={(e) =>
@@ -519,7 +508,7 @@
             <Button
               size="sm"
               variant="primary"
-              class="h-7 shrink-0 px-2.5 text-[10.5px]"
+              class="h-9 shrink-0 px-3.5"
               disabled={!newScriptName.trim()}
               onclick={createScript}
             >
@@ -529,13 +518,13 @@
         </div>
       </Card>
 
-      <div class="flex h-6 shrink-0 items-center justify-between px-0.5 pt-0.5">
+      <div class="flex h-7 shrink-0 items-center justify-between px-1 pt-1">
         <div
-          class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-ext-muted"
+          class="flex items-center gap-1.5 text-label font-bold uppercase tracking-widest text-ext-muted"
         >
           <span>Scripts</span>
           <span
-            class="rounded-sm border border-solid border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-0.2 text-[10px] font-bold text-ext-text-secondary"
+            class="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-label font-bold text-ext-text-secondary"
           >
             {scripts.length}
           </span>
@@ -550,7 +539,7 @@
           />
           <button
             type="button"
-            class="inline-flex h-5.5 cursor-pointer items-center gap-1 rounded-[5px] border-[1.5px] border-solid border-ext-border bg-ext-surface px-1.5 text-[9.5px] font-bold uppercase tracking-wider text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] active:translate-x-px active:translate-y-px"
+            class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-label font-bold uppercase tracking-wider text-ext-text shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95"
             onclick={() => fileInput?.click()}
             title="Import script from file"
           >
@@ -559,28 +548,18 @@
           </button>
           <button
             type="button"
-            class="inline-flex h-5.5 cursor-pointer items-center gap-1 rounded-[5px] border-[1.5px] border-solid border-ext-border bg-ext-surface px-1.5 text-[9.5px] font-bold uppercase tracking-wider text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] active:translate-x-px active:translate-y-px"
+            class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-label font-bold uppercase tracking-wider text-ext-text shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95"
             onclick={exportAll}
             title="Backup all scripts"
           >
             <Icon name="download" size={10} />
             <span>Export</span>
           </button>
-          {#if !isDashboard}
-            <button
-              type="button"
-              class="inline-flex h-5.5 cursor-pointer items-center gap-1 rounded-[5px] border-[1.5px] border-solid border-ext-border bg-amber-500/10 px-1.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700 shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-amber-500/20 active:translate-x-px active:translate-y-px"
-              onclick={() => void openFullDashboard()}
-              title="Open full dashboard in new tab"
-            >
-              <span>Dashboard ↗</span>
-            </button>
-          {/if}
         </div>
       </div>
 
       {#if isLoading}
-        <div class="py-8 text-center text-xs font-medium text-ext-muted">
+        <div class="py-8 text-center text-body font-medium text-ext-muted">
           Loading scripts…
         </div>
       {:else if scripts.length === 0}
@@ -593,7 +572,7 @@
           {/snippet}
         </EmptyState>
       {:else}
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-3">
           {#each scripts as script, i (script.id)}
             <div
               class="ext-card overflow-hidden rounded-lg transition-all {editingId ===
@@ -622,41 +601,6 @@
         </div>
       {/if}
     </div>
-
-    {#if isDashboard}
-      <!-- Right Column: Wide Code Editor (Dashboard Only) -->
-      <div class="w-full flex-1 min-w-0">
-        {#if editingScript}
-          <ScriptEditor
-            script={editingScript}
-            bind:code={draftCode}
-            dirty={draftDirty}
-            onInput={onDraftInput}
-            onSave={() => void saveDraft()}
-            onClose={cancelEditing}
-            onRun={() => void runInTab(editingScript)}
-          />
-        {:else}
-          <div
-            class="flex flex-col items-center justify-center min-h-[480px] rounded-xl border-[1.5px] border-dashed border-ext-border bg-ext-surface/60 p-8 text-center shadow-[1.5px_1.5px_0_#1A1A1A]"
-          >
-            <div
-              class="flex h-12 w-12 items-center justify-center rounded-xl border border-solid border-ext-border bg-[#EDE7DA] text-ext-text mb-3 shadow-[1.5px_1.5px_0_#1A1A1A]"
-            >
-              <Icon name="puzzle" size={24} />
-            </div>
-            <h3
-              class="text-sm font-bold uppercase tracking-wider text-ext-text"
-            >
-              UserScript Workspace
-            </h3>
-            <p class="mt-1 text-xs text-ext-text-secondary max-w-sm">
-              Select an installed script on the left to edit code, or create a
-              new script.
-            </p>
-          </div>
-        {/if}
-      </div>
-    {/if}
   </div>
+  {/if}
 </div>

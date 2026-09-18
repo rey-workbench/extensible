@@ -1,0 +1,403 @@
+<script lang="ts">
+  import Icon from "@/components/Icon.svelte";
+  import Toggle from "@/components/Toggle.svelte";
+  import type { FeatureModule } from "@/lib/feature-registry";
+
+  interface Props {
+    logo48: string;
+    features: FeatureModule[];
+    enabledMap: Record<string, boolean>;
+    masterOn: boolean;
+    activeTempAddress: string | null;
+    isGeneratingMail: boolean;
+    scriptStats: { total: number; enabled: number };
+    onToggleAll: (enabled: boolean) => void;
+    onToggleFeature: (feature: FeatureModule, enabled: boolean) => void;
+    onOpenDetail: (id: string) => void;
+    onQuickGenerate: () => void;
+    onQuickCopy: () => void;
+    onClose: () => void;
+  }
+
+  let {
+    logo48,
+    features,
+    enabledMap,
+    masterOn,
+    activeTempAddress,
+    isGeneratingMail,
+    scriptStats,
+    onToggleAll,
+    onToggleFeature,
+    onOpenDetail,
+    onQuickGenerate,
+    onQuickCopy,
+    onClose,
+  }: Props = $props();
+
+  let searchQuery = $state("");
+
+  const filteredFeatures = $derived(
+    features.filter((f) => {
+      const q = searchQuery.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        f.name.toLowerCase().includes(q) ||
+        f.description.toLowerCase().includes(q) ||
+        f.id.toLowerCase().includes(q)
+      );
+    }),
+  );
+
+  const activeCount = $derived(
+    features.filter((f) => enabledMap[f.id] !== false).length,
+  );
+
+  // Featured modules get dedicated bento cards; the rest render as pill rows.
+  const featuredIds = new Set(["temp-mail", "user-scripts", "ai-toolkit"]);
+  const otherFeatures = $derived(
+    filteredFeatures.filter((f) => !featuredIds.has(f.id)),
+  );
+  const hasAiToolkit = $derived(filteredFeatures.some((f) => f.id === "ai-toolkit"));
+  const hasUserScripts = $derived(filteredFeatures.some((f) => f.id === "user-scripts"));
+  const hasTempMail = $derived(filteredFeatures.some((f) => f.id === "temp-mail"));
+
+  function featureById(id: string): FeatureModule | undefined {
+    return features.find((f) => f.id === id);
+  }
+
+  function toggleById(id: string, enabled: boolean): void {
+    const feature = featureById(id);
+    if (feature) onToggleFeature(feature, enabled);
+  }
+</script>
+
+<div class="w-full max-w-5xl select-none text-slate-800">
+  <!-- Top bar: separated cards, same pattern as the module detail header -->
+  <div class="mb-5 flex shrink-0 items-stretch gap-3">
+    <!-- Brand card: logo + title/subtitle, mirrors the detail title pill -->
+    <div
+      class="flex h-15 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-slate-100 bg-white px-5 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)]"
+    >
+      <img src={logo48} alt="Extensible" class="h-10 w-10 shrink-0 object-contain" />
+      <div class="flex min-w-0 flex-col leading-tight">
+        <h2 class="truncate text-hero font-extrabold tracking-tight text-slate-900">
+          Extensible Hub
+        </h2>
+        <p class="truncate text-xs font-medium text-ext-text-secondary">
+          Modular Browser Workspace
+        </p>
+      </div>
+    </div>
+
+    <!-- Search card -->
+    <div
+      class="hidden h-15 w-72 items-center gap-2.5 rounded-2xl border border-slate-100 bg-white px-4 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)] transition-all focus-within:border-ext-primary/40 focus-within:ring-2 focus-within:ring-ext-primary/15 sm:flex"
+    >
+      <Icon name="search" size={14} class="shrink-0 text-ext-muted" />
+      <input
+        type="text"
+        bind:value={searchQuery}
+        placeholder="Search apps & tools…"
+        class="h-full w-full bg-transparent text-body text-slate-800 outline-none placeholder:text-ext-muted"
+      />
+      {#if searchQuery}
+        <button
+          type="button"
+          class="cursor-pointer text-ext-muted hover:text-ext-text"
+          onclick={() => (searchQuery = "")}
+          aria-label="Clear search"
+        >
+          <Icon name="close" size={13} />
+        </button>
+      {/if}
+    </div>
+
+    <!-- Master toggle card -->
+    <button
+      type="button"
+      role="switch"
+      aria-checked={masterOn}
+      title="Toggle all modules"
+      class="flex h-15 shrink-0 cursor-pointer items-center gap-3 whitespace-nowrap rounded-2xl border border-slate-100 bg-white px-5 text-body font-semibold text-slate-700 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)] transition-all hover:bg-slate-50 active:scale-95"
+      onclick={() => onToggleAll(!masterOn)}
+    >
+      <span>All Modules</span>
+      <span
+        class="relative h-5 w-9 shrink-0 rounded-full transition-colors duration-200 {masterOn
+          ? 'bg-ext-success'
+          : 'bg-slate-300'}"
+      >
+        <span
+          class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-[0_1px_3px_rgba(15,23,42,0.25)] transition-all duration-200 {masterOn
+            ? 'left-4.5'
+            : 'left-0.5'}"
+        ></span>
+      </span>
+    </button>
+
+    <!-- Close: neutral square, matching the detail header's back button -->
+    <button
+      type="button"
+      class="ext-close-btn h-15 w-15 shrink-0 rounded-2xl"
+      onclick={onClose}
+      title="Close (Esc)"
+      aria-label="Close"
+    >
+      <Icon name="close" size={20} />
+    </button>
+  </div>
+
+  <!-- Bento Grid: 2-column asymmetrical stack, like the reference -->
+  <div class="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
+    <!-- LEFT COLUMN -->
+    <div class="flex flex-col gap-5">
+      <!-- Stat mini-card (Weekly Revenue style) -->
+      <div class="ext-card flex items-center justify-between p-5">
+        <div>
+          <div class="text-label font-bold tracking-wider text-ext-text-secondary uppercase">
+            Total Active
+          </div>
+          <div class="text-lg font-black text-slate-900">
+            {activeCount} of {features.length} Modules
+          </div>
+        </div>
+        <div
+          class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-body font-bold text-[#047857]"
+        >
+          {activeCount === features.length ? "All OK" : "Partial"}
+        </div>
+      </div>
+
+      <!-- AI Toolkit coral card (Statistics style) -->
+      {#if hasAiToolkit}
+        <div
+          class="ext-card-coral relative flex cursor-pointer flex-col justify-between overflow-hidden p-6 transition-all hover:scale-[1.01] hover:shadow-xl {enabledMap['ai-toolkit'] === false
+            ? 'saturate-50 opacity-70'
+            : ''}"
+          onclick={() => onOpenDetail("ai-toolkit")}
+          role="button"
+          tabindex="0"
+          onkeydown={(e) => e.key === "Enter" && onOpenDetail("ai-toolkit")}
+        >
+          <div>
+            <div class="flex items-center justify-between">
+              <span class="text-body font-bold tracking-wider text-white/90 uppercase">
+                AI Toolkit
+              </span>
+              <div
+                class="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-sm transition-transform hover:scale-110"
+              >
+                <svg
+                  class="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7V17" />
+                </svg>
+              </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2">
+              <span class="ext-chip-glass">ChatGPT</span>
+              <span class="ext-chip-glass">Claude</span>
+              <span class="ext-chip-glass">Gemini</span>
+            </div>
+          </div>
+
+          <!-- Decorative wave -->
+          <div class="mt-5 h-14 w-full">
+            <svg
+              viewBox="0 0 160 50"
+              class="h-full w-full"
+              preserveAspectRatio="none"
+            >
+              <defs>
+                <linearGradient id="coralWave" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="rgba(255,255,255,0.35)" />
+                  <stop offset="100%" stop-color="rgba(255,255,255,0)" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M 0 32 Q 30 12, 60 30 T 110 16 T 160 28 L 160 50 L 0 50 Z"
+                fill="url(#coralWave)"
+              />
+              <path
+                d="M 0 32 Q 30 12, 60 30 T 110 16 T 160 28"
+                fill="none"
+                stroke="#ffffff"
+                stroke-width="2.5"
+                stroke-linecap="round"
+              />
+            </svg>
+          </div>
+        </div>
+      {/if}
+
+      <!-- Apps & Extensions pill rows (registry-driven, extensible) -->
+      <div class="ext-card flex flex-col p-6">
+        <div class="mb-4 flex items-center justify-between">
+          <h3 class="text-heading font-bold text-slate-900">Apps &amp; Extensions</h3>
+        </div>
+
+        <div class="flex flex-col gap-2.5">
+          {#each otherFeatures as feature (feature.id)}
+            {@const isEnabled = enabledMap[feature.id] !== false}
+            <div
+              class="group flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white p-3.5 text-left transition-all hover:scale-[1.01] hover:border-blue-400 hover:shadow-sm {isEnabled
+                ? ''
+                : 'opacity-60'}"
+            >
+              <button
+                type="button"
+                class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 bg-transparent text-left"
+                onclick={() => onOpenDetail(feature.id)}
+              >
+                <div
+                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
+                  style="background: {feature.color ? `${feature.color}15` : '#1A73E815'}; color: {feature.color || '#1A73E8'};"
+                >
+                  <Icon name={feature.icon} size={18} />
+                </div>
+                <div class="min-w-0 flex-1">
+                  <div
+                    class="truncate text-sm font-bold text-slate-900 transition-colors group-hover:text-blue-600"
+                  >
+                    {feature.name}
+                  </div>
+                  <div class="truncate text-xs font-medium text-ext-text-secondary">
+                    {feature.description}
+                  </div>
+                </div>
+              </button>
+              <Toggle
+                checked={isEnabled}
+                label="{isEnabled ? 'Disable' : 'Enable'} {feature.name}"
+                onchange={(v) => onToggleFeature(feature, v)}
+              />
+            </div>
+          {/each}
+
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="flex flex-col gap-5">
+      <!-- TempMail live card -->
+      {#if hasTempMail}
+        <div class="ext-card flex flex-col p-6 {enabledMap['temp-mail'] === false ? 'opacity-70' : ''}">
+          <div class="flex items-center justify-between">
+            <span class="text-label font-bold tracking-wider text-ext-text-secondary uppercase">
+              Disposable Mail
+            </span>
+            <div class="flex items-center gap-2">
+              <Toggle
+                checked={enabledMap["temp-mail"] !== false}
+                label="Toggle Temp Mail"
+                onchange={(v) => toggleById("temp-mail", v)}
+              />
+              <button
+                type="button"
+                class="ext-arrow-btn"
+                onclick={() => onOpenDetail("temp-mail")}
+                title="Open TempMail Inbox"
+              >
+                <svg
+                  class="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M7 17L17 7M17 7H7M17 7V17" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="mt-3 truncate font-mono text-xl font-black tracking-tight text-slate-900"
+            title={activeTempAddress ?? "Click generate below"}
+          >
+            {activeTempAddress ?? "Click generate below"}
+          </div>
+
+          <div class="mt-5 flex items-center justify-end gap-2">
+            <button
+              type="button"
+              class="cursor-pointer rounded-xl border border-slate-300 bg-white px-4 py-2 text-body font-bold text-slate-700 shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95"
+              onclick={onQuickCopy}
+            >
+              Copy
+            </button>
+            <button
+              type="button"
+              class="cursor-pointer rounded-xl bg-ext-primary px-4 py-2 text-body font-bold text-white shadow-sm transition-all hover:bg-ext-primary-dark active:scale-95 disabled:opacity-50"
+              disabled={isGeneratingMail}
+              onclick={onQuickGenerate}
+            >
+              {isGeneratingMail ? "Generating…" : "New"}
+            </button>
+          </div>
+        </div>
+      {/if}
+
+      <!-- UserScripts card: white functional card matching the bento family -->
+      {#if hasUserScripts}
+        <button
+          type="button"
+          class="ext-card flex w-full cursor-pointer flex-col p-6 text-left transition-all hover:scale-[1.01] hover:shadow-xl {enabledMap['user-scripts'] === false
+            ? 'opacity-70'
+            : ''}"
+          onclick={() => onOpenDetail("user-scripts")}
+        >
+          <div class="flex items-center justify-between">
+            <span class="text-label font-bold tracking-wider text-ext-text-secondary uppercase">
+              User Scripts
+            </span>
+            <span
+              class="flex h-8 w-8 items-center justify-center rounded-full text-ext-text-secondary transition-colors hover:bg-slate-100 hover:text-slate-900"
+            >
+              <svg
+                class="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M7 17L17 7M17 7H7M17 7V17" />
+              </svg>
+            </span>
+          </div>
+
+          <div class="mt-3 flex items-baseline gap-2">
+            <span class="text-2xl font-black tracking-tight text-slate-900">
+              {scriptStats.enabled}
+            </span>
+            <span class="text-heading font-bold text-ext-text-secondary">
+              of {scriptStats.total} active
+            </span>
+          </div>
+          <p class="mt-0.5 text-xs font-medium text-ext-text-secondary">
+            GM_* APIs · MV3 native runner
+          </p>
+
+          <div
+            class="mt-4 rounded-xl bg-slate-50 px-3 py-2 font-mono text-xs text-slate-500"
+          >
+            Injected on page load
+          </div>
+        </button>
+      {/if}
+    </div>
+  </div>
+</div>

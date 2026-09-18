@@ -69,10 +69,10 @@
     "wxt": "^0.21.4"
   },
   "knip": {
+    "ignoreExportsUsedInFile": true,
     "entry": [
       "src/entrypoints/background/index.ts",
       "src/entrypoints/content/index.ts",
-      "src/entrypoints/dashboard/main.ts",
       "src/entrypoints/popup/main.ts"
     ],
     "project": [

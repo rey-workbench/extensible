@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
   import Icon from "@/components/Icon.svelte";
-  import { DANGER, INK, SUCCESS, SURFACE } from "@/lib/design-tokens";
+  import { BORDER, DANGER, INK, SUCCESS, SURFACE } from "@/lib/design-tokens";
 
   type BadgeState = "idle" | "loading" | "filled" | "error";
 
@@ -65,7 +65,7 @@
         phase = "filled";
         
         target.style.outline = `2px solid ${SUCCESS}`;
-        target.style.boxShadow = `2px 2px 0 ${INK}`;
+        target.style.boxShadow = `0 0 0 4px rgba(16, 185, 129, 0.18)`;
         setTimeout(() => {
           target.style.outline = "";
           target.style.boxShadow = "";
@@ -97,9 +97,9 @@
     style:margin="0"
     style:padding="0"
     style:background={phase === "error" ? DANGER : SURFACE}
-    style:border={`1.5px solid ${INK}`}
-    style:border-radius="8px"
-    style:box-shadow={`2px 2px 0 ${INK}`}
+    style:border={`1px solid ${BORDER}`}
+    style:border-radius="9999px"
+    style:box-shadow={`0 2px 8px rgba(15, 23, 42, 0.18)`}
     style:cursor="pointer"
     style:outline="none"
     style:user-select="none"

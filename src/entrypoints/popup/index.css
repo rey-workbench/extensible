@@ -1,14 +1,14 @@
 body {
-  width: 330px;
+  width: 340px;
   min-height: 480px;
   max-height: 600px;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  background-color: #f5f0e8;
+  background-color: #e8eef5;
   font-family:
-    "Space Grotesk", system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+    "Plus Jakarta Sans", "Inter", system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -21,10 +21,10 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #a89b8c;
-  border-radius: 3px;
+  background: #cbd5e1;
+  border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #8a7d6f;
+  background: #94a3b8;
 }

@@ -17,21 +17,21 @@
   }
 </script>
 
-<div class="mb-1 flex items-center justify-between">
-  <span class="text-[10px] font-bold tracking-wider text-ext-muted uppercase">
+<div class="mb-2 flex items-center justify-between">
+  <span class="text-label font-bold tracking-wider text-ext-muted uppercase">
     Run log ({runLogs.length})
   </span>
-  <span class="text-[10px] text-ext-muted">
+  <span class="text-label text-ext-muted">
     Last run: {lastRunAt ? fmtTime(lastRunAt) : "never"}
   </span>
 </div>
 {#if runLogs.length === 0}
-  <div class="py-1 text-[11px] text-ext-muted">No runs recorded yet.</div>
+  <div class="py-1.5 text-label text-ext-muted">No runs recorded yet.</div>
 {:else}
-  <ul class="flex flex-col gap-0.5">
+  <ul class="flex flex-col gap-1.5">
     {#each runLogs as log}
-      <li class="flex items-center gap-1.5 text-[11px]">
-        <span class={log.ok ? "text-emerald-600" : "text-red-600"}>
+      <li class="flex items-center gap-2 text-label">
+        <span class={log.ok ? "text-emerald-700" : "text-red-600"}>
           {log.ok ? "✓" : "✗"}
         </span>
         <span class="truncate text-ext-muted">{log.url}</span>

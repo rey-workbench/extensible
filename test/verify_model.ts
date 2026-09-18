@@ -133,9 +133,9 @@ ok(
 );
 ok(typeof setInputValue === "function", "setInputValue must be exported");
 ok(typeof setNativeValue === "function", "setNativeValue must be exported");
-ok(DESIGN_TOKENS.primary === "#1B4DDB", "DESIGN_TOKENS.primary should match theme");
-ok(DESIGN_TOKENS.bg === "#F5F0E8", "DESIGN_TOKENS.bg should match theme");
-ok(DESIGN_TOKENS.surface === "#FFFDF7", "DESIGN_TOKENS.surface should match theme");
+ok(DESIGN_TOKENS.primary === "#1A73E8", "DESIGN_TOKENS.primary should match theme");
+ok(DESIGN_TOKENS.bg === "#EAEFF5", "DESIGN_TOKENS.bg should match theme");
+ok(DESIGN_TOKENS.surface === "#FFFFFF", "DESIGN_TOKENS.surface should match theme");
 console.log("   ✓ lib utilities passed.");
 console.log("\n2.5. Testing Feature Module Colors & Registration:");
 defineFeature({

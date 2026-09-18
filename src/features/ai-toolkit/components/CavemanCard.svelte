@@ -20,11 +20,11 @@
       text={caveman.enabled ? "ON" : "OFF"}
       variant={caveman.enabled ? "warning" : "neutral"}
     />{/snippet}
-  <div class="flex flex-col gap-2">
-    <div class="flex items-center justify-between gap-2">
-      <div class="flex flex-col">
-        <span class="text-xs font-bold text-ext-text">Terse Response Mode</span>
-        <span class="text-[11px] text-ext-text-secondary"
+  <div class="flex flex-col gap-3">
+    <div class="flex items-center justify-between gap-3">
+      <div class="flex flex-col gap-0.5">
+        <span class="text-body font-bold text-ext-text">Terse Response Mode</span>
+        <span class="text-label text-ext-text-secondary"
           >Strip fluff, pleasantries &amp; hedging. Retain 100% technical code
           &amp; substance.</span
         >
@@ -37,23 +37,23 @@
     </div>
     <div class="flex items-center gap-2">
       <span
-        class="shrink-0 text-[11px] font-bold uppercase tracking-wider text-ext-text-secondary"
+        class="shrink-0 text-label font-bold uppercase tracking-wider text-ext-text-secondary"
         >Intensity:</span
       >
-      <div class="flex gap-1">
+      <div class="flex gap-1.5">
         {#each CAVEMAN_LEVELS as lvl}
           <button
             type="button"
-            class="cursor-pointer rounded-sm border-[1.5px] border-solid px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider transition-all active:translate-x-px active:translate-y-px shadow-[1px_1px_0_#1A1A1A]
+            class="cursor-pointer rounded-full px-3.5 py-1.5 text-label font-bold uppercase tracking-wider transition-all active:scale-95
                 {caveman.level === lvl
-              ? 'border-ext-primary bg-ext-primary text-white'
-              : 'border-ext-border bg-ext-surface text-ext-text-secondary hover:bg-[#EDE7DA]'}"
+              ? 'bg-ext-primary text-white shadow-sm'
+              : 'border border-slate-300 bg-slate-50 text-ext-text-secondary hover:border-slate-400 hover:bg-slate-100'}"
             onclick={() => onSetLevel(lvl as CavemanLevel)}>{lvl}</button
           >
         {/each}
       </div>
     </div>
-    <div class="text-[11px] font-medium italic text-ext-muted">
+    <div class="text-label font-medium italic text-ext-muted">
       {cavemanHint}
     </div>
   </div>

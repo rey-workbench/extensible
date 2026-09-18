@@ -2,44 +2,87 @@
 @source "../**";
 
 @theme {
-  --color-ext-bg: #f5f0e8;
-  --color-ext-surface: #fffdf7;
-  --color-ext-border: #2b2b2b;
-  --color-ext-text: #1a1a1a;
-  --color-ext-text-secondary: #6b5e50;
-  --color-ext-muted: #a89b8c;
-  --color-ext-primary: #1b4ddb;
-  --color-ext-primary-dark: #0f3ba8;
-  --color-ext-primary-light: #4a7aff;
-  --color-ext-success: #2d8c4e;
-  --color-ext-danger: #d63230;
-  --color-ext-warning: #e8a727;
-  --color-ext-accent: #e86a33;
+  --color-ext-bg: #eaeff5;
+  --color-ext-surface: #ffffff;
+  --color-ext-border: #e2e8f0;
+  --color-ext-text: #0f172a;
+  --color-ext-text-secondary: #475569;
+  --color-ext-muted: #64748b;
+  --color-ext-primary: #1a73e8;
+  --color-ext-primary-dark: #0f56be;
+  --color-ext-primary-light: #4c8ff5;
+  --color-ext-success: #10b981;
+  --color-ext-danger: #ef4444;
+  --color-ext-danger-dark: #dc2626;
+  --color-ext-warning: #f59e0b;
+  --color-ext-coral: #ff4b26;
+  --color-ext-accent: #ff4b26;
 
   --spacing: 4px;
 
-  --text-2xs: 10px;
-  --text-2xs--line-height: 14px;
+  /* ── Type scale ─────────────────────────────────────────────────────────
+     px-pinned, so a host page's root font-size can never resize our UI.
+     Use these tokens instead of ad-hoc text-[Npx] values.
+
+       micro     10.5px   overlay-only micro badge (AI composer level pill)
+       chip      11.5px   smallest chips, version tags, vertical strip label
+       xs        12px     dense data chips
+       label     12.5px   uppercase eyebrows, meta lines, fine print
+       body      13px     default body copy, descriptions, inputs
+       body-lg   13.5px   editor code, list row titles
+       sm        14px     row/card titles, buttons
+       heading   15px     card headings
+       base      16px     emphasis
+       hero      17px     drawer / detail header title
+       lg, xl, 2xl        stat numbers and display values
+  ─────────────────────────────────────────────────────────────────────── */
+  --text-micro: 10.5px;
+  --text-micro--line-height: 14px;
+  --text-chip: 11.5px;
+  --text-chip--line-height: 16px;
   --text-xs: 12px;
   --text-xs--line-height: 16px;
+  --text-label: 12.5px;
+  --text-label--line-height: 17px;
+  --text-body: 13px;
+  --text-body--line-height: 18px;
+  --text-body-lg: 13.5px;
+  --text-body-lg--line-height: 19px;
   --text-sm: 14px;
   --text-sm--line-height: 20px;
+  --text-heading: 15px;
+  --text-heading--line-height: 21px;
   --text-base: 16px;
   --text-base--line-height: 24px;
+  --text-hero: 17px;
+  --text-hero--line-height: 24px;
   --text-lg: 18px;
   --text-lg--line-height: 28px;
   --text-xl: 20px;
   --text-xl--line-height: 28px;
+  --text-2xl: 24px;
+  --text-2xl--line-height: 32px;
+
+  /* px-pinned radius scale — rounded-* never resolves via rem */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-3xl: 32px;
+
+  /* px-pinned container widths used by the bento */
+  --container-5xl: 1024px;
 }
 
 :host {
   display: block;
   font-family:
-    "Space Grotesk", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
+    "Plus Jakarta Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu,
     sans-serif;
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.5;
-  color: #1a1a1a;
+  color: #0f172a;
   text-align: left;
   letter-spacing: normal;
   word-spacing: normal;
@@ -52,21 +95,14 @@
 *::before,
 *::after {
   box-sizing: border-box;
-  --tw-border-style: solid;
-  --tw-shadow: 0 0 #0000;
-  --tw-shadow-color: #1a1a1a;
-  --tw-inset-shadow: 0 0 #0000;
-  --tw-inset-ring-shadow: 0 0 #0000;
-  --tw-ring-offset-shadow: 0 0 #0000;
-  --tw-ring-shadow: 0 0 #0000;
 }
 
 @layer base {
   html,
   body {
     font-family:
-      "Space Grotesk", system-ui, "Segoe UI", Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
-    color: #1a1a1a;
+      "Plus Jakarta Sans", "Inter", system-ui, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    color: #0f172a;
     -webkit-user-select: none;
     user-select: none;
   }
@@ -80,30 +116,46 @@
 }
 
 .ext-card {
-  background: #fffdf7;
-  border: 1.5px solid #2b2b2b;
-  border-radius: 8px;
-  box-shadow: 3px 3px 0 #1a1a1a;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 14px 34px -4px rgba(15, 23, 42, 0.05), 0 3px 10px -2px rgba(15, 23, 42, 0.02);
+  border: 1px solid rgba(226, 232, 240, 0.7);
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+}
+
+.ext-card:hover {
+  box-shadow: 0 20px 42px -4px rgba(15, 23, 42, 0.08), 0 4px 14px -2px rgba(15, 23, 42, 0.03);
+}
+
+.ext-card-blue {
+  background: #1A73E8;
+  color: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 16px 36px -8px rgba(26, 115, 232, 0.4);
+}
+
+.ext-card-coral {
+  background: #FF4B26;
+  color: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 16px 36px -8px rgba(255, 75, 38, 0.4);
 }
 
 .ext-menu {
-  background: #fffdf7;
-  border: 1.5px solid #2b2b2b;
-  border-radius: 6px;
-  box-shadow: 3px 3px 0 #1a1a1a;
-  padding: 5px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.14), 0 2px 8px -2px rgba(15, 23, 42, 0.06);
+  padding: 6px;
 }
 
 .ext-menu-item {
-  border-radius: 4px;
-  padding: 5px 10px;
-  font-size: 12.5px;
+  border-radius: 12px;
+  padding: 7px 12px;
+  font-size: 13px;
   font-weight: 600;
-  color: #1a1a1a;
-  letter-spacing: 0.02em;
-  transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+  color: #0f172a;
+  transition: all 0.15s ease;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -112,40 +164,173 @@
   border: none;
   background: transparent;
   text-align: left;
-  -webkit-user-select: none;
-  user-select: none;
 }
 
 .ext-menu-item:hover {
-  background-color: #ede7da;
-  color: #1a1a1a;
+  background-color: #f1f5f9;
+  color: #1a73e8;
 }
 
 .ext-glass {
-  background: rgba(255, 253, 247, 0.96);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  backdrop-filter: blur(18px) saturate(140%);
-  border: 1.5px solid #2b2b2b;
-  box-shadow: 4px 4px 0 #1a1a1a;
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 20px 48px -10px rgba(15, 23, 42, 0.1);
 }
 
-.ext-row {
-  background: #fffdf7;
-  border: 1.5px solid #2b2b2b;
-  box-shadow: 2px 2px 0 #1a1a1a;
+.ext-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  color: #0f172a;
+  font-weight: 600;
+  font-size: 13px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.ext-btn {
-  background: #fffdf7;
-  border: 1.5px solid #2b2b2b;
-  box-shadow: 1px 1px 0 #1a1a1a;
+.ext-pill-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-.ext-btn:hover {
-  background: #ede7da;
+/* Close (X) buttons — one red treatment on every surface. Size, radius and
+   spacing still come from utilities so each surface keeps its own footprint. */
+.ext-close-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ext-danger-dark);
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 10px 28px -10px rgba(185, 28, 28, 0.45);
+  transition:
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    transform 0.16s ease;
 }
 
-.ext-btn:active {
-  transform: translate(1px, 1px);
-  box-shadow: none;
+.ext-close-btn:hover:not(:disabled) {
+  background: #b91c1c;
+  box-shadow: 0 12px 30px -8px rgba(185, 28, 28, 0.55);
+}
+
+.ext-close-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.ext-close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Icon-only buttons: bordered at rest so they read as clickable, not as a
+   floating glyph. Size comes from utilities (h-7 w-7, h-9 w-9, …). */
+.ext-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 10px;
+  color: #475569;
+  cursor: pointer;
+  transition:
+    border-color 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.16s ease;
+}
+
+.ext-icon-btn:hover:not(:disabled) {
+  border-color: #94a3b8;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.ext-icon-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.ext-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ext-icon-btn-danger:hover:not(:disabled) {
+  border-color: #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+/* Form fields: give them a visible shell on white cards — light fill + solid border */
+.ext-field {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+  outline: none;
+  transition:
+    border-color 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease;
+}
+
+.ext-field::placeholder {
+  color: #64748b;
+}
+
+.ext-field:hover:not(:disabled) {
+  border-color: #94a3b8;
+}
+
+.ext-field:focus {
+  background: #ffffff;
+  border-color: #1a73e8;
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+}
+
+.ext-field:disabled {
+  background: #f1f5f9;
+  cursor: not-allowed;
+}
+
+.ext-chip-glass {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  padding: 6px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.ext-arrow-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #475569;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.ext-arrow-btn:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: scale(1.06);
 }

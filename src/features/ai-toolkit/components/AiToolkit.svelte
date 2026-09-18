@@ -202,13 +202,13 @@
   });
 </script>
 
-<div class="flex flex-col gap-2.5 p-2.5">
+<div class="flex flex-col gap-4 p-2.5 sm:p-3.5">
   {#if status}
     <div
-      class="rounded-md border-[1.5px] px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#1A1A1A]
+      class="rounded-2xl border px-3.5 py-2 text-label font-bold shadow-sm
         {status.isError
-        ? 'bg-ext-danger text-white border-[#A82624]'
-        : 'bg-ext-success text-white border-[#1E6B38]'}"
+        ? 'border-red-200 bg-red-50 text-[#b91c1c]'
+        : 'border-emerald-200 bg-emerald-50 text-[#047857]'}"
     >
       {status.text}
     </div>

@@ -131,7 +131,7 @@ async function prepareScriptPayload(
   return { source, rpcToken };
 }
 
-export async function initNativeUserScripts(): Promise<void> {
+export async function syncUserScriptsApi(): Promise<void> {
   const userScriptsApi = getUserScriptsApi();
   if (typeof userScriptsApi?.register !== "function") return;
 
@@ -178,12 +178,9 @@ export async function initNativeUserScripts(): Promise<void> {
         );
       }
     }
-  } catch (err) {
-    console.debug("[UserScripts] initNativeUserScripts error:", err);
+  } catch (err) {      console.debug("[UserScripts] syncUserScriptsApi error:", err);
   }
 }
-
-export const syncUserScriptsApi = initNativeUserScripts;
 
 export function forgetTab(tabId: number): void {
   injectedTabs.delete(tabId);

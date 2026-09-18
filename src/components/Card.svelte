@@ -12,15 +12,15 @@
   let { id, title, subtitle, class: cls = "", headerAction, children }: Props = $props();
 </script>
 
-<div id={id || undefined} class="ext-card overflow-hidden rounded-lg {cls}">
+<div id={id || undefined} class="ext-card overflow-hidden {cls}">
   {#if title || headerAction}
-    <div class="flex items-center justify-between gap-2 border-b border-solid border-ext-border bg-[#EDE7DA] px-3 py-2">
+    <div class="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/50 px-4 py-3">
       <div class="min-w-0">
-        {#if title}<h3 class="truncate text-[12.5px] font-bold uppercase tracking-wide text-ext-text">{title}</h3>{/if}
-        {#if subtitle}<span class="text-[11px] text-ext-text-secondary">{subtitle}</span>{/if}
+        {#if title}<h3 class="truncate text-body font-bold uppercase tracking-wider text-slate-800">{title}</h3>{/if}
+        {#if subtitle}<span class="text-label text-slate-500">{subtitle}</span>{/if}
       </div>
       {#if headerAction}<div class="shrink-0">{@render headerAction()}</div>{/if}
     </div>
   {/if}
-  <div class="p-3">{@render children()}</div>
+  <div class="p-3.5 sm:p-4">{@render children()}</div>
 </div>

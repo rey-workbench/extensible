@@ -39,21 +39,21 @@
     onkeydown={(e) => e.key === "Escape" && onClose()}
   >
     <div
-      class="ext-glass flex max-h-[85vh] w-full max-w-105 flex-col overflow-hidden rounded-lg"
+      class="ext-glass flex max-h-[85vh] w-full max-w-105 flex-col overflow-hidden rounded-3xl"
       role="dialog"
       aria-modal="true"
     >
       <div
-        class="flex items-center justify-between border-b-[1.5px] border-ext-border bg-[#EDE7DA] px-3 py-2.5"
+        class="flex items-center justify-between border-b border-slate-200/70 bg-white px-4 py-3"
       >
         <div class="flex min-w-0 items-center gap-2">
-          <h3 class="min-w-0 truncate text-[13px] font-bold text-ext-text">
+          <h3 class="min-w-0 truncate text-sm font-bold text-ext-text">
             {email.subject || "(No Subject)"}
           </h3>
         </div>
         <button
           type="button"
-          class="ml-2 inline-flex h-5 w-5 shrink-0 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-ext-border bg-ext-surface text-ext-muted transition-all hover:bg-[#EDE7DA] hover:text-ext-text"
+          class="ext-close-btn ml-2 h-7 w-7 shrink-0 rounded-lg"
           title="Close"
           aria-label="Close"
           onclick={onClose}
@@ -62,7 +62,7 @@
       </div>
 
       <div class="min-h-0 flex-1 overflow-y-auto p-3">
-        <div class="mb-2.5 flex flex-col gap-0.5 text-xs text-ext-text-secondary">
+        <div class="mb-2.5 flex flex-col gap-0.5 text-body text-ext-text-secondary">
           <div class="flex gap-1.5">
             <span class="shrink-0 font-bold uppercase tracking-wider text-ext-muted">From:</span>
             <span class="min-w-0 truncate font-semibold text-ext-text"
@@ -77,12 +77,12 @@
 
         {#if otpCode}
           <div
-            class="mb-3 flex items-center gap-2 rounded-lg border-[1.5px] border-ext-warning bg-[#FDF3E3] p-2.5"
+            class="mb-3 flex items-center gap-2 rounded-2xl border border-amber-200/70 bg-amber-50/80 p-2.5"
           >
-            <span class="text-[11.5px] font-bold uppercase tracking-wider text-[#C48C1E]"
+            <span class="text-body font-bold uppercase tracking-wider text-[#b45309]"
               >Verification Code:</span
             >
-            <span class="text-[14px] font-bold tracking-[0.15em] text-ext-text"
+            <span class="text-sm font-bold tracking-[0.15em] text-ext-text"
               >{otpCode}</span
             >
             <span class="ml-auto">
@@ -98,7 +98,7 @@
 
         {#if hasRemoteImages}
           <div
-            class="mb-2 flex items-center justify-between rounded border border-ext-border bg-[#F5EFEB] px-2.5 py-1.5 text-[11px] text-ext-text-secondary"
+            class="mb-2 flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50 px-2.5 py-1.5 text-label font-medium text-ext-text-secondary"
           >
             <span>Remote images hidden to prevent tracking.</span>
             <button
@@ -114,16 +114,16 @@
         {#if sanitizedContent}
           <iframe
             title="Email content"
-            class="h-64 w-full rounded-lg border-[1.5px] border-ext-border bg-white"
+            class="h-64 w-full rounded-2xl border border-slate-200 bg-white"
             sandbox="allow-popups allow-popups-to-escape-sandbox"
-            srcdoc={`<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="${cspString}"><base target="_blank"><style>body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:12px;line-height:1.45;color:#1A1A1A;margin:8px;word-break:break-word;background:#FFFDF7;}img{max-width:100%;height:auto;}a{color:#1B4DDB;text-decoration:underline;cursor:pointer;font-weight:600;}a:hover{color:#0F3BA8;}</style></head><body>${sanitizedContent}</body></html>`}
+            srcdoc={`<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="${cspString}"><base target="_blank"><style>body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:12px;line-height:1.45;color:#0F172A;margin:8px;word-break:break-word;background:#FFFFFF;}img{max-width:100%;height:auto;}a{color:#1A73E8;text-decoration:underline;cursor:pointer;font-weight:600;}a:hover{color:#0F56BE;}</style></head><body>${sanitizedContent}</body></html>`}
           ></iframe>
         {:else}
-          <p class="text-xs font-medium text-ext-muted">(Empty email content)</p>
+          <p class="text-body font-medium text-ext-muted">(Empty email content)</p>
         {/if}
       </div>
 
-      <div class="flex justify-end border-t-[1.5px] border-ext-border bg-[#EDE7DA] px-3 py-2">
+      <div class="flex justify-end border-t border-slate-200/70 bg-slate-50/70 px-4 py-2.5">
         <Button
           variant="danger"
           size="sm"

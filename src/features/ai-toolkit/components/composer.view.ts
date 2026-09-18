@@ -119,7 +119,7 @@ export class AiToolkitComposerView {
     this.menuEl = document.createElement("div");
     this.menuEl.id = "aio-composer-menu-root";
     this.menuEl.className =
-      "aio-composer-menu fixed z-2147483647 flex-col overflow-hidden rounded-lg border-[1.5px] border-solid border-[#2B2B2B] bg-[#FFFDF7] p-1.5 shadow-[3px_3px_0_#1A1A1A]";
+      "aio-composer-menu fixed z-2147483647 flex-col overflow-hidden rounded-2xl border border-[#E2E8F0] bg-white p-1.5 shadow-[0_12px_32px_-8px_rgba(15,23,42,0.2)]";
     this.menuEl.style.position = "fixed";
     this.menuEl.style.zIndex = "2147483643";
     this.menuEl.style.pointerEvents = "auto";

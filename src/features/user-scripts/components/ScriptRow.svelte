@@ -43,33 +43,62 @@
   }: Props = $props();
 </script>
 
-<div class="flex flex-col gap-2 p-2.5">
-  <div class="flex items-start gap-2">
-    <div class="flex flex-col pt-0.5">
+<div class="flex flex-col gap-3.5 p-4">
+  <div class="flex items-start gap-3">
+    <div class="flex flex-col overflow-hidden rounded-lg border border-slate-200/70 bg-slate-50/70">
       <button
         type="button"
-        class="cursor-pointer text-[10px] leading-none text-ext-muted transition-colors hover:text-ext-text disabled:cursor-not-allowed disabled:opacity-25"
+        class="flex h-6 w-7 cursor-pointer items-center justify-center text-ext-muted transition-colors hover:bg-white hover:text-ext-text disabled:cursor-not-allowed disabled:opacity-30"
         disabled={index === 0}
         onclick={() => onMove(-1)}
         title="Move up (higher priority)"
-      >▲</button>
+        aria-label="Move up"
+      >
+        <svg
+          class="h-3 w-3"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 15l6-6 6 6" />
+        </svg>
+      </button>
       <button
         type="button"
-        class="cursor-pointer text-[10px] leading-none text-ext-muted transition-colors hover:text-ext-text disabled:cursor-not-allowed disabled:opacity-25"
+        class="flex h-6 w-7 cursor-pointer items-center justify-center border-t border-slate-200/70 text-ext-muted transition-colors hover:bg-white hover:text-ext-text disabled:cursor-not-allowed disabled:opacity-30"
         disabled={index === total - 1}
         onclick={() => onMove(1)}
         title="Move down (lower priority)"
-      >▼</button>
+        aria-label="Move down"
+      >
+        <svg
+          class="h-3 w-3"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
     </div>
 
     <div class="min-w-0 flex-1">
       <div class="flex flex-wrap items-center gap-1.5">
-        <span class="truncate text-xs font-bold text-ext-text" title={script.meta.name}>
+        <span class="truncate text-body font-bold text-ext-text" title={script.meta.name}>
           {script.meta.name}
         </span>
         <Badge text={`v${script.meta.version}`} variant="neutral" />
       </div>
-      <div class="truncate text-[10.5px] text-ext-muted" title={script.meta.matches.join(", ")}>
+      <div
+        class="mt-1 truncate text-xs text-ext-muted"
+        title={script.meta.matches.join(", ")}
+      >
         {script.meta.matches.join(", ")}
       </div>
     </div>
@@ -81,8 +110,8 @@
     />
   </div>
 
-  <div class="flex flex-wrap items-center justify-between gap-1 border-t border-ext-border/30 pt-1.5">
-    <div class="flex items-center gap-1">
+  <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+    <div class="flex items-center gap-1.5">
       <Button
         variant={editing ? "primary" : "secondary"}
         size="sm"
@@ -102,7 +131,7 @@
         Run
       </Button>
       <Button
-        variant={logOpen ? "secondary" : "ghost"}
+        variant="secondary"
         size="sm"
         icon="star"
         onclick={onToggleLogs}
@@ -112,10 +141,10 @@
       </Button>
     </div>
 
-    <div class="flex items-center gap-0.5">
+    <div class="flex items-center gap-1">
       <button
         type="button"
-        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm border border-transparent text-ext-muted transition-all hover:border-ext-border hover:bg-[#EDE7DA] hover:text-ext-text"
+        class="ext-icon-btn h-7 w-7"
         onclick={onDuplicate}
         title="Duplicate script"
       >
@@ -123,7 +152,7 @@
       </button>
       <button
         type="button"
-        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm border border-transparent text-ext-muted transition-all hover:border-ext-border hover:bg-[#EDE7DA] hover:text-ext-text"
+        class="ext-icon-btn h-7 w-7"
         onclick={onExport}
         title="Export as .user.js"
       >
@@ -131,7 +160,7 @@
       </button>
       <button
         type="button"
-        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded-sm border border-transparent text-ext-danger transition-all hover:border-[#A82624]/30 hover:bg-ext-danger/10"
+        class="ext-icon-btn ext-icon-btn-danger h-7 w-7"
         onclick={onDelete}
         title="Delete script"
       >
@@ -143,13 +172,13 @@
 
 
 {#if logOpen}
-  <div class="border-t border-ext-border px-2.5 py-2">
+  <div class="border-t border-ext-border px-4 py-3">
     <RunLog {runLogs} lastRunAt={script.lastRunAt} />
   </div>
 {/if}
 
 {#if editing && editor}
-  <div class="border-t border-ext-border p-2">
+  <div class="border-t border-ext-border p-3">
     {@render editor()}
   </div>
 {/if}

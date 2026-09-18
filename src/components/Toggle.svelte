@@ -23,14 +23,14 @@
   aria-label={ariaLabel ?? label}
   title={label}
   {disabled}
-  class="relative h-4.5 w-8 shrink-0 cursor-pointer rounded-sm border-[1.5px] border-solid transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ext-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 {checked
-    ? 'bg-ext-success border-[#1E6B38]'
-    : 'bg-[#D4CEC2] border-ext-muted'}"
+  class="relative h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-ext-primary/40 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 {checked
+    ? 'bg-ext-success'
+    : 'bg-slate-300'}"
   onclick={() => onchange?.(!checked)}
 >
   <span
-    class="absolute top-[1.5px] h-3.25 w-3.25 rounded-[3px] border border-solid border-ext-border/30 bg-white shadow-[1px_1px_0_rgba(26,26,26,0.2)] transition-all duration-200 {checked
-      ? 'left-3.75'
+    class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-[0_1px_3px_rgba(15,23,42,0.25)] transition-all duration-200 {checked
+      ? 'left-4.5'
       : 'left-0.5'}"
   ></span>
 </button>

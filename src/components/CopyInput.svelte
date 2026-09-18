@@ -23,11 +23,11 @@
   }: Props = $props();
 </script>
 
-<div class="flex items-center gap-1.5 {cls}">
+<div class="flex items-center gap-2 {cls}">
   <input
     type="text"
     {id}
-    class="h-7.5 min-w-0 flex-1 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 text-[12px] font-mono font-semibold text-ext-text outline-none transition-all focus:ring-2 focus:ring-ext-primary/25"
+    class="ext-field h-9 min-w-0 flex-1 rounded-lg px-3 text-body font-mono font-semibold"
     {value}
     {placeholder}
     readonly={readonly}
@@ -35,8 +35,9 @@
   <button
     type="button"
     id={buttonId}
-    class="inline-flex h-7.5 w-7.5 shrink-0 cursor-pointer items-center justify-center rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-text-secondary shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+    class="ext-icon-btn h-9 w-9 shrink-0"
     title={buttonTitle}
     aria-label={buttonTitle}
-    onclick={oncopy}><Icon name="copy" size={13} /></button>
+    onclick={oncopy}><Icon name="copy" size={13} /></button
+  >
 </div>

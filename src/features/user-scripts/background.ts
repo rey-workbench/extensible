@@ -1,5 +1,5 @@
 import { browser } from "wxt/browser";
-import { openOrFocusDashboardTab } from "@/lib/browser";
+import { APP_ACTIONS } from "@/lib/browser";
 import { onMessage, sendToTab } from "@/lib/messaging";
 import { isBlockedUrl, USER_SCRIPTS_ACTIONS } from "./constants/user-scripts.constants";
 import { handleGmRpc, MENU_PREFIX } from "./services/gm-rpc.service";
@@ -72,7 +72,12 @@ export function setupBackground(): void {
   onMessage<{ url: string }, void>(USER_SCRIPTS_ACTIONS.CAPTURE_URL, async (p) => {
     const url = p?.url?.trim();
     if (!url) return;
-    await openOrFocusDashboardTab(`?installUrl=${encodeURIComponent(url)}`);
+    const [active] = await browser.tabs.query({ active: true, lastFocusedWindow: true });
+    if (active?.id == null) return;
+    await sendToTab(active.id, APP_ACTIONS.OPEN_LAUNCHER, {
+      feature: "user-scripts",
+      installUrl: url,
+    });
   });
 
   onMessage<{ tabId?: number; scriptId?: string }, number>(
@@ -103,7 +108,13 @@ export function setupBackground(): void {
         } catch {
           // Ignore if download already handled
         }
-        await openOrFocusDashboardTab(`?installUrl=${encodeURIComponent(url)}`);
+        const [active] = await browser.tabs.query({ active: true, lastFocusedWindow: true });
+        if (active?.id != null) {
+          await sendToTab(active.id, APP_ACTIONS.OPEN_LAUNCHER, {
+            feature: "user-scripts",
+            installUrl: url,
+          }).catch(() => {});
+        }
       }
     });
   }

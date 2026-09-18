@@ -25,7 +25,7 @@
   {#snippet action()}
     {#if history.length > 0}<Button
         size="sm"
-        variant="ghost"
+        variant="secondary"
         disabled={isLoading}
         onclick={onClear}>Clear</Button
       >{/if}
@@ -47,11 +47,10 @@
         minute: "2-digit",
       })}
       {@const platformName = AI_PLATFORMS[item.platform]?.name || item.platform}
-      <div
-        class="flex items-center gap-2 rounded-lg border-[1.5px] border-solid border-ext-border bg-ext-surface px-2 py-1.5 shadow-[2px_2px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA]"
+      <div              class="ext-card flex items-center gap-3 rounded-2xl px-3.5 py-2.5 transition-all hover:scale-[1.01] hover:shadow-md"
       >
         <span
-          class="flex h-6 w-6 shrink-0 items-center justify-center rounded-[5px] border border-solid border-[#D4CEC2] bg-[#EDE7DA] text-ext-text-secondary"
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-ext-primary"
         >
           <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"
             ><path
@@ -60,10 +59,10 @@
           >
         </span>
         <div class="min-w-0 flex-1">
-          <div class="truncate text-xs font-bold text-ext-text">
+          <div class="truncate text-body font-bold text-ext-text">
             {item.title}
           </div>
-          <div class="truncate text-[11px] font-medium text-ext-muted">
+          <div class="truncate text-label font-medium text-ext-muted">
             {platformName} • {item.format.toUpperCase()} • {dateStr}
           </div>
         </div>
@@ -71,7 +70,7 @@
           {#if item.content}
             <button
               type="button"
-              class="inline-flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+              class="ext-icon-btn h-7 w-7"
               title="Re-download"
               aria-label="Re-download"
               onclick={() => onDownload(item.id)}
@@ -79,7 +78,7 @@
             >
             <button
               type="button"
-              class="inline-flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-[#EDE7DA] hover:text-ext-text active:translate-x-px active:translate-y-px"
+              class="ext-icon-btn h-7 w-7"
               title="Copy Content"
               aria-label="Copy Content"
               onclick={() => onCopy(item.id)}
@@ -88,7 +87,7 @@
           {/if}
           <button
             type="button"
-            class="inline-flex h-5.5 w-5.5 cursor-pointer items-center justify-center rounded-sm border-[1.5px] border-solid border-ext-border bg-ext-surface text-ext-muted shadow-[1px_1px_0_#1A1A1A] transition-all hover:bg-ext-danger hover:border-[#A82624] hover:text-white active:translate-x-px active:translate-y-px"
+            class="ext-icon-btn ext-icon-btn-danger h-7 w-7"
             title="Delete"
             aria-label="Delete"
             onclick={() => onDelete(item.id)}

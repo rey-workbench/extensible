@@ -9,16 +9,18 @@
   }
   let { text, variant = "neutral", id, class: cls = "" }: Props = $props();
 
+  // Text colors are darkened from the Tailwind 500/600 steps: the tinted chip
+  // backgrounds cut the contrast of the lighter steps below 4.5:1.
   const variants: Record<Variant, string> = {
-    primary: "bg-[#1B4DDB] text-white border-[#0F3BA8]",
-    success: "bg-ext-success text-white border-[#1E6B38]",
-    danger: "bg-ext-danger text-white border-[#A82624]",
-    warning: "bg-ext-warning text-ext-text border-[#C48C1E]",
-    neutral: "bg-[#EDE7DA] text-ext-text-secondary border-[#D4CEC2]",
+    primary: "bg-blue-50 text-[#1558b8] border-blue-200",
+    success: "bg-emerald-50 text-[#047857] border-emerald-200",
+    danger: "bg-red-50 text-[#b91c1c] border-red-200",
+    warning: "bg-amber-50 text-[#b45309] border-amber-200",
+    neutral: "bg-slate-100 text-ext-text-secondary border-slate-200",
   };
 </script>
 
 <span
   id={id || undefined}
-  class="inline-flex items-center rounded-sm border border-solid px-2 py-px text-[10px] font-bold uppercase tracking-wider leading-4 {variants[variant]} {cls}"
+  class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-label font-bold tracking-wide leading-4 {variants[variant]} {cls}"
 >{text}</span>

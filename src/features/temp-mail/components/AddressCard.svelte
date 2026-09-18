@@ -28,18 +28,13 @@
   const emailValue = $derived(email ? email.address : "No active address");
 </script>
 
-<div class="ext-card space-y-2.5 p-3">
+<div class="ext-card space-y-3.5 p-4">
   <div class="flex items-center justify-between">
-    <div class="flex items-center gap-1.5">
-      <span
-        class="h-2 w-2 rounded-full {isActive ? 'bg-ext-success' : 'bg-ext-muted'}"
-      ></span>
-      <span class="text-[11.5px] font-bold text-ext-text"
-        >{isActive ? "Active Address" : "Expired"}</span
-      >
-    </div>
+    <span class="text-body font-bold {isActive ? 'text-ext-text' : 'text-ext-text-secondary'}">
+      {isActive ? "Active Address" : "Expired"}
+    </span>
     <span
-      class="rounded-sm border border-[#D4CEC2] bg-[#EDE7DA] px-2 py-0.5 text-[10.5px] font-bold tabular-nums text-ext-text-secondary"
+      class="rounded-full border border-slate-200/70 bg-slate-100 px-2.5 py-0.5 text-xs font-bold tabular-nums text-ext-text-secondary"
     >
       {isActive ? formatCountdown(remainingSeconds) : "00:00"}
     </span>
@@ -47,17 +42,17 @@
 
   <CopyInput value={emailValue} readonly={true} oncopy={() => onCopy(emailValue)} />
 
-  <div class="grid grid-cols-2 gap-2 pt-0.5">
+  <div class="grid grid-cols-2 gap-2.5 pt-0.5">
     <Button
       variant="primary"
-      size="sm"
+      size="md"
       icon="refresh"
       onclick={onGenerate}
       disabled={isRefreshing}>New Address</Button
     >
     <Button
       variant="secondary"
-      size="sm"
+      size="md"
       icon="autofill"
       onclick={onAutofill}>Autofill Page</Button
     >

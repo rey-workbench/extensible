@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { FeatureModule } from "@/lib/feature-registry";
+  import EmptyState from "./EmptyState.svelte";
   import ExtensionRow from "./ExtensionRow.svelte";
   import Icon from "./Icon.svelte";
 
@@ -41,9 +42,9 @@
 </script>
 
 <div class="flex min-h-0 flex-1 flex-col">
-  <div class="border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 pb-2.5 pt-2">
+  <div class="px-3 pb-2 pt-3">
     <div
-      class="flex h-7.5 items-center gap-1.5 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2.5 shadow-[1px_1px_0_#1A1A1A] transition-all focus-within:ring-2 focus-within:ring-ext-primary/20"
+      class="flex h-9 items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3.5 transition-all focus-within:border-ext-primary focus-within:bg-white focus-within:ring-2 focus-within:ring-ext-primary/10"
     >
       <button
         type="button"
@@ -57,8 +58,8 @@
       <input
         bind:this={searchInput}
         type="text"
-        class="h-full min-w-0 flex-1 border-0 bg-transparent text-[12px] font-medium text-ext-text outline-none"
-        placeholder="Search extensions..."
+        class="h-full min-w-0 flex-1 border-0 bg-transparent text-xs font-medium text-ext-text outline-none placeholder:text-ext-muted"
+        placeholder="Search apps & tools…"
         autocomplete="off"
         spellcheck="false"
         bind:value={query}
@@ -66,7 +67,7 @@
       {#if query}
         <button
           type="button"
-          class="flex h-4 w-4 cursor-pointer items-center justify-center rounded-[3px] border border-solid border-[#D4CEC2] bg-[#EDE7DA] text-[9px] font-bold text-ext-text-secondary transition-colors hover:bg-[#D4CEC2] hover:text-ext-text"
+          class="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-ext-muted transition-colors hover:bg-slate-100 hover:text-ext-text"
           aria-label="Clear search"
           onclick={() => (query = "")}
           >&times;</button
@@ -75,31 +76,32 @@
     </div>
   </div>
 
-  <div class="flex h-6.5 shrink-0 items-center justify-between px-3">
-    <span class="text-[10.5px] font-bold uppercase tracking-widest text-ext-muted">
+  <div class="flex h-7 shrink-0 items-center justify-between px-4">
+    <span class="text-label font-bold uppercase tracking-widest text-ext-muted">
       Extensions
     </span>
     <span
-      class="rounded-sm border border-solid border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-px text-[9.5px] font-bold tabular-nums text-ext-text-secondary"
+      class="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-label font-bold tabular-nums text-ext-text-secondary"
       >{filtered.length}</span
     >
   </div>
 
-  <div class="min-h-0 flex-1 space-y-1.5 overflow-y-auto px-2.5 pb-2.5">
+  <div class="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-3">
     {#if filtered.length === 0}
-      <div class="flex flex-col items-center gap-2 px-3 py-10 text-center">
-        <span
-          class="flex h-10 w-10 items-center justify-center rounded-md border-[1.5px] border-[#D4CEC2] bg-[#EDE7DA] text-ext-muted"
-        >
-          <Icon name="puzzle" size={18} />
-        </span>
-        <div class="text-[12.5px] font-bold text-ext-text">
-          {query ? "No matches" : "No extensions"}
-        </div>
-        <div class="text-[11px] text-ext-text-secondary">
-          {query ? "Try a different search term" : "Nothing to show here yet"}
-        </div>
-      </div>
+      <EmptyState
+        title={query ? "No matches" : "No extensions"}
+        subtitle={query
+          ? "Try a different search term"
+          : "Nothing to show here yet"}
+      >
+        {#snippet icon()}
+          <span
+            class="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-ext-muted"
+          >
+            <Icon name="puzzle" size={18} />
+          </span>
+        {/snippet}
+      </EmptyState>
     {:else}
       {#each filtered as feature (feature.id)}
         {@const enabled = enabledMap[feature.id] !== false}

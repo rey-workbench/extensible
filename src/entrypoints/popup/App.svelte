@@ -3,7 +3,7 @@
   import Badge from "@/components/Badge.svelte";
   import ExtensionList from "@/components/ExtensionList.svelte";
   import Toggle from "@/components/Toggle.svelte";
-  import { openOrFocusDashboardTab } from "@/lib/browser";
+  import { openBentoLauncher } from "@/lib/browser";
   import {
     type FeatureModule,
     getFeatureColor,
@@ -67,28 +67,28 @@
 <div class="ext-container flex h-full min-h-0 flex-col select-none bg-ext-bg text-ext-text">
   {#if view === "list"}
     <header
-      class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-3"
+      class="flex h-12 shrink-0 items-center justify-between border-b border-slate-200/70 bg-white px-3"
     >
       <div class="flex items-center gap-2">
         <img
           src="/icon/icon-48.png"
           alt="Extensible Logo"
-          class="h-6 w-6 rounded-[5px] border-[1.5px] border-solid border-ext-border bg-ext-surface object-contain shadow-[1.5px_1.5px_0_#1A1A1A]"
+          class="h-8 w-8 rounded-xl border border-slate-200 bg-white object-contain shadow-sm"
         />
-        <span class="flex items-center gap-1.5 text-[13px] font-bold uppercase tracking-wider text-ext-text">
+        <span class="flex items-center gap-1.5 text-sm font-extrabold tracking-tight text-ext-text">
           Extensible
           {#if import.meta.env.DEV}
-            <Badge text="DEV" variant="warning" class="px-1 py-0 text-[9px] leading-3" />
+            <Badge text="DEV" variant="warning" class="px-2 py-0.5" />
           {/if}
         </span>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2.5">
         <button
           type="button"
-          class="flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-solid border-ext-border bg-[#EDE7DA] text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-colors hover:bg-white"
-          title="Open Dashboard in full tab"
-          onclick={() => void openOrFocusDashboardTab()}
+          class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-ext-text active:scale-95"
+          title="Open Bento Hub in current tab"
+          onclick={() => void openBentoLauncher()}
         >
           <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -97,9 +97,6 @@
           </svg>
         </button>
 
-        <span
-          class="text-[10.5px] font-bold uppercase tracking-wider text-ext-muted"
-        >{masterOn ? "All on" : "All off"}</span>
         <Toggle
           checked={masterOn}
           label={masterOn ? "Disable all extensions" : "Enable all extensions"}
@@ -117,11 +114,11 @@
     />
   {:else}
     <header
-      class="flex h-10.5 shrink-0 items-center justify-between border-b-[1.5px] border-solid border-ext-border bg-ext-surface px-3"
+      class="flex h-12 shrink-0 items-center justify-between border-b border-slate-200/70 bg-white px-3"
     >
       <button
         type="button"
-        class="flex cursor-pointer items-center gap-1 rounded-[5px] py-1 pr-2 text-[12.5px] font-bold uppercase tracking-wide text-ext-text-secondary transition-colors hover:bg-[#EDE7DA] hover:text-ext-text"
+        class="flex cursor-pointer items-center gap-1 rounded-xl border border-slate-200 bg-white py-1.5 pr-3 pl-1.5 text-body font-bold text-ext-text-secondary shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-ext-text"
         onclick={showList}
       >
         <svg
@@ -137,14 +134,14 @@
         </svg>
         <span>Extensions</span>
       </button>
-      <span class="max-w-42.5 truncate text-[12.5px] font-bold text-ext-text">
+      <span class="max-w-42.5 truncate text-body font-bold text-ext-text">
         {activeFeature?.name ?? ""}
       </span>
       <button
         type="button"
-        class="flex h-6 w-6 cursor-pointer items-center justify-center rounded border border-solid border-ext-border bg-[#EDE7DA] text-ext-text shadow-[1px_1px_0_#1A1A1A] transition-colors hover:bg-white"
+        class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-ext-text active:scale-95"
         title="Open Dashboard in full tab"
-        onclick={() => void openOrFocusDashboardTab()}
+        onclick={() => void openBentoLauncher()}
       >
         <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />

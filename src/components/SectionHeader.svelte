@@ -12,7 +12,7 @@
 </script>
 
 <div id={id || undefined} class="mb-2 flex items-center justify-between {cls}">
-  <div class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-ext-muted">
+  <div class="flex items-center gap-2 text-label font-bold uppercase tracking-wider text-ext-muted">
     <span>{title}</span>
     {#if badge}{@render badge()}{/if}
   </div>
