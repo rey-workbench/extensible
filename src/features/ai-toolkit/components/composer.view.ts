@@ -1,3 +1,4 @@
+import { showToast } from "@/lib/toast";
 import globalCss from "@/styles/global.css?inline";
 import { DEFAULT_CAVEMAN_SETTINGS } from "../constants/ai-toolkit.constants";
 import type { CavemanSettings, ExportFormat } from "../types/ai-toolkit.types";
@@ -13,7 +14,6 @@ import {
   computeMenuPlacement,
   resolveDockAnchor,
 } from "./composer/positioning";
-import { showComposerToast } from "./composer/toast";
 
 export interface AiToolkitComposerViewCallbacks {
   onExport: (format: ExportFormat) => Promise<void>;
@@ -239,10 +239,10 @@ export class AiToolkitComposerView {
         if (format) {
           try {
             await this.callbacks.onExport(format);
-            this.showToast(format === "pdf" ? "Print dialog opened!" : "Exported!");
+            this.showMessage(format === "pdf" ? "Print dialog opened!" : "Exported!");
           } catch (err) {
             console.warn("[AiToolkit] Export failed:", err);
-            this.showToast(formatExportError(err), true);
+            this.showMessage(formatExportError(err), true);
           }
         }
       });
@@ -255,10 +255,10 @@ export class AiToolkitComposerView {
       this.closeMenu();
       try {
         await this.callbacks.onCopy();
-        this.showToast("Copied to clipboard!");
+        this.showMessage("Copied to clipboard!");
       } catch (err) {
         console.warn("[AiToolkit] Copy failed:", err);
-        this.showToast(
+        this.showMessage(
           err instanceof Error && err.message ? `Copy failed: ${err.message}` : "Copy failed",
           true,
         );
@@ -299,7 +299,9 @@ export class AiToolkitComposerView {
       e.stopPropagation();
       const updated = await this.callbacks.onCycleCavemanLevel();
       this.updateSettings(updated);
-      this.showToast(updated.enabled ? `Caveman: ${updated.level.toUpperCase()}` : "Caveman: OFF");
+      this.showMessage(
+        updated.enabled ? `Caveman: ${updated.level.toUpperCase()}` : "Caveman: OFF",
+      );
     });
 
     const exportBtn = this.container.querySelector(".ext-export-trigger-btn");
@@ -364,9 +366,9 @@ export class AiToolkitComposerView {
     if (caret) caret.style.transform = "";
   }
 
-  public showToast(message: string, isError = false): void {
+  public showMessage(message: string, isError = false): void {
     if (!this.container) return;
-    showComposerToast(this.container, message, isError);
+    showToast(this.container, message, { isError, anchor: this.container });
   }
 
   public unmount(): void {

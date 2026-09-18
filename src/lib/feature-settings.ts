@@ -7,9 +7,13 @@ export const featureEnabledItem = storage.defineItem<Record<string, boolean>>(
   { defaultValue: {} },
 );
 
-export async function isFeatureEnabled(id: string): Promise<boolean> {
-  const map = await featureEnabledItem.getValue();
+/** Read the "missing means enabled" flag from an already-loaded map. */
+export function isEnabledIn(map: Record<string, boolean>, id: string): boolean {
   return map[id] !== false;
+}
+
+export async function isFeatureEnabled(id: string): Promise<boolean> {
+  return isEnabledIn(await featureEnabledItem.getValue(), id);
 }
 
 export async function setFeatureEnabled(id: string, enabled: boolean): Promise<void> {

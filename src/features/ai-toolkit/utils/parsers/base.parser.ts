@@ -17,7 +17,7 @@ export interface RoleHints {
 }
 
 const USER_HINTS = /(?:^|[^a-z])(?:user|human|me|prompt)(?:[^a-z]|$)/i;
-const ASSISTANT_HINTS = /(?:^|[^a-z])(?:assistant|bot|model|ai|gpt|chatbot)(?:[^a-z]|$)/i;
+const ASSISTANT_HINTS = /(?:^|[^a-z])(?:assistant|bot|model|ai|gpt|chatbot|claude)(?:[^a-z]|$)/i;
 
 export function roleFromHints(hints: RoleHints, index: number): MessageRole {
   const attrText = [hints.authorRole, hints.author, hints.role]
@@ -35,10 +35,6 @@ export function roleFromHints(hints: RoleHints, index: number): MessageRole {
   if (USER_HINTS.test(cls)) return "user";
 
   return index % 2 === 0 ? "user" : "assistant";
-}
-
-export function innermost(elements: readonly Element[]): Element[] {
-  return elements.filter((el) => !elements.some((other) => other !== el && el.contains(other)));
 }
 
 export function outermost(elements: readonly Element[]): Element[] {

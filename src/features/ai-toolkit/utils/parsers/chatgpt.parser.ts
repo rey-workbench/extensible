@@ -7,6 +7,14 @@ import {
   roleFromHints,
 } from "./base.parser";
 
+/**
+ * Ordered probes for conversation turns on chatgpt.com. The host app rewrites
+ * this markup regularly — turns have been `article[data-testid=...]`, plain
+ * `div[data-message-author-role]`, and (logged out) nothing but class-named
+ * bubbles — so we try each shape and use the first that yields text.
+ * Bare `article` is deliberately not a probe: a chat page also has unrelated
+ * article cards, which silently turn page furniture into "messages".
+ */
 export const TURN_STRATEGIES = [
   { label: "data-message-author-role", selector: "[data-message-author-role]" },
   {
@@ -14,7 +22,6 @@ export const TURN_STRATEGIES = [
     selector: '[data-testid^="conversation-turn"], [data-testid="conversation-turn"]',
   },
   { label: "data-message-id", selector: "[data-message-id]" },
-  { label: "article", selector: "main article, article" },
   {
     label: "message-class",
     selector: '[class*="user-message"], [class*="assistant-message"]',

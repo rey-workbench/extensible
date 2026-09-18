@@ -1,50 +1,40 @@
-import type { ChatMessage, MessageRole } from "../../types/ai-toolkit.types";
-import { cleanElementText, pushMessage } from "./base.parser";
-import { parseGeneric } from "./generic.parser";
+import type { ChatMessage } from "../../types/ai-toolkit.types";
+import { classNamesOf, cleanElementText, pushMessage, roleFromHints } from "./base.parser";
+
+const SECONDARY_TURN_SELECTOR =
+  'div[class*="user-query"], div[class*="model-response"], [data-test-id*="user-query"], [data-test-id*="model-response"], .user-query-container, .model-response-container';
 
 export function parseGemini(doc: Document): ChatMessage[] {
   const messages: ChatMessage[] = [];
 
-  const turns = doc.querySelectorAll("user-query, model-response");
-  if (turns.length > 0) {
-    turns.forEach((el, index) => {
-      const tagName = el.tagName.toLowerCase();
-      const isUser = tagName === "user-query";
-      const role: MessageRole = isUser ? "user" : "assistant";
-      const contentEl = !isUser ? el.querySelector("message-content") || el : el;
-      const text = cleanElementText(contentEl);
+  doc.querySelectorAll("user-query, model-response").forEach((el, index) => {
+    const isUser = el.tagName.toLowerCase() === "user-query";
+    const contentEl = isUser ? el : el.querySelector("message-content") || el;
+    const text = cleanElementText(contentEl).trim();
+    if (!text) return;
 
-      if (text) {
-        pushMessage(messages, `msg_gemini_${index}`, role, text);
-      }
-    });
+    pushMessage(
+      messages,
+      `msg_gemini_${index}`,
+      roleFromHints({ author: el.tagName }, index),
+      text,
+    );
+  });
+  if (messages.length > 0) return messages;
 
-    if (messages.length > 0) {
-      return messages;
-    }
-  }
+  doc.querySelectorAll(SECONDARY_TURN_SELECTOR).forEach((el, index) => {
+    const text = cleanElementText(el).trim();
+    if (!text) return;
 
-  const secondaryTurns = doc.querySelectorAll(
-    'div[class*="user-query"], div[class*="model-response"], [data-test-id*="user-query"], [data-test-id*="model-response"], .user-query-container, .model-response-container',
-  );
-  if (secondaryTurns.length > 0) {
-    secondaryTurns.forEach((el, index) => {
-      const isUser =
-        /user/i.test(el.className) ||
-        el.getAttribute("data-test-id")?.includes("user") ||
-        el.tagName.toLowerCase().includes("user");
-      const role: MessageRole = isUser ? "user" : "assistant";
-      const text = cleanElementText(el);
+    const role = roleFromHints(
+      {
+        author: el.getAttribute("data-test-id"),
+        className: classNamesOf(el),
+      },
+      index,
+    );
+    pushMessage(messages, `msg_gemini_sec_${index}`, role, text);
+  });
 
-      if (text) {
-        pushMessage(messages, `msg_gemini_sec_${index}`, role, text);
-      }
-    });
-
-    if (messages.length > 0) {
-      return messages;
-    }
-  }
-
-  return parseGeneric(doc);
+  return messages;
 }

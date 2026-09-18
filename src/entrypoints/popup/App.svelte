@@ -4,52 +4,31 @@
   import ExtensionList from "@/components/ExtensionList.svelte";
   import Toggle from "@/components/Toggle.svelte";
   import { openBentoLauncher } from "@/lib/browser";
-  import {
-    type FeatureModule,
-    getFeatureColor,
-    getToggleableFeatures,
-  } from "@/lib/feature-registry";
-  import {
-    featureEnabledItem,
-    setFeatureEnabled,
-    setFeaturesEnabled,
-  } from "@/lib/feature-settings";
+  import { type FeatureModule, getToggleableFeatures } from "@/lib/feature-registry";
+  import { createFeatureToggles, watchFeatureToggles } from "@/lib/feature-toggles.svelte";
 
   
   const features = getToggleableFeatures();
 
   let view = $state<"list" | "detail">("list");
   let activeId = $state<string | null>(null);
-  let masterOn = $state(true);
-  let enabledMap = $state<Record<string, boolean>>({});
+
+  const toggles = createFeatureToggles(features);
+  const enabledMap = $derived(toggles.enabledMap);
+  const masterOn = $derived(toggles.masterOn);
 
   const activeFeature = $derived(
     activeId ? (features.find((f) => f.id === activeId) ?? null) : null,
   );
 
-  onMount(async () => {
-    await syncFromStorage();
-    void featureEnabledItem.watch(() => void syncFromStorage());
-  });
+  onMount(() => watchFeatureToggles(toggles));
 
-  async function syncFromStorage(): Promise<void> {
-    const map = await featureEnabledItem.getValue();
-    enabledMap = map ?? {};
-    masterOn = features.every((f) => enabledMap[f.id] !== false);
+  function toggleFeature(feature: FeatureModule, enabled: boolean): void {
+    void toggles.toggle(feature.id, enabled);
   }
 
-  async function toggleFeature(feature: FeatureModule, enabled: boolean): Promise<void> {
-    enabledMap = { ...enabledMap, [feature.id]: enabled };
-    await setFeatureEnabled(feature.id, enabled);
-  }
-
-  async function toggleAll(enabled: boolean): Promise<void> {
-    masterOn = enabled;
-    await setFeaturesEnabled(
-      features.map((f) => f.id),
-      enabled,
-    );
-    await syncFromStorage();
+  function toggleAll(enabled: boolean): void {
+    void toggles.toggleAll(enabled);
   }
 
   function openDetail(id: string): void {
@@ -108,7 +87,6 @@
     <ExtensionList
       {features}
       {enabledMap}
-      colorFor={getFeatureColor}
       onOpenDetail={openDetail}
       onToggleFeature={(f, enabled) => void toggleFeature(f, enabled)}
     />

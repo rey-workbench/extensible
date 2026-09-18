@@ -50,7 +50,7 @@ function createFakeBrowser(): Record<string, unknown> {
 
 const [
   { extractOtpCode, formatCountdown, sanitizeEmailHtml },
-  { escapeHtml, formatRelativeTime, isContextInvalidated, slugify, setInputValue, setNativeValue },
+  { escapeHtml, formatRelativeTime, isContextInvalidated, slugify, setNativeValue },
   {
     clearHistory,
     deleteHistoryItem,
@@ -79,6 +79,7 @@ const [
   { isPrivateOrLocalHost },
   { getAllScriptTokens, getScriptToken },
   { DESIGN_TOKENS },
+  { roleFromHints },
 ] = await Promise.all([
   import("@/features/temp-mail/utils/temp-mail.utils"),
   import("@/lib/browser"),
@@ -91,6 +92,7 @@ const [
   import("@/features/user-scripts/services/gm-rpc.service"),
   import("@/features/user-scripts/services/user-scripts.service"),
   import("@/lib/design-tokens"),
+  import("@/features/ai-toolkit/utils/parsers/base.parser"),
 ]);
 let passed = 0;
 
@@ -131,7 +133,6 @@ ok(
   slugify("Testing AI Toolkit Architecture") === "testing-ai-toolkit-architecture",
   "Should slugify text",
 );
-ok(typeof setInputValue === "function", "setInputValue must be exported");
 ok(typeof setNativeValue === "function", "setNativeValue must be exported");
 ok(DESIGN_TOKENS.primary === "#1A73E8", "DESIGN_TOKENS.primary should match theme");
 ok(DESIGN_TOKENS.bg === "#EAEFF5", "DESIGN_TOKENS.bg should match theme");
@@ -150,9 +151,32 @@ ok(
   "Custom registered feature should report registered color",
 );
 ok(
-  getFeatureColor("unknown-feature") === "#1B4DDB",
-  "Unknown feature should fall back to default color #1B4DDB",
+  getFeatureColor("unknown-feature") === DESIGN_TOKENS.primary,
+  "Unknown feature should fall back to the theme primary color",
 );
+ok(roleFromHints({ authorRole: "user" }, 1) === "user", "Role: explicit user attribute wins");
+ok(
+  roleFromHints({ authorRole: "assistant" }, 0) === "assistant",
+  "Role: explicit assistant attribute wins over turn parity",
+);
+ok(
+  roleFromHints({ className: "font-user-message text-base" }, 1) === "user",
+  "Role: user class hint",
+);
+ok(
+  roleFromHints({ className: "font-claude-message" }, 0) === "assistant",
+  "Role: assistant class hint",
+);
+ok(
+  roleFromHints({ className: "message-row" }, 3) === "assistant",
+  "Role: 'message' must not match the 'me' hint",
+);
+ok(
+  roleFromHints({ className: "email-thread" }, 0) === "user",
+  "Role: 'email' must not match the 'ai' hint",
+);
+ok(roleFromHints({}, 0) === "user", "Role: first turn defaults to user");
+ok(roleFromHints({}, 1) === "assistant", "Role: second turn defaults to assistant");
 console.log("   ✓ Feature module colors passed.");
 console.log("\n3. Testing ai-toolkit service functions:");
 const sampleConvo = {

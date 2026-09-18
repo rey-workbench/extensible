@@ -11,11 +11,7 @@
     getFeatureColor,
     getToggleableFeatures,
   } from "@/lib/feature-registry";
-  import {
-    featureEnabledItem,
-    setFeatureEnabled,
-    setFeaturesEnabled,
-  } from "@/lib/feature-settings";
+  import { createFeatureToggles, watchFeatureToggles } from "@/lib/feature-toggles.svelte";
   import { sendMessage } from "@/lib/messaging";
   import { showToast } from "@/lib/toast";
   import globalCss from "@/styles/global.css?inline";
@@ -39,8 +35,9 @@
 
   let view = $state<"list" | "detail">("list");
   let activeId = $state<string | null>(null);
-  let masterOn = $state(true);
-  let enabledMap = $state<Record<string, boolean>>({});
+  const toggles = createFeatureToggles(modules);
+  const enabledMap = $derived(toggles.enabledMap);
+  const masterOn = $derived(toggles.masterOn);
   let scriptStats = $state<{ total: number; enabled: number }>({ total: 0, enabled: 0 });
 
   async function loadScriptStats(): Promise<void> {
@@ -132,17 +129,12 @@
         background: #ffffff;
         box-shadow: -6px 14px 36px -4px rgba(15, 23, 42, 0.18);
       }
-      ::-webkit-scrollbar { width: 6px; }
-      ::-webkit-scrollbar-track { background: transparent; }
-      ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
-      ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
     `;
     shadowRoot.appendChild(style);
 
-    void syncFromStorage();
+    watchFeatureToggles(toggles);
     void syncTempMail();
     void loadScriptStats();
-    void featureEnabledItem.watch(() => void syncFromStorage());
 
     
     
@@ -180,29 +172,10 @@
     }
   }
 
-  async function syncFromStorage(): Promise<void> {
-    const map = await featureEnabledItem.getValue();
-    enabledMap = map ?? {};
-    masterOn = modules.every((m) => enabledMap[m.id] !== false);
-  }
-
-  async function toggleFeature(id: string, enabled: boolean): Promise<void> {
-    enabledMap = { ...enabledMap, [id]: enabled };
-    await setFeatureEnabled(id, enabled);
-  }
-
-  async function toggleAll(enabled: boolean): Promise<void> {
-    masterOn = enabled;
-    await setFeaturesEnabled(
-      modules.map((m) => m.id),
-      enabled,
-    );
-    await syncFromStorage();
-  }
 
   function openDrawer(): void {
     isOpen = true;
-    void syncFromStorage();
+    void toggles.sync();
     void syncTempMail();
     void loadScriptStats();
   }
@@ -218,7 +191,7 @@
     activeId = id;
     view = "detail";
     isOpen = true;
-    void syncFromStorage();
+    void toggles.sync();
     if (id === "temp-mail") void syncTempMail();
   }
 
@@ -269,10 +242,10 @@
           {activeTempAddress}
           {isGeneratingMail}
           {scriptStats}
-          onToggleAll={(v) => void toggleAll(v)}
+          onToggleAll={(v) => void toggles.toggleAll(v)}
           onClose={closeDrawer}
           onOpenDetail={openDetail}
-          onToggleFeature={(m, enabled) => void toggleFeature(m.id, enabled)}
+          onToggleFeature={(m, enabled) => void toggles.toggle(m.id, enabled)}
           onQuickGenerate={() => void handleQuickGenerate()}
           onQuickCopy={() => void handleQuickCopy()}
         />

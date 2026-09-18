@@ -1,5 +1,5 @@
 import { browser } from "wxt/browser";
-import { showNotification } from "@/lib/browser";
+import { copyToClipboard, showNotification } from "@/lib/browser";
 import { sendToTab } from "@/lib/messaging";
 import { resolveGrants, USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
 import type {
@@ -73,7 +73,10 @@ export async function handleGmRpc(
     case "gm_download":
       return gmDownload(script, args[0] as { url: string; name?: string });
     case "gm_clipboard": {
-      await navigator.clipboard.writeText(String(args[0] ?? ""));
+      const text = String(args[0] ?? "");
+      if (text && !(await copyToClipboard(text))) {
+        throw new Error("gm_clipboard: clipboard write failed");
+      }
       return null;
     }
     case "gm_notify": {

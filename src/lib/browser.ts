@@ -70,10 +70,6 @@ export function setNativeValue(input: HTMLInputElement | HTMLTextAreaElement, va
   input.dispatchEvent(new Event("change", { bubbles: true, composed: true }));
 }
 
-export function setInputValue(input: HTMLInputElement, value: string): void {
-  setNativeValue(input, value);
-}
-
 export function isContextInvalidated(err: unknown): boolean {
   if (!browser.runtime?.id) return true;
   const msg = err instanceof Error ? err.message : String(err);

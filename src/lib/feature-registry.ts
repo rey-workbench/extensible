@@ -1,4 +1,5 @@
 import type { Component } from "svelte";
+import { DESIGN_TOKENS } from "@/lib/design-tokens";
 import type { IconName } from "@/lib/icons";
 
 export interface FeatureModule {
@@ -31,6 +32,7 @@ export function getToggleableFeatures(): FeatureModule[] {
   return [...registry.values()].filter((f) => !f.mandatory);
 }
 
+/** Accent for a module, falling back to the theme's primary token. */
 export function getFeatureColor(id: string): string {
-  return registry.get(id)?.color ?? "#1B4DDB";
+  return registry.get(id)?.color ?? DESIGN_TOKENS.primary;
 }

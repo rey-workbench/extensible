@@ -1,3 +1,4 @@
+import { copyToClipboard } from "@/lib/browser";
 import { sendMessage } from "@/lib/messaging";
 import { readSettings } from "@/lib/utils";
 import { AiToolkitComposerView } from "../components/composer.view";
@@ -23,7 +24,9 @@ export function setupComposerToolbar(initialSettings: CavemanSettings): void {
     onCopy: async () => {
       const convo = await scrapeConvo(document, { actionLabel: "copy" });
       const mdText = formatMarkdown(convo);
-      await navigator.clipboard.writeText(mdText);
+      if (!(await copyToClipboard(mdText))) {
+        throw new Error("Clipboard write was blocked");
+      }
     },
     onToggleCaveman: async (): Promise<CavemanSettings> => {
       const updated: CavemanSettings = { ...cavemanSettings, enabled: !cavemanSettings.enabled };

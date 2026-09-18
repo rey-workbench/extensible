@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { FeatureModule } from "@/lib/feature-registry";
+  import { type FeatureModule, getFeatureColor } from "@/lib/feature-registry";
+  import { isEnabledIn } from "@/lib/feature-settings";
   import EmptyState from "./EmptyState.svelte";
   import ExtensionRow from "./ExtensionRow.svelte";
   import Icon from "./Icon.svelte";
@@ -7,18 +8,10 @@
   interface Props {
     features: FeatureModule[];
     enabledMap: Record<string, boolean>;
-    
-    colorFor: (id: string) => string;
     onOpenDetail: (id: string) => void;
     onToggleFeature: (feature: FeatureModule, enabled: boolean) => void;
   }
-  let {
-    features,
-    enabledMap,
-    colorFor,
-    onOpenDetail,
-    onToggleFeature,
-  }: Props = $props();
+  let { features, enabledMap, onOpenDetail, onToggleFeature }: Props = $props();
 
   let query = $state("");
   let searchInput = $state<HTMLInputElement | null>(null);
@@ -104,11 +97,11 @@
       </EmptyState>
     {:else}
       {#each filtered as feature (feature.id)}
-        {@const enabled = enabledMap[feature.id] !== false}
+        {@const enabled = isEnabledIn(enabledMap, feature.id)}
         <ExtensionRow
           {feature}
           {enabled}
-          color={colorFor(feature.id)}
+          color={getFeatureColor(feature.id)}
           dropdownOpen={activeDropdownId === feature.id}
           onOpen={() => {
             activeDropdownId = null;

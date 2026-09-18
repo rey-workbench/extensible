@@ -1,7 +1,8 @@
 <script lang="ts">
   import Icon from "@/components/Icon.svelte";
   import Toggle from "@/components/Toggle.svelte";
-  import type { FeatureModule } from "@/lib/feature-registry";
+  import { type FeatureModule, getFeatureColor } from "@/lib/feature-registry";
+  import { isEnabledIn } from "@/lib/feature-settings";
 
   interface Props {
     logo48: string;
@@ -50,7 +51,7 @@
   );
 
   const activeCount = $derived(
-    features.filter((f) => enabledMap[f.id] !== false).length,
+    features.filter((f) => isEnabledIn(enabledMap, f.id)).length,
   );
 
   
@@ -245,8 +246,9 @@
 
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {#each filteredFeatures as feature (feature.id)}
-            {@const isEnabled = enabledMap[feature.id] !== false}
+            {@const isEnabled = isEnabledIn(enabledMap, feature.id)}
             {@const hasDescription = !!feature.description?.trim()}
+            {@const accent = getFeatureColor(feature.id)}
             {#if hasDescription}
               
               <div
@@ -265,7 +267,7 @@
                     class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 {isEnabled
                       ? ''
                       : 'grayscale'}"
-                    style="background: {feature.color ? `${feature.color}15` : '#1A73E815'}; color: {feature.color || '#1A73E8'};"
+                    style="background: {accent}15; color: {accent};"
                   >
                     <Icon name={feature.icon} size={22} />
                   </span>
@@ -304,7 +306,7 @@
                     class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 {isEnabled
                       ? ''
                       : 'grayscale'}"
-                    style="background: {feature.color ? `${feature.color}15` : '#1A73E815'}; color: {feature.color || '#1A73E8'};"
+                    style="background: {accent}15; color: {accent};"
                   >
                     <Icon name={feature.icon} size={22} />
                   </span>
@@ -326,14 +328,18 @@
     <div class="flex flex-col gap-5">
       
       {#if hasTempMail}
-        <div class="ext-card flex flex-col p-6 {enabledMap['temp-mail'] === false ? 'opacity-70' : ''}">
+        <div
+          class="ext-card flex flex-col p-6 {isEnabledIn(enabledMap, 'temp-mail')
+            ? ''
+            : 'opacity-70'}"
+        >
           <div class="flex items-center justify-between">
             <span class="text-label font-bold tracking-wider text-ext-text-secondary uppercase">
               Disposable Mail
             </span>
             <div class="flex items-center gap-2">
               <Toggle
-                checked={enabledMap["temp-mail"] !== false}
+                checked={isEnabledIn(enabledMap, "temp-mail")}
                 label="Toggle Temp Mail"
                 onchange={(v) => toggleById("temp-mail", v)}
               />

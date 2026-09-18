@@ -36,7 +36,8 @@
     "lint": "biome check",
     "lint:fix": "biome check --write",
     "format": "biome format --write",
-    "test": "npx -y tsx test/verify_model.ts"
+    "test": "npx -y tsx test/parsers/harness.ts && npx -y tsx test/verify_model.ts",
+    "test:parsers": "npx -y tsx test/parsers/harness.ts"
   },
   "keywords": [
     "chrome-extension",
@@ -76,11 +77,10 @@
       "src/entrypoints/popup/main.ts"
     ],
     "project": [
-      "src/**/*.{ts,svelte}",
-      "!src/entrypoints/**"
+      "src/**/*.{ts,svelte,css}"
     ],
     "ignoreDependencies": [
-      "tailwindcss"
+      "linkedom"
     ]
   }
 }
