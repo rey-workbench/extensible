@@ -8,7 +8,7 @@
     class?: string;
     icon?: Snippet;
     action?: Snippet;
-    /** Wrap the message in the shared dashed "nothing here yet" container. */
+    
     boxed?: boolean;
   }
   let {

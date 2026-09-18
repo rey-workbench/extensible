@@ -8,7 +8,11 @@ import {
   formatExportError,
   updateCavemanButtonUi,
 } from "./composer/dom-builder";
-import { computeDockPlacement, computeMenuPlacement } from "./composer/positioning";
+import {
+  computeDockPlacement,
+  computeMenuPlacement,
+  resolveDockAnchor,
+} from "./composer/positioning";
 import { showComposerToast } from "./composer/toast";
 
 export interface AiToolkitComposerViewCallbacks {
@@ -145,6 +149,11 @@ export class AiToolkitComposerView {
     this.container.style.position = "fixed";
     this.container.style.zIndex = "2147483641";
     this.container.style.pointerEvents = "auto";
+
+    this.container.style.width = "max-content";
+    this.container.style.maxWidth = "min(92vw, 420px)";
+    this.container.style.bottom = "";
+    this.container.style.right = "";
     const shadow = this.ensureShadowHost();
     if (!shadow.contains(this.container)) {
       shadow.appendChild(this.container);
@@ -157,9 +166,12 @@ export class AiToolkitComposerView {
     const rect = composerBox.getBoundingClientRect();
     if (rect.width === 0 && rect.height === 0) return;
 
+    const editor = getEditor(document);
+    const anchor = resolveDockAnchor(rect, editor ? editor.getBoundingClientRect() : null);
+
     const width = this.container.offsetWidth || 170;
     const height = this.container.offsetHeight || 30;
-    const { left, top } = computeDockPlacement(rect, width, height);
+    const { left, top } = computeDockPlacement(anchor, width, height);
 
     this.container.style.left = `${left}px`;
     this.container.style.top = `${top}px`;

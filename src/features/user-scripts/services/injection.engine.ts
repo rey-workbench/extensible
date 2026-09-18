@@ -28,7 +28,6 @@ function getUserScriptsApi(): UserScriptsApi | undefined {
   );
 }
 
-// ponytail: lastRunAt write throttle (60s) so every auto-run doesn't rewrite storage + trigger UI watch
 const lastRunSavedAt = new Map<string, number>();
 
 async function markRun(script: UserScriptRecord): Promise<void> {
@@ -59,8 +58,6 @@ export async function runScriptsInTab(
     const seen = injectedTabs.get(tabId) ?? new Set<string>();
     if (trigger === "auto" && seen.has(script.id)) continue;
 
-    // If auto-triggered on navigation and this script was registered natively,
-    // Chrome's userScripts runner already injected it into USER_SCRIPT world.
     if (trigger === "auto" && nativeRegisteredScriptIds.has(script.id)) {
       continue;
     }
@@ -115,10 +112,7 @@ async function prepareScriptPayload(
   }
 
   const allApis = resolveGrants(script.meta.grants);
-  const apis =
-    forWorld === "ISOLATED"
-      ? allApis.filter((a) => a !== "unsafeWindow")
-      : allApis;
+  const apis = forWorld === "ISOLATED" ? allApis.filter((a) => a !== "unsafeWindow") : allApis;
 
   const source = buildScriptSource({
     scriptId: script.id,
@@ -162,23 +156,18 @@ export async function syncUserScriptsApi(): Promise<void> {
             id: script.id,
             matches,
             js: [{ code: source }],
-            runAt:
-              script.meta.runAt === "document-start"
-                ? "document_start"
-                : "document_idle",
+            runAt: script.meta.runAt === "document-start" ? "document_start" : "document_idle",
             world: "USER_SCRIPT",
           },
         ]);
 
         nativeRegisteredScriptIds.add(script.id);
       } catch (scriptErr) {
-        console.warn(
-          `[UserScripts] Failed to register script ${script.id} natively:`,
-          scriptErr,
-        );
+        console.warn(`[UserScripts] Failed to register script ${script.id} natively:`, scriptErr);
       }
     }
-  } catch (err) {      console.debug("[UserScripts] syncUserScriptsApi error:", err);
+  } catch (err) {
+    console.debug("[UserScripts] syncUserScriptsApi error:", err);
   }
 }
 
@@ -192,8 +181,7 @@ async function injectScript(
   url: string,
 ): Promise<boolean> {
   const needsMainWorld =
-    script.meta.injectInto === "page" ||
-    resolveGrants(script.meta.grants).includes("unsafeWindow");
+    script.meta.injectInto === "page" || resolveGrants(script.meta.grants).includes("unsafeWindow");
   const world = needsMainWorld ? "MAIN" : "ISOLATED";
 
   const { source, rpcToken } = await prepareScriptPayload(script, world);
@@ -214,8 +202,7 @@ async function injectScript(
             const el = document.createElement("script");
             const nonceEl = document.querySelector("script[nonce]");
             const nonce =
-              nonceEl?.getAttribute("nonce") ||
-              (nonceEl as HTMLScriptElement | null)?.nonce;
+              nonceEl?.getAttribute("nonce") || (nonceEl as HTMLScriptElement | null)?.nonce;
             if (nonce) {
               el.setAttribute("nonce", nonce);
               el.nonce = nonce;
@@ -248,8 +235,7 @@ async function injectScript(
             }
 
             try {
-              (el as unknown as { textContent: unknown }).textContent =
-                trustedCode;
+              (el as unknown as { textContent: unknown }).textContent = trustedCode;
             } catch {
               try {
                 (el as unknown as { text: unknown }).text = trustedCode;

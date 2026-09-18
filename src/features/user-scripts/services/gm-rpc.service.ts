@@ -31,7 +31,6 @@ export async function handleGmRpc(
     throw new Error(`Unauthorized GM RPC: script "${script.meta.name}" is not active on tab URL`);
   }
 
-  // gm_rpc fn → GM_GRANT_REGISTRY grant names; empty = requires no grant.
   const RPC_GRANTS: Record<string, readonly string[]> = {
     gm_xhr: ["GM_xmlhttpRequest"],
     gm_download: ["GM_download"],

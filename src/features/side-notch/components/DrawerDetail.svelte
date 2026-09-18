@@ -2,7 +2,7 @@
   import Icon from "@/components/Icon.svelte";
   import type { FeatureModule } from "@/lib/feature-registry";
 
-  /** Optional API a module component may export (UserScripts does). */
+  
   export interface ModuleApi {
     openEditorFor?: (scriptId: string) => void;
     installFromCapturedUrl?: (url: string) => void;
@@ -33,9 +33,9 @@
 </script>
 
 <div class="flex max-h-[88vh] w-full flex-col">
-  <!-- Header row: two equal square buttons flanking a title pill -->
+  
   <div class="flex shrink-0 items-stretch gap-3">
-    <!-- Back: standalone neutral square, mirroring the red close button on the right -->
+    
     <button
       type="button"
       class="flex h-15 w-15 shrink-0 cursor-pointer items-center justify-center rounded-2xl border border-slate-100 bg-white text-slate-600 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)] transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95"
@@ -56,7 +56,7 @@
       </svg>
     </button>
 
-    <!-- Title: plain white pill, no icon tile -->
+    
     <div
       class="flex h-15 min-w-0 flex-1 flex-col justify-center rounded-2xl border border-slate-100 bg-white px-5 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)]"
     >
@@ -70,7 +70,7 @@
       {/if}
     </div>
 
-    <!-- Close: red square, same size and radius as the back button -->
+    
     <button
       type="button"
       class="ext-close-btn h-15 w-15 shrink-0 rounded-2xl"
@@ -85,7 +85,7 @@
     </button>
   </div>
 
-  <!-- Content panel: clean scrollable container without redundant outer card wrapper -->
+  
   <div class="mt-3 min-h-0 flex-1 overflow-y-auto">
     {#if feature?.popup}
       {@const DetailView = feature.popup}

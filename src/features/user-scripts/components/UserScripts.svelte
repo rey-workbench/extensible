@@ -53,7 +53,7 @@
     editingId ? (scripts.find((s) => s.id === editingId) ?? null) : null,
   );
 
-  // The drawer/bento context shows the wide inline editor next to the list.
+  
   const isExpanded = $derived(
     typeof window !== "undefined" &&
       !window.location.pathname.includes("popup"),
@@ -67,7 +67,7 @@
     }
   }
 
-  /** Called by SideNotch when the bento deep-opens the module with an editId. */
+  
   export function openEditorFor(scriptId: string): void {
     void (async () => {
       const all = await sendMessage<UserScriptRecord[]>(
@@ -78,7 +78,7 @@
     })();
   }
 
-  /** Called by SideNotch to prefill the URL installer from a captured download. */
+  
   export function installFromCapturedUrl(url: string): void {
     installUrl = url;
     void inspectUrl(url);
@@ -461,7 +461,7 @@
   {/if}
 
   {#if isExpanded && editingScript}
-    <!-- Full-width editor takeover: list hidden while editing (drawer only) -->
+    
     <ScriptEditor
       script={editingScript}
       bind:code={draftCode}
@@ -473,7 +473,7 @@
     />
   {:else}
   <div class="flex w-full max-w-full flex-col gap-3">
-    <!-- Add Script + Script List -->
+    
     <div class="flex w-full flex-col gap-2.5 min-w-0">
       <Card title="Add Script">
         <div class="flex flex-col gap-2">

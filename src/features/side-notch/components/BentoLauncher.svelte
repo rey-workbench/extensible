@@ -53,11 +53,7 @@
     features.filter((f) => enabledMap[f.id] !== false).length,
   );
 
-  // Featured modules get dedicated bento cards; the rest render as pill rows.
-  const featuredIds = new Set(["temp-mail", "user-scripts", "ai-toolkit"]);
-  const otherFeatures = $derived(
-    filteredFeatures.filter((f) => !featuredIds.has(f.id)),
-  );
+  
   const hasAiToolkit = $derived(filteredFeatures.some((f) => f.id === "ai-toolkit"));
   const hasUserScripts = $derived(filteredFeatures.some((f) => f.id === "user-scripts"));
   const hasTempMail = $derived(filteredFeatures.some((f) => f.id === "temp-mail"));
@@ -73,9 +69,9 @@
 </script>
 
 <div class="w-full max-w-5xl select-none text-slate-800">
-  <!-- Top bar: separated cards, same pattern as the module detail header -->
+  
   <div class="mb-5 flex shrink-0 items-stretch gap-3">
-    <!-- Brand card: logo + title/subtitle, mirrors the detail title pill -->
+    
     <div
       class="flex h-15 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-slate-100 bg-white px-5 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)]"
     >
@@ -90,7 +86,7 @@
       </div>
     </div>
 
-    <!-- Search card -->
+    
     <div
       class="hidden h-15 w-72 items-center gap-2.5 rounded-2xl border border-slate-100 bg-white px-4 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)] transition-all focus-within:border-ext-primary/40 focus-within:ring-2 focus-within:ring-ext-primary/15 sm:flex"
     >
@@ -113,7 +109,7 @@
       {/if}
     </div>
 
-    <!-- Master toggle card -->
+    
     <button
       type="button"
       role="switch"
@@ -136,7 +132,7 @@
       </span>
     </button>
 
-    <!-- Close: neutral square, matching the detail header's back button -->
+    
     <button
       type="button"
       class="ext-close-btn h-15 w-15 shrink-0 rounded-2xl"
@@ -148,11 +144,11 @@
     </button>
   </div>
 
-  <!-- Bento Grid: 2-column asymmetrical stack, like the reference -->
+  
   <div class="grid grid-cols-1 items-start gap-5 md:grid-cols-2">
-    <!-- LEFT COLUMN -->
+    
     <div class="flex flex-col gap-5">
-      <!-- Stat mini-card (Weekly Revenue style) -->
+      
       <div class="ext-card flex items-center justify-between p-5">
         <div>
           <div class="text-label font-bold tracking-wider text-ext-text-secondary uppercase">
@@ -169,7 +165,7 @@
         </div>
       </div>
 
-      <!-- AI Toolkit coral card (Statistics style) -->
+      
       {#if hasAiToolkit}
         <div
           class="ext-card-coral relative flex cursor-pointer flex-col justify-between overflow-hidden p-6 transition-all hover:scale-[1.01] hover:shadow-xl {enabledMap['ai-toolkit'] === false
@@ -209,7 +205,7 @@
             </div>
           </div>
 
-          <!-- Decorative wave -->
+          
           <div class="mt-5 h-14 w-full">
             <svg
               viewBox="0 0 160 50"
@@ -238,41 +234,43 @@
         </div>
       {/if}
 
-      <!-- Apps & Extensions pill rows (registry-driven, extensible) -->
+      
       <div class="ext-card flex flex-col p-6">
         <div class="mb-4 flex items-center justify-between">
           <h3 class="text-heading font-bold text-slate-900">Apps &amp; Extensions</h3>
+          <span class="text-label font-medium text-ext-text-secondary">
+            {filteredFeatures.length} modules
+          </span>
         </div>
 
-        <div class="flex flex-col gap-2.5">
-          {#each otherFeatures as feature (feature.id)}
+        <div class="grid grid-cols-3 gap-3 sm:grid-cols-4">
+          {#each filteredFeatures as feature (feature.id)}
             {@const isEnabled = enabledMap[feature.id] !== false}
             <div
-              class="group flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200/70 bg-white p-3.5 text-left transition-all hover:scale-[1.01] hover:border-blue-400 hover:shadow-sm {isEnabled
+              class="group flex flex-col items-center gap-2.5 rounded-2xl border border-slate-200/70 bg-white px-2 py-3.5 text-center transition-all hover:border-blue-400 hover:shadow-md {isEnabled
                 ? ''
-                : 'opacity-60'}"
+                : 'opacity-65'}"
             >
               <button
                 type="button"
-                class="flex min-w-0 flex-1 cursor-pointer items-center gap-3 bg-transparent text-left"
+                class="flex w-full min-w-0 cursor-pointer flex-col items-center gap-2 border-0 bg-transparent p-0"
                 onclick={() => onOpenDetail(feature.id)}
+                title={feature.description}
+                aria-label="Open {feature.name}"
               >
-                <div
-                  class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105"
+                <span
+                  class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105 {isEnabled
+                    ? ''
+                    : 'grayscale'}"
                   style="background: {feature.color ? `${feature.color}15` : '#1A73E815'}; color: {feature.color || '#1A73E8'};"
                 >
-                  <Icon name={feature.icon} size={18} />
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div
-                    class="truncate text-sm font-bold text-slate-900 transition-colors group-hover:text-blue-600"
-                  >
-                    {feature.name}
-                  </div>
-                  <div class="truncate text-xs font-medium text-ext-text-secondary">
-                    {feature.description}
-                  </div>
-                </div>
+                  <Icon name={feature.icon} size={22} />
+                </span>
+                <span
+                  class="line-clamp-2 text-label font-semibold text-slate-900 transition-colors group-hover:text-blue-600"
+                >
+                  {feature.name}
+                </span>
               </button>
               <Toggle
                 checked={isEnabled}
@@ -281,14 +279,13 @@
               />
             </div>
           {/each}
-
         </div>
       </div>
     </div>
 
-    <!-- RIGHT COLUMN -->
+    
     <div class="flex flex-col gap-5">
-      <!-- TempMail live card -->
+      
       {#if hasTempMail}
         <div class="ext-card flex flex-col p-6 {enabledMap['temp-mail'] === false ? 'opacity-70' : ''}">
           <div class="flex items-center justify-between">
@@ -349,7 +346,7 @@
         </div>
       {/if}
 
-      <!-- UserScripts card: white functional card matching the bento family -->
+      
       {#if hasUserScripts}
         <button
           type="button"

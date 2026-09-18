@@ -26,18 +26,18 @@ export default defineBackground({
         }
       }
     })();
-    // Route "open launcher" requests to the active tab's bento content script.
+
     onMessage<Record<string, unknown>, boolean>(
       APP_ACTIONS.OPEN_LAUNCHER,
       async (_payload, sender) => {
-      let tabId = sender.tab?.id;
-      if (tabId == null) {
-        const [active] = await browser.tabs.query({
-          active: true,
-          lastFocusedWindow: true,
-        });
-        tabId = active?.id;
-      }
+        let tabId = sender.tab?.id;
+        if (tabId == null) {
+          const [active] = await browser.tabs.query({
+            active: true,
+            lastFocusedWindow: true,
+          });
+          tabId = active?.id;
+        }
         if (tabId == null) return false;
         await sendToTab(tabId, APP_ACTIONS.OPEN_LAUNCHER);
         return true;

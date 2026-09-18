@@ -1,14 +1,4 @@
-/**
- * JS mirror of the palette for code that cannot consume CSS variables at build
- * time (the AI composer builds its DOM as an HTML string).
- *
- * Colors must stay in sync with the `@theme` block in `src/styles/global.css`,
- * and that file is the single source of truth for the type scale (`text-chip`,
- * `text-label`, `text-body`, `text-heading`, `text-hero`, …) — do not duplicate
- * font sizes here.
- */
 export const DESIGN_TOKENS = {
-  // Bento design system — soft, airy, card-first (matches BentoLauncher)
   bg: "#EAEFF5",
   surface: "#FFFFFF",
   surfaceHover: "#F1F5F9",
@@ -22,8 +12,7 @@ export const DESIGN_TOKENS = {
   dangerDark: "#DC2626",
   warning: "#F59E0B",
   warningBg: "#FFFBEB",
-  fontStack:
-    "'Plus Jakarta Sans', 'Inter', system-ui, 'Segoe UI', Roboto, Ubuntu, sans-serif",
+  fontStack: "'Plus Jakarta Sans', 'Inter', system-ui, 'Segoe UI', Roboto, Ubuntu, sans-serif",
 } as const;
 
 export const INK = DESIGN_TOKENS.text;

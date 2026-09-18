@@ -144,8 +144,8 @@
     void loadScriptStats();
     void featureEnabledItem.watch(() => void syncFromStorage());
 
-    // Deep-open requests from the background (captured .user.js downloads,
-    // popup "open launcher", etc.). Payload: { feature?, editId?, installUrl? }
+    
+    
     browser.runtime.onMessage.addListener(
       (msg: { action?: string; payload?: Record<string, unknown> } | undefined) => {
         if (!msg || msg.action !== "app:open_launcher") return;
@@ -173,7 +173,7 @@
     }
 
     if (featureId === "user-scripts" && (editId || installUrl)) {
-      // Wait for the module component to mount and register its API.
+      
       await new Promise((r) => setTimeout(r, 150));
       if (editId) moduleApi?.openEditorFor?.(editId);
       if (installUrl) moduleApi?.installFromCapturedUrl?.(installUrl);

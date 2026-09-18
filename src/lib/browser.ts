@@ -1,21 +1,10 @@
 import { browser } from "wxt/browser";
 import { sendMessage } from "@/lib/messaging";
 
-/**
- * Cross-context message actions handled by the background service worker.
- * The bento launcher (content script) is the single control surface — there is
- * no dashboard page anymore, so tab-opening requests route through here.
- */
 export const APP_ACTIONS = {
   OPEN_LAUNCHER: "app:open_launcher",
 } as const;
 
-/**
- * Ask the background to open the bento launcher on the active tab.
- * Safe from any context (popup, background, content script).
- *
- * @public (consumed from popup/App.svelte — knip does not follow .svelte imports)
- */
 export async function openBentoLauncher(): Promise<void> {
   if (browser.tabs) {
     const [active] = await browser.tabs.query({

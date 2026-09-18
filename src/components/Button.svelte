@@ -53,8 +53,8 @@
     ghost: "border border-transparent bg-transparent text-slate-600 hover:bg-slate-100 hover:text-slate-900",
     outline: "border border-blue-400 bg-blue-50/70 text-[#1558b8] hover:bg-blue-100",
   };
-  // Heights stay above 2x the control radius (14px) so buttons read as rounded
-  // rectangles instead of collapsing into pills.
+  
+  
   const sizes: Record<Size, string> = {
     sm: "h-8 px-3.5 py-1 text-body font-medium",
     md: "h-9 px-4 py-1.5 text-body font-semibold",

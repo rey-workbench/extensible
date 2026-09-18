@@ -34,7 +34,7 @@
   }
 
   function handleKeydown(e: KeyboardEvent): void {
-    // Ctrl+S / Cmd+S: Save immediately
+    
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
       e.preventDefault();
       onSave();
@@ -97,7 +97,7 @@
     };
   });
 
-  // Keep CodeJar in sync when switching scripts
+  
   $effect(() => {
     const _activeId = script.id;
     if (jar && jar.toString() !== code) {
@@ -107,7 +107,7 @@
 </script>
 
 <div class="flex flex-col h-[70vh] min-h-[540px] rounded-2xl border border-slate-800/40 bg-[#16171B] text-gray-200 shadow-[0_16px_40px_-12px_rgba(15,23,42,0.35)] overflow-hidden">
-  <!-- Editor Header: single row, never wraps -->
+  
   <div class="flex shrink-0 items-center justify-between gap-2 whitespace-nowrap border-b border-solid border-[#262830] bg-[#1E2026] px-3.5 py-2">
     <button
       type="button"
@@ -154,9 +154,9 @@
     </div>
   </div>
 
-  <!-- Code Editor Body (Gutter + CodeJar) -->
+  
   <div class="relative flex flex-1 min-h-0 overflow-hidden bg-[#131417]">
-    <!-- Line numbers gutter -->
+    
     <div
       bind:this={lineNumbersEl}
       onwheel={onGutterWheel}
@@ -168,7 +168,7 @@
       {/each}
     </div>
 
-    <!-- CodeJar Editor Element -->
+    
     <div
       bind:this={editorEl}
       onkeydown={handleKeydown}
@@ -181,7 +181,7 @@
     ></div>
   </div>
 
-  <!-- Status Bar Footer -->
+  
   <div class="flex shrink-0 items-center justify-between border-t border-solid border-[#262830] bg-[#18191E] px-3.5 py-1.5 text-label font-mono text-gray-400">
     <div class="flex items-center gap-3">
       <span>{lineCount} lines</span>
@@ -205,7 +205,7 @@
     overflow-wrap: normal !important;
   }
 
-  /* One Dark Pro Syntax Highlighting */
+  
   :global(.editor-code .token.comment),
   :global(.editor-code .token.prolog),
   :global(.editor-code .token.doctype),
