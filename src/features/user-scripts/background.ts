@@ -1,10 +1,10 @@
 import { browser } from "wxt/browser";
+import { openOrFocusDashboardTab } from "@/lib/browser";
 import { onMessage, sendToTab } from "@/lib/messaging";
 import { isBlockedUrl, USER_SCRIPTS_ACTIONS } from "./constants/user-scripts.constants";
 import { handleGmRpc, MENU_PREFIX } from "./services/gm-rpc.service";
 import {
   forgetTab,
-  onTabLoading,
   reinjectAll,
   runScriptsInTab,
   syncUserScriptsApi,
@@ -12,7 +12,6 @@ import {
 import { checkAll } from "./services/update.service";
 import {
   duplicate,
-  get,
   getAllScriptTokens,
   getRunLog,
   list,
@@ -26,38 +25,14 @@ import type {
   UserScriptRecord,
   UserScriptRunLogEntry,
 } from "./types/user-scripts.types";
-import { recordFromCode } from "./utils/record-factory.utils";
-
-async function openOrFocusDashboard(pathWithQuery: `/dashboard.html${string}`): Promise<void> {
-  const targetUrl = browser.runtime.getURL(pathWithQuery);
-  const allTabs = await browser.tabs.query({});
-  const existingTab = allTabs.find((t) => t.url?.includes("/dashboard.html"));
-
-  if (existingTab?.id != null) {
-    await browser.tabs.update(existingTab.id, { url: targetUrl, active: true });
-    if (existingTab.windowId != null) {
-      await browser.windows.update(existingTab.windowId, { focused: true });
-    }
-  } else {
-    await browser.tabs.create({ url: targetUrl });
-  }
-}
+import { isUserScriptUrl } from "./utils/capture.utils";
 
 export function setupBackground(): void {
   void syncUserScriptsApi().catch(() => {});
 
-  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-    if (changeInfo.status === "loading") onTabLoading(tabId);
-  });
-  browser.tabs.onRemoved.addListener((tabId) => {
-    forgetTab(tabId);
-  });
+  browser.tabs.onRemoved.addListener(forgetTab);
 
-  onMessage<null, UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST, async () => list());
-
-  onMessage<{ id: string }, UserScriptRecord | null>(USER_SCRIPTS_ACTIONS.GET, async (p) =>
-    get(p?.id ?? ""),
-  );
+  onMessage<null, UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST, () => list());
 
   onMessage<{ record: UserScriptRecord }, UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, (p) => {
     if (!p?.record) throw new Error("Missing record");
@@ -88,33 +63,14 @@ export function setupBackground(): void {
     },
   );
 
-  onMessage<{ record: UserScriptRecord }, UserScriptRecord>(
-    USER_SCRIPTS_ACTIONS.IMPORT_FILE,
-    (p) => {
-      if (!p?.record) throw new Error("Missing record");
-      return save(p.record);
-    },
-  );
-
   onMessage<null, string>(USER_SCRIPTS_ACTIONS.EXPORT, async () =>
     JSON.stringify(await list(), null, 2),
   );
 
-  onMessage<{ url: string }, UserScriptRecord>(USER_SCRIPTS_ACTIONS.INSTALL_FROM_URL, async (p) => {
+  onMessage<{ url: string }, void>(USER_SCRIPTS_ACTIONS.CAPTURE_URL, async (p) => {
     const url = p?.url?.trim();
-    if (!url) throw new Error("Missing URL");
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12000);
-    try {
-      const res = await fetch(url, { credentials: "omit", signal: controller.signal });
-      if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      const record = recordFromCode(await res.text());
-      await save(record);
-      void reinjectAll();
-      return record;
-    } finally {
-      clearTimeout(timer);
-    }
+    if (!url) return;
+    await openOrFocusDashboardTab(`?installUrl=${encodeURIComponent(url)}`);
   });
 
   onMessage<{ tabId?: number; scriptId?: string }, number>(
@@ -134,40 +90,28 @@ export function setupBackground(): void {
     },
   );
 
-  onMessage<{ url: string }, void>(USER_SCRIPTS_ACTIONS.CAPTURE_URL, async (p) => {
-    const url = p?.url?.trim();
-    if (!url) return;
-    await openOrFocusDashboard(`/dashboard.html?installUrl=${encodeURIComponent(url)}`);
-  });
-
   if (browser.downloads?.onCreated) {
     browser.downloads.onCreated.addListener(async (item) => {
       const url = item.finalUrl || item.url || "";
       const filename = item.filename || "";
-      if (/\.user\.js($|\?)/i.test(url) || filename.endsWith(".user.js")) {
+      if (isUserScriptUrl(url) || filename.endsWith(".user.js")) {
         try {
           await browser.downloads.cancel(item.id);
           await browser.downloads.erase({ id: item.id });
         } catch {
           // Ignore if download already handled
         }
-        await openOrFocusDashboard(`/dashboard.html?installUrl=${encodeURIComponent(url)}`);
+        await openOrFocusDashboardTab(`?installUrl=${encodeURIComponent(url)}`);
       }
     });
   }
-
-  onMessage<{ scriptId: string }, void>(USER_SCRIPTS_ACTIONS.OPEN_EDITOR, async (p) => {
-    const script = await get(p?.scriptId ?? "");
-    if (!script) throw new Error("Script not found");
-    await openOrFocusDashboard(`/dashboard.html?editId=${encodeURIComponent(script.id)}`);
-  });
 
   onMessage<{ scriptId: string }, UserScriptRunLogEntry[]>(
     USER_SCRIPTS_ACTIONS.RUN_LOG,
     async (p) => getRunLog(p?.scriptId ?? ""),
   );
 
-  onMessage<null, Record<string, string>>(USER_SCRIPTS_ACTIONS.REGISTER_SESSION_TOKEN, async () =>
+  onMessage<null, Record<string, string>>(USER_SCRIPTS_ACTIONS.REGISTER_SESSION_TOKEN, () =>
     getAllScriptTokens(),
   );
 

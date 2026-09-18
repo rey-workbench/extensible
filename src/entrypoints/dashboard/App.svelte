@@ -37,7 +37,7 @@
       map[f.id] = raw[f.id] ?? true;
     }
     enabledMap = map;
-    masterOn = features.some((f) => map[f.id] !== false);
+    masterOn = features.every((f) => map[f.id] !== false);
   }
 
   async function toggleFeature(
@@ -46,7 +46,7 @@
   ): Promise<void> {
     enabledMap[feature.id] = enabled;
     await setFeatureEnabled(feature.id, enabled);
-    masterOn = features.some((f) => enabledMap[f.id] !== false);
+    masterOn = features.every((f) => enabledMap[f.id] !== false);
   }
 
   async function toggleAll(enabled: boolean): Promise<void> {

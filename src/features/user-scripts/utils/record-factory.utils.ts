@@ -14,9 +14,9 @@ export function newScriptCopy(src: UserScriptRecord): UserScriptRecord {
   };
 }
 
-export function recordFromCode(code: string): UserScriptRecord {
+export function recordFromCode(code: string, fallbackName?: string): UserScriptRecord {
   const now = Date.now();
-  const meta = parseUserScriptHeader(code);
+  const meta = parseUserScriptHeader(code, fallbackName);
   return {
     id: createUniqueId("us"),
     code,

@@ -31,21 +31,22 @@ export async function handleGmRpc(
     throw new Error(`Unauthorized GM RPC: script "${script.meta.name}" is not active on tab URL`);
   }
 
-  const allowedApis = resolveGrants(script.meta.grants);
-  const REQUIRED_GRANTS: Record<string, string[]> = {
-    gm_xhr: ["GM_xmlhttpRequest", "GM.xmlHttpRequest"],
-    gm_download: ["GM_download", "GM.download"],
-    gm_get: ["GM_getValue", "GM.getValue"],
-    gm_set: ["GM_setValue", "GM.setValue"],
-    gm_delete: ["GM_deleteValue", "GM.deleteValue"],
-    gm_list: ["GM_listValues", "GM.listValues"],
-    gm_watch: ["GM_addValueChangeListener", "GM.addValueChangeListener"],
-    gm_clipboard: ["GM_setClipboard", "GM.setClipboard"],
-    gm_notify: ["GM_notification", "GM.notification"],
-    gm_resource: ["GM_getResourceURL", "GM.getResourceUrl"],
-    gm_menu: ["GM_registerMenuCommand", "GM.registerMenuCommand"],
+  // gm_rpc fn → GM_GRANT_REGISTRY grant names; empty = requires no grant.
+  const RPC_GRANTS: Record<string, readonly string[]> = {
+    gm_xhr: ["GM_xmlhttpRequest"],
+    gm_download: ["GM_download"],
+    gm_get: ["GM_getValue"],
+    gm_set: ["GM_setValue"],
+    gm_delete: ["GM_deleteValue"],
+    gm_list: ["GM_listValues"],
+    gm_watch: ["GM_addValueChangeListener"],
+    gm_clipboard: ["GM_setClipboard"],
+    gm_notify: ["GM_notification"],
+    gm_resource: ["GM_getResourceURL"],
+    gm_menu: ["GM_registerMenuCommand"],
   };
-  const required = REQUIRED_GRANTS[fn];
+  const allowedApis = resolveGrants(script.meta.grants);
+  const required = RPC_GRANTS[fn];
   if (required && !required.some((api) => allowedApis.includes(api))) {
     throw new Error(`Unauthorized: script "${script.meta.name}" lacks @grant for "${fn}"`);
   }
@@ -95,12 +96,7 @@ export async function handleGmRpc(
         title: caption,
         contexts: ["page"],
       });
-      await sendToTab(tabId, USER_SCRIPTS_ACTIONS.GM_MENU_REGISTERED, {
-        scriptId,
-        caption,
-        commandId,
-      });
-      return null;
+      return commandId;
     }
     case "gm_ping":
       return { url: tabUrl };

@@ -8,7 +8,10 @@ export async function checkAll(): Promise<void> {
     const updateUrl = script.meta.updateURL || script.meta.downloadURL;
     if (!updateUrl) continue;
     try {
-      const res = await fetch(updateUrl, { credentials: "omit" });
+      const res = await fetch(updateUrl, {
+        credentials: "omit",
+        signal: AbortSignal.timeout(10_000),
+      });
       if (!res.ok) continue;
       const code = await res.text();
       const meta = parseUserScriptHeader(code);

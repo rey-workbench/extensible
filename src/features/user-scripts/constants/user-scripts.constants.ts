@@ -2,23 +2,18 @@ import type { UserScriptMeta } from "../types/user-scripts.types";
 
 export const USER_SCRIPTS_ACTIONS = {
   LIST: "user_scripts:list",
-  GET: "user_scripts:get",
   SAVE: "user_scripts:save",
   DELETE: "user_scripts:delete",
   DUPLICATE: "user_scripts:dup",
   MOVE: "user_scripts:move",
   TOGGLE: "user_scripts:toggle",
-  IMPORT_FILE: "user_scripts:import",
   EXPORT: "user_scripts:export",
-  INSTALL_FROM_URL: "user_scripts:install_url",
   CAPTURE_URL: "user_scripts:capture_url",
   RUN_IN_TAB: "user_scripts:run_in_tab",
-  OPEN_EDITOR: "user_scripts:open_editor",
 
   GM_RPC: "user_scripts:gm_rpc",
   GM_VALUE_CHANGED: "user_scripts:gm_value_changed",
   GM_MENU_COMMAND: "user_scripts:gm_menu_command",
-  GM_MENU_REGISTERED: "user_scripts:gm_menu_registered",
   REGISTER_SESSION_TOKEN: "user_scripts:register_session_token",
   RUN_LOG: "user_scripts:run_log",
 } as const;
@@ -29,7 +24,7 @@ export const USER_SCRIPTS_STORAGE_KEYS = {
   GM_VALUES: "local:user_scripts:gm_values",
 } as const;
 
-const GM_GRANT_REGISTRY = {
+export const GM_GRANT_REGISTRY = {
   none: [],
   unsafeWindow: ["unsafeWindow"],
   GM_getValue: ["GM.getValue", "GM_getValue"],

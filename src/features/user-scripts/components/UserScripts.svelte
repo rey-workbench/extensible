@@ -1,24 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { browser } from "wxt/browser";
   import Button from "@/components/Button.svelte";
   import Card from "@/components/Card.svelte";
   import EmptyState from "@/components/EmptyState.svelte";
   import Icon from "@/components/Icon.svelte";
-  import { slugify } from "@/lib/browser";
+  import { openOrFocusDashboardTab, slugify } from "@/lib/browser";
   import { sendMessage } from "@/lib/messaging";
   import { showToast } from "@/lib/toast";
-  import { createUniqueId } from "@/lib/utils";
+  
   import { USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
-  import {
-    duplicate,
-    list,
-    move,
-    remove as removeScript,
-    save,
-    scriptsItem,
-    setEnabled,
-  } from "../services/user-scripts.service";
+  import { scriptsItem } from "../services/user-scripts.service";
   import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
   import { makeScriptTemplate, parseUserScriptHeader } from "../utils/header-parser.utils";
   import { recordFromCode } from "../utils/record-factory.utils";
@@ -74,17 +65,7 @@
 
   async function openFullDashboard(editScriptId?: string): Promise<void> {
     const query = editScriptId ? `?editId=${encodeURIComponent(editScriptId)}` : "";
-    const targetUrl = browser.runtime.getURL(`/dashboard.html${query}`);
-    const allTabs = await browser.tabs.query({});
-    const existingTab = allTabs.find((t) => t.url?.includes("/dashboard.html"));
-    if (existingTab?.id != null) {
-      await browser.tabs.update(existingTab.id, { url: targetUrl, active: true });
-      if (existingTab.windowId != null) {
-        await browser.windows.update(existingTab.windowId, { focused: true });
-      }
-    } else {
-      await browser.tabs.create({ url: targetUrl });
-    }
+    await openOrFocusDashboardTab(query);
   }
 
   onMount(() => {
@@ -106,7 +87,7 @@
     const editId = params.get("editId");
     if (editId) {
       void (async () => {
-        const all = await list();
+        const all = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST);
         const found = all.find((s) => s.id === editId);
         if (found) startEditing(found);
       })();
@@ -149,8 +130,9 @@
     if (!pendingInstall) return;
     installing = true;
     try {
-      const record = recordFromCode(pendingInstall.code);
-      await save(record);
+      const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
+        record: recordFromCode(pendingInstall.code),
+      });
       scripts = [...scripts, record];
       showStatus(`Installed "${record.meta.name}"`);
       pendingInstall = null;
@@ -174,13 +156,9 @@
 
   async function refresh(): Promise<void> {
     try {
-      scripts = await list();
-    } catch {
-      try {
-        scripts = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST);
-      } catch (err) {
-        showStatus(err instanceof Error ? err.message : "Failed to load scripts", true);
-      }
+      scripts = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST);
+    } catch (err) {
+      showStatus(err instanceof Error ? err.message : "Failed to load scripts", true);
     } finally {
       isLoading = false;
     }
@@ -191,15 +169,22 @@
   }
 
   async function toggle(script: UserScriptRecord, enabled: boolean): Promise<void> {
-    scripts = await setEnabled(script.id, enabled);
-    void sendMessage(USER_SCRIPTS_ACTIONS.TOGGLE, { id: script.id, enabled }).catch(() => {});
+    try {
+      scripts = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.TOGGLE, {
+        id: script.id,
+        enabled,
+      });
+    } catch (err) {
+      showStatus(err instanceof Error ? err.message : "Toggle failed", true);
+    }
   }
 
   async function createScript(): Promise<void> {
     const name = newScriptName.trim() || "New script";
     newScriptName = "";
-    const record = recordFromCode(makeScriptTemplate(name));
-    await save(record);
+    const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
+      record: recordFromCode(makeScriptTemplate(name)),
+    });
     scripts = [...scripts, record];
     if (isDashboard) {
       startEditing(record);
@@ -209,9 +194,11 @@
   }
 
   async function duplicateScript(script: UserScriptRecord): Promise<void> {
-    const copy = await duplicate(script.id);
+    const copy = await sendMessage<UserScriptRecord | null>(USER_SCRIPTS_ACTIONS.DUPLICATE, {
+      id: script.id,
+    });
     if (copy) {
-      scripts = await list();
+      scripts = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST);
       showStatus(`Duplicated as "${copy.meta.name}"`);
     }
   }
@@ -227,11 +214,10 @@
       return;
     }
     deleteConfirmId = null;
-    const ok = await removeScript(script.id);
+    const ok = await sendMessage<boolean>(USER_SCRIPTS_ACTIONS.DELETE, { id: script.id });
     if (ok) {
       scripts = scripts.filter((s) => s.id !== script.id);
       showStatus("Script deleted");
-      void sendMessage(USER_SCRIPTS_ACTIONS.DELETE, { id: script.id }).catch(() => {});
     }
   }
 
@@ -239,7 +225,10 @@
     const idx = scripts.findIndex((s) => s.id === script.id);
     const target = idx + dir;
     if (target < 0 || target >= scripts.length) return;
-    scripts = await move(script.id, target);
+    scripts = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.MOVE, {
+      id: script.id,
+      index: target,
+    });
   }
 
   function startEditing(script: UserScriptRecord): void {
@@ -265,7 +254,9 @@
     const script = scripts.find((s) => s.id === editingId);
     if (!script) return;
     try {
-      const saved = await save({ ...script, code: draftCode, updatedAt: Date.now() });
+      const saved = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
+        record: { ...script, code: draftCode, updatedAt: Date.now() },
+      });
       scripts = scripts.map((s) => (s.id === saved.id ? saved : s));
       draftDirty = false;
       showStatus("Saved");
@@ -278,16 +269,8 @@
     const code = await file.text();
     const fallbackName = file.name.replace(/\.user\.js$|\.js$/i, "");
     const meta = parseUserScriptHeader(code, fallbackName);
-    const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.IMPORT_FILE, {
-      record: {
-        id: createUniqueId("us"),
-        code,
-        meta,
-        enabled: true,
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        lastRunAt: null,
-      },
+    const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
+      record: recordFromCode(code, fallbackName),
     });
     scripts = [...scripts, record];
     showStatus(`Imported "${record.meta.name}"`);

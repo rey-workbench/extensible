@@ -4,7 +4,9 @@ const GM_SHIM_SOURCE: string = `
   var CALL = "us:gm:call";
   var RESP = "us:gm:resp";
   var CHANGED = "us:gm:changed";
+  var MENU = "us:gm:menu";
   var seq = 0;
+  var menuCommands = {};
   var pending = new Map();
   var changeListeners = new Map();
   var listenerSeq = 0;
@@ -25,6 +27,9 @@ const GM_SHIM_SOURCE: string = `
       set.forEach(function (fn) {
         try { fn(d.key, d.oldValue, d.newValue, d.remote); } catch (e) {}
       });
+    } else if (d.__us === MENU) {
+      var fn = menuCommands[d.scriptId + ":" + d.commandId];
+      if (fn) { try { fn(); } catch (e) {} }
     }
   });
 
@@ -96,8 +101,7 @@ const GM_SHIM_SOURCE: string = `
             responseText: resp.isBase64 ? "" : resp.data,
           };
           if (details.onload) try { details.onload(fake); } catch (e) {}
-          if (resp.status >= 200 && resp.status < 300 && details.onload) {}
-          else if (resp.status >= 400 && details.onerror) try { details.onerror(fake); } catch (e) {}
+          if (resp.status >= 400 && details.onerror) try { details.onerror(fake); } catch (e) {}
         }).catch(function (err) {
           if (details.onerror) try { details.onerror({ error: err, responseText: "" }); } catch (e) {}
         });
@@ -138,7 +142,10 @@ const GM_SHIM_SOURCE: string = `
     }
     if (has("GM.registerMenuCommand") || has("GM_registerMenuCommand")) {
       gm.GM_registerMenuCommand = function (caption, fn) {
-        return call("gm_menu", [caption]).then(function () { return undefined; });
+        return call("gm_menu", [caption]).then(function (commandId) {
+          menuCommands[cfg.scriptId + ":" + commandId] = fn;
+          return undefined;
+        });
       };
       gm.GM = gm.GM || {}; gm.GM.registerMenuCommand = function (c, f) { return gm.GM_registerMenuCommand(c, f); };
     }

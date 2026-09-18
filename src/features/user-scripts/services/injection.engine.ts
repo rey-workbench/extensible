@@ -14,6 +14,29 @@ const injectedTabs = new Map<number, Set<string>>();
 
 const requireCache = new Map<string, string>();
 
+interface UserScriptsApi {
+  register?: (items: unknown[]) => Promise<unknown>;
+  unregister?: () => Promise<unknown>;
+  execute?: (details: unknown) => Promise<unknown>;
+}
+
+function getUserScriptsApi(): UserScriptsApi | undefined {
+  return (
+    (browser as unknown as { userScripts?: UserScriptsApi }).userScripts ??
+    (globalThis.chrome as unknown as { userScripts?: UserScriptsApi } | undefined)?.userScripts
+  );
+}
+
+// ponytail: lastRunAt write throttle (60s) so every auto-run doesn't rewrite storage + trigger UI watch
+const lastRunSavedAt = new Map<string, number>();
+
+async function markRun(script: UserScriptRecord): Promise<void> {
+  const now = Date.now();
+  if (now - (lastRunSavedAt.get(script.id) ?? 0) < 60_000) return;
+  lastRunSavedAt.set(script.id, now);
+  await save({ ...script, lastRunAt: now });
+}
+
 export async function runScriptsInTab(
   tabId: number,
   trigger: "auto" | "manual",
@@ -61,23 +84,7 @@ export async function reinjectAll(): Promise<void> {
 }
 
 export async function syncUserScriptsApi(): Promise<void> {
-  const userScriptsApi =
-    (
-      browser as unknown as {
-        userScripts?: {
-          register: (arg: unknown) => Promise<unknown>;
-          unregister: () => Promise<unknown>;
-        };
-      }
-    ).userScripts ??
-    (
-      globalThis.chrome as unknown as {
-        userScripts?: {
-          register: (arg: unknown) => Promise<unknown>;
-          unregister: () => Promise<unknown>;
-        };
-      }
-    )?.userScripts;
+  const userScriptsApi = getUserScriptsApi();
   if (typeof userScriptsApi?.register !== "function") return;
 
   try {
@@ -110,10 +117,6 @@ export async function syncUserScriptsApi(): Promise<void> {
   } catch (err) {
     console.debug("[UserScripts] syncUserScriptsApi error:", err);
   }
-}
-
-export function onTabLoading(tabId: number): void {
-  injectedTabs.delete(tabId);
 }
 
 export function forgetTab(tabId: number): void {
@@ -161,14 +164,7 @@ async function injectScript(
   });
 
   try {
-    const userScriptsApi =
-      (browser as unknown as { userScripts?: { execute: (arg: unknown) => Promise<unknown> } })
-        .userScripts ??
-      (
-        globalThis.chrome as unknown as {
-          userScripts?: { execute: (arg: unknown) => Promise<unknown> };
-        }
-      )?.userScripts;
+    const userScriptsApi = getUserScriptsApi();
     if (typeof userScriptsApi?.execute === "function") {
       await userScriptsApi.execute({
         target: { tabId },
@@ -180,7 +176,7 @@ async function injectScript(
         url,
         ok: true,
       });
-      await save({ ...script, lastRunAt: Date.now() });
+      await markRun(script);
       return true;
     }
   } catch (e) {
@@ -251,7 +247,7 @@ async function injectScript(
     }
 
     await appendRunLog({ scriptId: script.id, ts: Date.now(), url, ok: true });
-    await save({ ...script, lastRunAt: Date.now() });
+    await markRun(script);
     return true;
   } catch (err) {
     await appendRunLog({

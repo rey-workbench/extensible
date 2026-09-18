@@ -1,5 +1,19 @@
 import { browser } from "wxt/browser";
 
+export async function openOrFocusDashboardTab(query = ""): Promise<void> {
+  const targetUrl = browser.runtime.getURL(`/dashboard.html${query}`);
+  const allTabs = await browser.tabs.query({});
+  const existingTab = allTabs.find((t) => t.url?.includes("/dashboard.html"));
+  if (existingTab?.id != null) {
+    await browser.tabs.update(existingTab.id, { url: targetUrl, active: true });
+    if (existingTab.windowId != null) {
+      await browser.windows.update(existingTab.windowId, { focused: true });
+    }
+    return;
+  }
+  await browser.tabs.create({ url: targetUrl });
+}
+
 export async function copyToClipboard(text: string): Promise<boolean> {
   if (!text) return false;
   try {
