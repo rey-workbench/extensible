@@ -27,12 +27,12 @@ import Icon from "@/components/Icon.svelte";
 
 <div id={id || undefined} class="ext-card overflow-hidden {cls}">
   {#if title || headerAction}
-    <div class="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50/50 px-4 py-3">
+    <div class="flex items-center justify-between gap-2 border-b border-ext-border bg-ext-subtle/50 px-4 py-3">
       <div class="flex min-w-0 items-center gap-2.5">
         {#if icon}<Icon name={icon} size={15} class="shrink-0 text-ext-warning" />{/if}
         <div class="min-w-0">
-          {#if title}<h3 class="truncate text-body font-bold uppercase tracking-wider text-slate-800">{title}</h3>{/if}
-          {#if subtitle}<span class="text-label text-slate-500">{subtitle}</span>{/if}
+          {#if title}<h3 class="truncate text-body font-bold uppercase tracking-wider text-ext-text">{title}</h3>{/if}
+          {#if subtitle}<span class="text-label text-ext-muted">{subtitle}</span>{/if}
         </div>
       </div>
       {#if headerAction}<div class="shrink-0">{@render headerAction()}</div>{/if}

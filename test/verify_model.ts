@@ -1,12 +1,15 @@
 import assert from "node:assert";
+import { readFileSync } from "node:fs";
 
 console.log("[Test] Running WXT + Svelte Unit & Integration Tests...\n");
 
-function createFakeBrowser(): Record<string, unknown> {
-  const store = new Map<string, unknown>();
-  const listeners = new Set<(changes: unknown, area: string) => void>();
+const sessionStore = new Map<string, unknown>();
 
-  const area = {
+function createFakeBrowser(): Record<string, unknown> {
+  const listeners = new Set<(changes: unknown, area: string) => void>();
+  const persistentStore = new Map<string, unknown>();
+
+  const mkArea = (store: Map<string, unknown>, name: string) => ({
     get(
       keys: string | string[] | Record<string, unknown> | null | undefined,
     ): Record<string, unknown> {
@@ -26,7 +29,7 @@ function createFakeBrowser(): Record<string, unknown> {
         store.set(k, v);
         changes[k] = { oldValue: old, newValue: v };
       }
-      for (const fn of listeners) fn(changes, "local");
+      for (const fn of listeners) fn(changes, name);
     },
     remove(keys: string | string[]): void {
       for (const k of Array.isArray(keys) ? keys : [keys]) store.delete(k);
@@ -34,19 +37,32 @@ function createFakeBrowser(): Record<string, unknown> {
     clear(): void {
       store.clear();
     },
-  };
+  });
 
   return {
     runtime: { id: "test-extension" },
     storage: {
-      local: area,
-      sync: area,
+      local: mkArea(persistentStore, "local"),
+      sync: mkArea(persistentStore, "sync"),
+      session: mkArea(sessionStore, "session"),
       onChanged: { addListener: () => {}, removeListener: () => {} },
     },
   };
 }
 
-(globalThis as Record<string, unknown>).browser = createFakeBrowser();
+interface FakeArea {
+  get(keys?: string | string[] | Record<string, unknown> | null): Record<string, unknown>;
+  set(items: Record<string, unknown>): void;
+  remove(keys: string | string[]): void;
+  clear(): void;
+}
+
+interface FakeBrowser {
+  storage: { local: FakeArea; sync: FakeArea; session: FakeArea };
+}
+
+const fakeBrowser = createFakeBrowser() as unknown as FakeBrowser;
+(globalThis as Record<string, unknown>).browser = fakeBrowser;
 
 const [
   { extractOtpCode, formatCountdown, sanitizeEmailHtml },
@@ -58,6 +74,7 @@ const [
     generateFilename,
     getCavemanSettings,
     getHistory,
+    readHistoryContent,
     recordHistory,
     updateCavemanSettings,
   },
@@ -77,7 +94,7 @@ const [
   tempMail,
   { defineFeature, getFeatureColor },
   { isPrivateOrLocalHost },
-  { getAllScriptTokens, getScriptToken },
+  { getAllScriptTokens, getScriptToken, gmDelete, gmGet, gmList, gmSet },
   { DESIGN_TOKENS },
   { roleFromHints },
 ] = await Promise.all([
@@ -206,22 +223,63 @@ ok(generatedFilename.endsWith(".md"), "Filename should end with .md");
 await clearHistory();
 ok((await getHistory()).length === 0, "History should be empty after clear");
 
-await recordHistory({
-  id: "hist_1",
-  title: sampleConvo.title,
-  platform: "chatgpt",
-  messageCount: 2,
-  exportedAt: Date.now(),
-  format: "markdown",
-  url: sampleConvo.url,
-  content: formatMarkdown(sampleConvo),
-});
+const transcript = formatMarkdown(sampleConvo);
+await recordHistory(
+  {
+    id: "hist_1",
+    title: sampleConvo.title,
+    platform: "chatgpt",
+    messageCount: 2,
+    exportedAt: Date.now(),
+    format: "markdown",
+    url: sampleConvo.url,
+  },
+  transcript,
+);
 const hist = await getHistory();
 ok(hist.length === 1, "History should contain one item");
 ok(hist[0].title === sampleConvo.title, "History item title should match");
+ok(hist[0].hasContent === true, "Index entry should flag that a blob exists");
+ok(!("content" in hist[0]), "Index must never carry the transcript itself");
+ok(
+  (await readHistoryContent("hist_1")) === transcript,
+  "Transcript blob should be readable from session storage",
+);
+
+sessionStore.clear();
+ok(
+  (await getHistory())[0].title === sampleConvo.title,
+  "Index survives a restart (it lives in the persistent area)",
+);
+ok((await readHistoryContent("hist_1")) === null, "Transcript is unreadable after a restart");
 
 await deleteHistoryItem("hist_1");
 ok((await getHistory()).length === 0, "History should be empty after delete");
+ok((await readHistoryContent("hist_1")) === null, "Deleting an entry should drop its blob");
+
+fakeBrowser.storage.local.set({
+  ai_toolkit_history: [
+    {
+      id: "hist_legacy",
+      title: "Old export",
+      platform: "chatgpt",
+      messageCount: 1,
+      exportedAt: 1,
+      format: "markdown",
+      url: "https://chatgpt.com/c/legacy",
+      content: "legacy transcript",
+    },
+  ],
+});
+const migratedHistory = await getHistory();
+ok(migratedHistory.length === 1, "Migration should keep the index entry");
+ok(migratedHistory[0].hasContent === true, "Migrated entry should be flagged");
+ok(!("content" in migratedHistory[0]), "Migration should strip the persisted transcript");
+ok(
+  (await readHistoryContent("hist_legacy")) === "legacy transcript",
+  "Migration should move the transcript to session storage",
+);
+await clearHistory();
 
 let cavemanSettings = await getCavemanSettings();
 ok(cavemanSettings.enabled === false, "Caveman should default to disabled");
@@ -351,7 +409,93 @@ try {
   console.warn(`   ⚠ Live API test skipped (${err instanceof Error ? err.message : String(err)})`);
 }
 
-console.log("\n8. Testing Security & Hardening Validations:");
+console.log("\n8. Testing theme contrast (light + dark):");
+{
+  const css = readFileSync(new URL("../src/styles/global.css", import.meta.url), "utf8");
+  const themeBlock = css.slice(css.indexOf("@theme"), css.indexOf(":host {"));
+  const darkBlock = css.slice(css.indexOf("prefers-color-scheme: dark"));
+
+  const tokenIn = (block: string, name: string): string | null =>
+    block.match(new RegExp(`--color-ext-${name}:\\s*([^;]+);`))?.[1].trim() ?? null;
+
+  const luminance = (hex: string): number => {
+    const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const linear = channels.map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2];
+  };
+
+  const contrast = (a: string, b: string): number => {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+
+  const PAIRS: [string, string][] = [
+    ["text", "surface"],
+    ["text", "bg"],
+    ["text", "subtle"],
+    ["text", "subtle-strong"],
+    ["text-secondary", "surface"],
+    ["text-secondary", "subtle"],
+    ["muted", "surface"],
+    ["muted", "bg"],
+    ["muted", "subtle"],
+    ["primary", "surface"],
+    ["info-ink", "info-soft"],
+    ["success-ink", "success-soft"],
+    ["warning-ink", "warning-soft"],
+    ["danger-ink", "danger-soft"],
+  ];
+
+  for (const theme of ["light", "dark"] as const) {
+    for (const [fg, bg] of PAIRS) {
+      const resolve = (name: string): string => {
+        const value =
+          (theme === "dark" ? tokenIn(darkBlock, name) : null) ?? tokenIn(themeBlock, name);
+        assert.ok(value, `${theme}: token --color-ext-${name} is missing`);
+        assert.ok(
+          /^#[0-9a-f]{6}$/i.test(value),
+          `${theme}: --color-ext-${name} must be a hex value`,
+        );
+        return value;
+      };
+      const ratio = contrast(resolve(fg), resolve(bg));
+      assert.ok(
+        ratio >= 4.5,
+        `${theme}: ${fg} on ${bg} is ${ratio.toFixed(2)}:1 — below the 4.5:1 minimum`,
+      );
+    }
+  }
+
+  assert.ok(
+    tokenIn(darkBlock, "surface") !== tokenIn(themeBlock, "surface"),
+    "Dark theme should override the surface token",
+  );
+  console.log(`   ✓ Theme contrast passed (${PAIRS.length} pairs × 2 themes).`);
+}
+
+console.log("\n9. Testing Security & Hardening Validations:");
+
+type DomParserCtor = new () => { parseFromString: (markup: string, mime: string) => unknown };
+let LinkedomParser: DomParserCtor | null = null;
+
+class FragmentAwareDOMParser {
+  parseFromString(html: string, mimeType: string): unknown {
+    if (!LinkedomParser) throw new Error("no DOM parser available");
+    const source = /<html[\s>]/i.test(html)
+      ? html
+      : `<!doctype html><html><body>${html}</body></html>`;
+    return new LinkedomParser().parseFromString(source, mimeType);
+  }
+}
+
+try {
+  const linkedom = (await import("linkedom")) as { DOMParser: DomParserCtor };
+  LinkedomParser = linkedom.DOMParser;
+  (globalThis as Record<string, unknown>).DOMParser = FragmentAwareDOMParser;
+  console.log("   · sanitizer exercised through DOMParser (the path browsers take)");
+} catch {
+  console.warn("   ⚠ linkedom unavailable — sanitizer assertions cover the fallback path only");
+}
 
 const dirtyHtml = `
   <div>
@@ -372,6 +516,38 @@ ok(
   "Sanitizer must preserve safe markup",
 );
 
+const hardenedHtml = `
+  <a href="https://example.com/a">safe link</a>
+  <a href="ja&#118;ascript:alert(1)">entity encoded</a>
+  <a href="java\tscript:alert(2)">tab smuggled</a>
+  <img src="blob:https://evil.com/abc" srcset="data:image/png;base64,AAA 1x, javascript:alert(3) 2x">
+  <video poster="filesystem:https://evil.com/temporary/x"></video>
+`;
+const hardened = sanitizeEmailHtml(hardenedHtml);
+ok(!hardened.includes("alert(1)"), "Sanitizer must decode HTML entities before scheme checks");
+ok(!hardened.includes("alert(2)"), "Sanitizer must ignore whitespace inside a scheme");
+ok(!hardened.includes("blob:"), "Sanitizer must drop blob: URLs");
+ok(!hardened.includes("filesystem:"), "Sanitizer must drop filesystem: URLs");
+ok(!hardened.includes("alert(3)"), "Sanitizer must vet every srcset entry");
+ok(
+  hardened.includes('rel="noopener noreferrer nofollow"') && hardened.includes('target="_blank"'),
+  "Surviving links must open without opener access",
+);
+ok(
+  !hardened.includes("srcset") && hardened.includes("<img"),
+  "A srcset with one dangerous entry is dropped whole, keeping the image tag itself",
+);
+ok(hardened.includes('href="https://example.com/a"'), "Safe links must survive the vetting");
+
+await assert.rejects(
+  () => gmSet("test-script-1", "big", "x".repeat(70 * 1024)),
+  /limit is 64 KB/,
+  "GM_setValue must reject values above the per-value ceiling",
+);
+ok((await gmGet("test-script-1", "small")) === undefined, "GM values start undefined");
+await gmSet("test-script-1", "small", 42);
+ok((await gmGet("test-script-1", "small")) === 42, "GM values round-trip");
+
 ok(isPrivateOrLocalHost("localhost") === true, "localhost must be private");
 ok(isPrivateOrLocalHost("127.0.0.1") === true, "127.0.0.1 must be private");
 ok(isPrivateOrLocalHost("0.0.0.0") === true, "0.0.0.0 must be private");
@@ -380,6 +556,9 @@ ok(isPrivateOrLocalHost("192.168.1.1") === true, "192.168.x.x must be private");
 ok(isPrivateOrLocalHost("10.0.0.5") === true, "10.x.x.x must be private");
 ok(isPrivateOrLocalHost("example.com") === false, "Public domain must not be private");
 ok(isPrivateOrLocalHost("api.tempmail.ing") === false, "api.tempmail.ing must not be private");
+
+await gmDelete("test-script-1", "small");
+ok((await gmList("test-script-1")).length === 0, "GM delete must drop the key");
 
 const token1 = getScriptToken("test-script-1");
 const token2 = getScriptToken("test-script-1");

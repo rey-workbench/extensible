@@ -8,8 +8,12 @@ export const AI_TOOLKIT_ACTIONS = {
 
 export const AI_TOOLKIT_STORAGE_KEYS = {
   HISTORY: "local:ai_toolkit_history",
+
+  HISTORY_BLOB: "session:ai_toolkit_history_blob:",
   CAVEMAN_SETTINGS: "local:ai_toolkit_caveman",
 } as const;
+
+export const MAX_HISTORY_ITEMS = 50;
 
 export const DEFAULT_CAVEMAN_SETTINGS: CavemanSettings = {
   enabled: false,

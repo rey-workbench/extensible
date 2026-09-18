@@ -72,14 +72,18 @@ export function sanitizeEmailHtml(rawHtml: string | null | undefined): string {
         const val = attr.value.trim().toLowerCase();
         if (name.startsWith("on")) {
           el.removeAttribute(attr.name);
-        } else if (
-          (name === "href" || name === "src" || name === "action" || name === "formaction") &&
-          (val.startsWith("javascript:") ||
-            val.startsWith("vbscript:") ||
-            val.startsWith("data:text/html"))
-        ) {
-          el.removeAttribute(attr.name);
+          continue;
         }
+
+        if (URL_ATTRIBUTES.has(name)) {
+          const urls = name === "srcset" ? val.split(",") : [val];
+          if (urls.some(isUnsafeUrl)) el.removeAttribute(attr.name);
+        }
+      }
+
+      if (el.tagName === "A" && el.hasAttribute("href")) {
+        el.setAttribute("rel", "noopener noreferrer nofollow");
+        el.setAttribute("target", "_blank");
       }
     }
 
@@ -94,8 +98,32 @@ export function sanitizeEmailHtml(rawHtml: string | null | undefined): string {
       .replace(/\son\w+\s*=\s*(['"]).*?\1/gi, "")
       .replace(/\son\w+\s*=\s*[^\s>]+/gi, "")
       .replace(
-        /(href|src|action|formaction)\s*=\s*(['"])\s*(javascript|vbscript|data:text\/html):.*?\2/gi,
+        /(href|src|action|formaction|srcset)\s*=\s*(['"])\s*(javascript|vbscript|data:text\/html|blob|filesystem):.*?\2/gi,
         "",
       );
   }
+}
+
+const URL_ATTRIBUTES = new Set([
+  "href",
+  "src",
+  "action",
+  "formaction",
+  "srcset",
+  "poster",
+  "background",
+]);
+
+const UNSAFE_SCHEMES = ["javascript:", "vbscript:", "data:text/html", "blob:", "filesystem:"];
+
+function isUnsafeUrl(raw: string): boolean {
+  const decoded = raw
+    .replace(/&#x?([0-9a-f]+);?/gi, (_, code: string) =>
+      String.fromCharCode(parseInt(code, /^[0-9]+$/.test(code) ? 10 : 16)),
+    )
+    // Browsers ignore control characters and whitespace inside a scheme, so
+    // `java\tscript:` has to collapse to `javascript:` before the check.
+    .replace(/./gs, (ch) => (ch <= " " || ch === "\u007f" ? "" : ch))
+    .toLowerCase();
+  return UNSAFE_SCHEMES.some((scheme) => decoded.startsWith(scheme));
 }

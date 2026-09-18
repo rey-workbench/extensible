@@ -49,9 +49,11 @@ export default defineConfig({
         "Extensible modular productivity extension with temporary email generation, instant input autofill, and live inbox OTP reader.",
       permissions: [
         "storage",
+        // Kept deliberately: userscript sources plus their GM values would
+        // otherwise share the ~10 MB local quota, and a quota error mid-save is
+        // silent data loss. See docs/data.md for the stored-data inventory.
         "unlimitedStorage",
         "alarms",
-        "activeTab",
         "contextMenus",
         "clipboardWrite",
         "scripting",
@@ -60,7 +62,9 @@ export default defineConfig({
         "downloads",
         "userScripts",
       ],
-      host_permissions: ["https://api.tempmail.ing/*", "http://127.0.0.1/*", "<all_urls>"],
+      // `<all_urls>` already covers the mail API and localhost dev server, so
+      // they are not listed separately. `activeTab` was dropped as redundant.
+      host_permissions: ["<all_urls>"],
       browser_specific_settings: {
         gecko: {
           id: "extensible@extension.local",
@@ -72,6 +76,20 @@ export default defineConfig({
         "32": "icon/icon-32.png",
         "48": "icon/icon-48.png",
         "128": "icon/icon-128.png",
+      },
+      commands: {
+        "toggle-dock": {
+          suggested_key: { default: "Alt+Shift+E" },
+          description: "Open the Extensible quick dock",
+        },
+        "copy-temp-email": {
+          suggested_key: { default: "Alt+Shift+M" },
+          description: "Copy a temporary email address",
+        },
+        "export-chat": {
+          suggested_key: { default: "Alt+Shift+X" },
+          description: "Export the current AI chat",
+        },
       },
       action: {
         default_title: isDev ? "Extensible (DEV)" : "Extensible",

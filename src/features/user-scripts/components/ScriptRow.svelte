@@ -45,10 +45,10 @@
 
 <div class="flex flex-col gap-3.5 p-4">
   <div class="flex items-start gap-3">
-    <div class="flex flex-col overflow-hidden rounded-lg border border-slate-200/70 bg-slate-50/70">
+    <div class="flex flex-col overflow-hidden rounded-lg border border-ext-border/70 bg-ext-subtle/70">
       <button
         type="button"
-        class="flex h-6 w-7 cursor-pointer items-center justify-center text-ext-muted transition-colors hover:bg-white hover:text-ext-text disabled:cursor-not-allowed disabled:opacity-30"
+        class="flex h-6 w-7 cursor-pointer items-center justify-center text-ext-muted transition-colors hover:bg-ext-surface hover:text-ext-text disabled:cursor-not-allowed disabled:opacity-30"
         disabled={index === 0}
         onclick={() => onMove(-1)}
         title="Move up (higher priority)"
@@ -68,7 +68,7 @@
       </button>
       <button
         type="button"
-        class="flex h-6 w-7 cursor-pointer items-center justify-center border-t border-slate-200/70 text-ext-muted transition-colors hover:bg-white hover:text-ext-text disabled:cursor-not-allowed disabled:opacity-30"
+        class="flex h-6 w-7 cursor-pointer items-center justify-center border-t border-ext-border/70 text-ext-muted transition-colors hover:bg-ext-surface hover:text-ext-text disabled:cursor-not-allowed disabled:opacity-30"
         disabled={index === total - 1}
         onclick={() => onMove(1)}
         title="Move down (lower priority)"
@@ -110,7 +110,7 @@
     />
   </div>
 
-  <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+  <div class="flex flex-wrap items-center justify-between gap-2 border-t border-ext-border pt-3">
     <div class="flex items-center gap-1.5">
       <Button
         variant={editing ? "primary" : "secondary"}

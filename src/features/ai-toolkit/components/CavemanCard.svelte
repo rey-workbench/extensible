@@ -47,7 +47,7 @@
             class="cursor-pointer rounded-full px-3.5 py-1.5 text-label font-bold uppercase tracking-wider transition-all active:scale-95
                 {caveman.level === lvl
               ? 'bg-ext-primary text-white shadow-sm'
-              : 'border border-slate-300 bg-slate-50 text-ext-text-secondary hover:border-slate-400 hover:bg-slate-100'}"
+              : 'border border-ext-border-strong bg-ext-subtle text-ext-text-secondary hover:border-ext-border-strong hover:bg-ext-subtle-strong'}"
             onclick={() => onSetLevel(lvl as CavemanLevel)}>{lvl}</button
           >
         {/each}

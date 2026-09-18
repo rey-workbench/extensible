@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { browser } from "wxt/browser";
-  import { copyToClipboard, slugify } from "@/lib/browser";
+  import { COPY_MESSAGES, copyWithFeedback, slugify } from "@/lib/browser";
   import { sendMessage, sendToTab } from "@/lib/messaging";
   import { delay } from "@/lib/utils";
   import { AI_TOOLKIT_ACTIONS } from "../constants/ai-toolkit.constants";
@@ -11,6 +11,7 @@
     formatMeta,
     getCavemanSettings,
     getHistory,
+    readHistoryContent,
     updateCavemanSettings,
   } from "../services/ai-toolkit.service";
   import type {
@@ -139,10 +140,10 @@
     isLoading = true;
     try {
       const mdText = formatMarkdown(convo);
-      const ok = await copyToClipboard(mdText);
-      showStatus(ok ? "Copied to clipboard!" : "Copy failed", !ok);
+      const message = await copyWithFeedback(mdText);
+      showStatus(message, message !== COPY_MESSAGES.success);
     } catch {
-      showStatus("Copy failed", true);
+      showStatus(COPY_MESSAGES.failure, true);
     } finally {
       isLoading = false;
     }
@@ -150,12 +151,16 @@
 
   async function handleDownloadHistory(id: string): Promise<void> {
     const item = history.find((x) => x.id === id);
-    if (!item?.content) return;
+    const content = await readHistoryContent(id);
+    if (!item || !content) {
+      showStatus("Transcript expired — export again", true);
+      return;
+    }
     const { mimeType, extension } = formatMeta(item.format);
     const filename = `${item.platform}_${slugify(item.title).slice(0, 40) || "chat"}_${item.exportedAt}${extension}`;
     try {
       await sendMessage(AI_TOOLKIT_ACTIONS.DOWNLOAD_CONTENT, {
-        content: item.content,
+        content,
         filename,
         mimeType,
       });
@@ -166,10 +171,13 @@
   }
 
   async function handleCopyHistory(id: string): Promise<void> {
-    const item = history.find((x) => x.id === id);
-    if (!item?.content) return;
-    const ok = await copyToClipboard(item.content);
-    showStatus(ok ? "Copied from history!" : "Copy failed", !ok);
+    const content = await readHistoryContent(id);
+    if (!content) {
+      showStatus("Transcript expired — export again", true);
+      return;
+    }
+    const message = await copyWithFeedback(content);
+    showStatus(message, message !== COPY_MESSAGES.success);
   }
 
   async function handleDeleteHistory(id: string): Promise<void> {
@@ -207,8 +215,8 @@
     <div
       class="rounded-2xl border px-3.5 py-2 text-label font-bold shadow-sm
         {status.isError
-        ? 'border-red-200 bg-red-50 text-[#b91c1c]'
-        : 'border-emerald-200 bg-emerald-50 text-[#047857]'}"
+        ? 'border-ext-danger-soft-border bg-ext-danger-soft text-ext-danger-ink'
+        : 'border-ext-success-soft-border bg-ext-success-soft text-ext-success-ink'}"
     >
       {status.text}
     </div>

@@ -5,6 +5,7 @@ import {
   AI_TOOLKIT_STORAGE_KEYS,
   DEFAULT_CAVEMAN_SETTINGS,
   isValidCavemanLevel,
+  MAX_HISTORY_ITEMS,
 } from "../constants/ai-toolkit.constants";
 import type {
   CavemanSettings,
@@ -28,24 +29,67 @@ export const cavemanSettingsItem = storage.defineItem<CavemanSettings>(
   { defaultValue: DEFAULT_CAVEMAN_SETTINGS },
 );
 
-export async function getHistory(): Promise<ExportHistoryItem[]> {
-  const list = await historyItem.getValue();
-  return Array.isArray(list) ? list : [];
+type LegacyHistoryItem = ExportHistoryItem & { content?: string };
+
+function historyBlobKey(id: string): `session:${string}` {
+  return `${AI_TOOLKIT_STORAGE_KEYS.HISTORY_BLOB}${id}`;
 }
 
-export async function recordHistory(item: ExportHistoryItem): Promise<void> {
+export async function readHistoryContent(id: string): Promise<string | null> {
+  try {
+    return (await storage.getItem<string>(historyBlobKey(id))) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function removeHistoryContent(id: string): Promise<void> {
+  try {
+    await storage.removeItem(historyBlobKey(id));
+  } catch {}
+}
+
+export async function getHistory(): Promise<ExportHistoryItem[]> {
+  const stored = await historyItem.getValue();
+  const list: LegacyHistoryItem[] = Array.isArray(stored) ? stored : [];
+
+  const legacy = list.filter((item) => typeof item.content === "string");
+  if (legacy.length === 0) return list;
+
+  for (const item of legacy) {
+    if (item.content) {
+      await storage.setItem(historyBlobKey(item.id), item.content);
+    }
+  }
+  const migrated = list.map(({ content, ...metadata }) => ({
+    ...metadata,
+    hasContent: Boolean(content),
+  }));
+  await historyItem.setValue(migrated);
+  return migrated;
+}
+
+export async function recordHistory(item: ExportHistoryItem, content: string): Promise<void> {
+  await storage.setItem(historyBlobKey(item.id), content);
+
   const list = await getHistory();
-  const updated = [item, ...list.filter((x) => x.id !== item.id)].slice(0, 50);
-  await historyItem.setValue(updated);
+  const merged = [{ ...item, hasContent: true }, ...list.filter((x) => x.id !== item.id)];
+  await historyItem.setValue(merged.slice(0, MAX_HISTORY_ITEMS));
+
+  const evicted = merged.slice(MAX_HISTORY_ITEMS);
+  await Promise.all(evicted.map((x) => removeHistoryContent(x.id)));
 }
 
 export async function deleteHistoryItem(id: string): Promise<void> {
   const list = await getHistory();
   await historyItem.setValue(list.filter((x) => x.id !== id));
+  await removeHistoryContent(id);
 }
 
 export async function clearHistory(): Promise<void> {
+  const list = await getHistory();
   await historyItem.setValue([]);
+  await Promise.all(list.map((x) => removeHistoryContent(x.id)));
 }
 
 export async function getCavemanSettings(): Promise<CavemanSettings> {

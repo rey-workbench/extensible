@@ -394,11 +394,11 @@
   class="flex flex-col gap-4 p-2.5 sm:p-3.5 w-full max-w-full overflow-x-hidden box-border"
 >
   {#if pendingInstall}      <div
-      class="rounded-2xl border border-amber-200/70 bg-amber-50/80 p-3 shadow-sm w-full max-w-full overflow-hidden"
+      class="rounded-2xl border border-ext-warning-soft-border bg-ext-warning-soft p-3 shadow-sm w-full max-w-full overflow-hidden"
     >
       <div class="flex items-center justify-between">
         <span
-          class="rounded-full bg-amber-400 px-2.5 py-0.5 text-label font-bold uppercase tracking-wider text-[#0f172a] shadow-sm"
+          class="rounded-full bg-ext-warning px-2.5 py-0.5 text-label font-bold uppercase tracking-wider text-ext-text shadow-sm"
         >
           Auto-Captured UserScript
         </span>
@@ -428,7 +428,7 @@
         <div class="flex flex-wrap gap-1.5 max-h-14 overflow-y-auto">
           {#each pendingInstall.matches as m}
             <span
-              class="rounded-full border border-slate-200 bg-white px-2.5 py-0.5 font-mono text-label text-ext-text-secondary truncate max-w-45"
+              class="rounded-full border border-ext-border bg-ext-surface px-2.5 py-0.5 font-mono text-label text-ext-text-secondary truncate max-w-45"
               >{m}</span
             >
           {/each}
@@ -524,7 +524,7 @@
         >
           <span>Scripts</span>
           <span
-            class="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-label font-bold text-ext-text-secondary"
+            class="rounded-full border border-ext-border bg-ext-subtle-strong px-2.5 py-0.5 text-label font-bold text-ext-text-secondary"
           >
             {scripts.length}
           </span>
@@ -539,7 +539,7 @@
           />
           <button
             type="button"
-            class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-label font-bold uppercase tracking-wider text-ext-text shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95"
+            class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-xl border border-ext-border-strong bg-ext-surface px-3 text-label font-bold uppercase tracking-wider text-ext-text shadow-sm transition-all hover:border-ext-border-strong hover:bg-ext-subtle active:scale-95"
             onclick={() => fileInput?.click()}
             title="Import script from file"
           >
@@ -548,7 +548,7 @@
           </button>
           <button
             type="button"
-            class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 text-label font-bold uppercase tracking-wider text-ext-text shadow-sm transition-all hover:border-slate-400 hover:bg-slate-50 active:scale-95"
+            class="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-xl border border-ext-border-strong bg-ext-surface px-3 text-label font-bold uppercase tracking-wider text-ext-text shadow-sm transition-all hover:border-ext-border-strong hover:bg-ext-subtle active:scale-95"
             onclick={exportAll}
             title="Backup all scripts"
           >

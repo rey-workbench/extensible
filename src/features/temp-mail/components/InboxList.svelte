@@ -17,7 +17,7 @@
   <div class="flex items-center gap-1.5 text-label font-bold uppercase tracking-widest text-ext-muted">
     <span>Inbox</span>
     <span
-      class="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-label font-bold text-ext-text-secondary"
+      class="rounded-full border border-ext-border bg-ext-subtle-strong px-2.5 py-0.5 text-label font-bold text-ext-text-secondary"
       >{emails.length}</span
     >
   </div>

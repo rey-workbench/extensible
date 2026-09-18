@@ -1,6 +1,6 @@
 import { browser } from "wxt/browser";
 import "@/features";
-import { APP_ACTIONS } from "@/lib/browser";
+import { APP_ACTIONS, APP_COMMANDS } from "@/lib/browser";
 import { getFeatures } from "@/lib/feature-registry";
 import { isFeatureEnabled } from "@/lib/feature-settings";
 import { onMessage, sendToTab } from "@/lib/messaging";
@@ -44,6 +44,26 @@ export default defineBackground({
       },
     );
 
+    browser.commands?.onCommand.addListener((command) => {
+      void runCommand(command);
+    });
+
     console.log("[WXT] Background service worker ready.");
   },
 });
+
+async function runCommand(command: string): Promise<void> {
+  const [active] = await browser.tabs.query({ active: true, lastFocusedWindow: true });
+  if (active?.id != null) {
+    try {
+      await sendToTab(active.id, APP_ACTIONS.COMMAND, { command });
+      return;
+    } catch {
+      // No content script on this page (chrome://, web store, PDF, …).
+    }
+  }
+
+  if (command === APP_COMMANDS.COPY_TEMP_EMAIL) {
+    await browser.action?.openPopup?.().catch(() => {});
+  }
+}

@@ -1,5 +1,109 @@
 type UiHandledEvent = Event & { __usUiHandled?: boolean };
 
+interface HostRegistry {
+  hosts: Set<HTMLElement>;
+  onClick: (event: Event) => void;
+  onKey: (event: Event) => void;
+}
+
+const registries = new WeakMap<Document, HostRegistry>();
+const hostDocuments = new WeakMap<HTMLElement, Document>();
+
+function composedPathOf(event: Event): EventTarget[] {
+  return event.composedPath ? event.composedPath() : [];
+}
+
+function hostInPath(registry: HostRegistry, path: EventTarget[]): HTMLElement | null {
+  for (const host of registry.hosts) {
+    if (path.includes(host)) return host;
+  }
+  return null;
+}
+
+function registryFor(doc: Document): HostRegistry {
+  const existing = registries.get(doc);
+  if (existing) return existing;
+
+  const registry: HostRegistry = {
+    hosts: new Set<HTMLElement>(),
+    onClick: (event) => {
+      const target = event.target as Element | null;
+      if (!target || !hostInPath(registry, composedPathOf(event))) return;
+      const marked = event as UiHandledEvent;
+      setTimeout(() => {
+        if (marked.__usUiHandled || !target.isConnected) return;
+        target.dispatchEvent(
+          new MouseEvent("click", { bubbles: true, composed: true, cancelable: true }),
+        );
+      }, 0);
+    },
+    onKey: (event) => {
+      if (hostInPath(registry, composedPathOf(event))) event.stopPropagation();
+    },
+  };
+
+  const view = doc.defaultView;
+  view?.addEventListener("click", registry.onClick, true);
+  view?.addEventListener("keydown", registry.onKey, true);
+  view?.addEventListener("keyup", registry.onKey, true);
+  view?.addEventListener("keypress", registry.onKey, true);
+  registries.set(doc, registry);
+  return registry;
+}
+
+function registerHost(host: HTMLElement): () => void {
+  const doc = host.ownerDocument ?? document;
+  const registry = registryFor(doc);
+  registry.hosts.add(host);
+  hostDocuments.set(host, doc);
+
+  return () => {
+    registry.hosts.delete(host);
+    hostDocuments.delete(host);
+    if (registry.hosts.size > 0) return;
+    const view = doc.defaultView;
+    view?.removeEventListener("click", registry.onClick, true);
+    view?.removeEventListener("keydown", registry.onKey, true);
+    view?.removeEventListener("keyup", registry.onKey, true);
+    view?.removeEventListener("keypress", registry.onKey, true);
+    registries.delete(doc);
+  };
+}
+
+const sharedSheets = new WeakMap<Document, Map<string, CSSStyleSheet>>();
+
+export function installSharedStyles(shadow: ShadowRoot, css: string): void {
+  if (!css) return;
+  const doc = shadow.ownerDocument ?? document;
+
+  const supportsSheets =
+    typeof CSSStyleSheet !== "undefined" &&
+    typeof (CSSStyleSheet.prototype as CSSStyleSheet).replaceSync === "function" &&
+    "adoptedStyleSheets" in shadow;
+
+  if (supportsSheets) {
+    let perDocument = sharedSheets.get(doc);
+    if (!perDocument) {
+      perDocument = new Map<string, CSSStyleSheet>();
+      sharedSheets.set(doc, perDocument);
+    }
+    let sheet = perDocument.get(css);
+    if (!sheet) {
+      sheet = new CSSStyleSheet();
+      sheet.replaceSync(css);
+      perDocument.set(css, sheet);
+    }
+    if (!shadow.adoptedStyleSheets.includes(sheet)) {
+      shadow.adoptedStyleSheets = [...shadow.adoptedStyleSheets, sheet];
+    }
+    return;
+  }
+
+  const style = doc.createElement("style");
+  style.textContent = css;
+  shadow.appendChild(style);
+}
+
 export function markUiClicks(shadow: ShadowRoot): void {
   shadow.addEventListener(
     "click",
@@ -11,21 +115,7 @@ export function markUiClicks(shadow: ShadowRoot): void {
 }
 
 export function rescueClicksIn(host: HTMLElement): () => void {
-  const rescueClick = (e: Event) => {
-    const path = e.composedPath ? e.composedPath() : [];
-    if (!path.includes(host)) return;
-    const ev = e as UiHandledEvent;
-    setTimeout(() => {
-      if (ev.__usUiHandled) return;
-      const target = e.target as Element | null;
-      if (!target || !path.includes(target)) return;
-      target.dispatchEvent(
-        new MouseEvent("click", { bubbles: true, composed: true, cancelable: true }),
-      );
-    }, 0);
-  };
-  window.addEventListener("click", rescueClick, true);
-  return () => window.removeEventListener("click", rescueClick, true);
+  return registerHost(host);
 }
 
 export function createShadowHost(
@@ -38,25 +128,10 @@ export function createShadowHost(
   host.style.all = "initial";
   document.body.appendChild(host);
   const shadow = host.attachShadow({ mode: "open" });
-  if (extraCss) {
-    const style = document.createElement("style");
-    style.textContent = extraCss;
-    shadow.appendChild(style);
-  }
+  installSharedStyles(shadow, extraCss);
   return { host, shadow };
 }
 
 export function shieldKeysFromHost(host: HTMLElement): () => void {
-  const stop = (e: Event) => {
-    const path = e.composedPath ? e.composedPath() : [];
-    if (path.includes(host)) e.stopPropagation();
-  };
-  window.addEventListener("keydown", stop, true);
-  window.addEventListener("keyup", stop, true);
-  window.addEventListener("keypress", stop, true);
-  return () => {
-    window.removeEventListener("keydown", stop, true);
-    window.removeEventListener("keyup", stop, true);
-    window.removeEventListener("keypress", stop, true);
-  };
+  return registerHost(host);
 }

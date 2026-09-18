@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { copyToClipboard, isContextInvalidated } from "@/lib/browser";
+  import { COPY_MESSAGES, copyWithFeedback, isContextInvalidated } from "@/lib/browser";
   import { sendMessage } from "@/lib/messaging";
   import { showToast } from "@/lib/toast";
   import { TEMPMAIL_ACTIONS } from "../constants/temp-mail.constants";
@@ -27,8 +27,8 @@
 
   const isActive = $derived(email !== null && remainingSeconds > 0);
 
-  function showToastMsg(msg: string): void {
-    if (rootEl) showToast(rootEl, msg);
+  function showToastMsg(msg: string, isError = false): void {
+    if (rootEl) showToast(rootEl, msg, { isError });
   }
 
   function startCountdown(initial: number): void {
@@ -124,12 +124,10 @@
     }
   }
 
-  async function handleCopy(
-    text: string,
-    successMsg = "Copied to clipboard!",
-  ): Promise<void> {
-    const ok = await copyToClipboard(text);
-    if (ok) showToastMsg(successMsg);
+  async function handleCopy(text: string, successMsg?: string): Promise<void> {
+    const message = await copyWithFeedback(text);
+    const failed = message !== COPY_MESSAGES.success;
+    showToastMsg(failed ? message : (successMsg ?? message), failed);
   }
 
   onMount(async () => {

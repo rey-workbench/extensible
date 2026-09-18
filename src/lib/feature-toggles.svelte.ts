@@ -6,11 +6,6 @@ import {
   setFeaturesEnabled,
 } from "./feature-settings";
 
-/**
- * Enable/disable state for any surface that lists modules (popup, quick dock).
- * Owning it in one place keeps the "missing means enabled" rule, the optimistic
- * update, and the storage round-trip from being re-implemented per surface.
- */
 export function createFeatureToggles(features: readonly FeatureModule[]) {
   let enabledMap = $state<Record<string, boolean>>({});
   const masterOn = $derived(features.every((f) => isEnabledIn(enabledMap, f.id)));
@@ -47,7 +42,6 @@ export function createFeatureToggles(features: readonly FeatureModule[]) {
 
 export type FeatureToggles = ReturnType<typeof createFeatureToggles>;
 
-/** Watch storage so every open surface follows changes made elsewhere. */
 export function watchFeatureToggles(toggles: FeatureToggles): void {
   void toggles.sync();
   void featureEnabledItem.watch(() => void toggles.sync());

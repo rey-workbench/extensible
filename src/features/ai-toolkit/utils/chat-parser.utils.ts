@@ -122,19 +122,26 @@ export function findTranscriptScroller(doc: Document = document): HTMLElement | 
   return best ?? scrollableAncestorOf(doc.querySelector<HTMLElement>("main"));
 }
 
+const LAZY_TURN_THRESHOLD = 12;
+
 export async function hydrateVirtualizedChat(doc: Document = document): Promise<void> {
+  const mounted = doc.querySelectorAll(
+    'article[data-testid^="conversation-turn"], [data-message-author-role], user-query, model-response, .ds-message',
+  ).length;
+  if (mounted < LAZY_TURN_THRESHOLD) return;
+
   const scroller = findTranscriptScroller(doc);
-  if (!scroller) return;
+  if (!scroller || scroller.scrollHeight - scroller.clientHeight < 200) return;
 
   const previousTop = scroller.scrollTop;
   const range = scroller.scrollHeight - scroller.clientHeight;
   try {
-    for (const ratio of [0, 0.5, 1]) {
+    for (const ratio of [0, 1]) {
       scroller.scrollTop = Math.round(range * ratio);
-      await delay(120);
+      await delay(90);
     }
     scroller.scrollTop = previousTop;
-    await delay(60);
+    await delay(50);
   } catch {}
 }
 

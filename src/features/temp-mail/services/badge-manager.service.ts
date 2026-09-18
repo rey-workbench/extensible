@@ -33,7 +33,7 @@ export async function setupBadges(): Promise<void> {
   const { host, shadow } = ui;
   markUiClicks(shadow);
   const disposeRescue = rescueClicksIn(host);
-  shieldKeysFromHost(host);
+  const disposeShield = shieldKeysFromHost(host);
 
   function attach(input: HTMLInputElement): void {
     if (badges.has(input)) return;
@@ -62,6 +62,23 @@ export async function setupBadges(): Promise<void> {
     }
   }
 
+  function scanWithin(nodes: readonly Node[]): void {
+    if (!settings.showFloatingButton) return;
+    for (const node of nodes) {
+      if (!(node instanceof Element)) continue;
+      if (node instanceof HTMLInputElement && isEmailField(node)) attach(node);
+      for (const input of node.querySelectorAll<HTMLInputElement>("input")) {
+        if (isEmailField(input)) attach(input);
+      }
+    }
+  }
+
+  function onFocusIn(event: Event): void {
+    if (!settings.showFloatingButton) return;
+    const target = event.target;
+    if (target instanceof HTMLInputElement && isEmailField(target)) attach(target);
+  }
+
   function prune(): void {
     for (const [input, entry] of badges) {
       if (!document.contains(input)) {
@@ -73,6 +90,10 @@ export async function setupBadges(): Promise<void> {
 
   function teardown(): void {
     clearTimeout(scanTimer);
+    document.removeEventListener("focusin", onFocusIn, true);
+    observer.disconnect();
+    disposeRescue();
+    disposeShield();
     for (const entry of badges.values()) entry.unmount();
     badges.clear();
   }
@@ -80,14 +101,24 @@ export async function setupBadges(): Promise<void> {
   scan();
 
   let scanTimer: ReturnType<typeof setTimeout> | undefined;
-  const observer = new MutationObserver(() => {
+  const observer = new MutationObserver((records) => {
+    const added: Node[] = [];
+    let removed = false;
+    for (const record of records) {
+      if (record.type === "childList" && record.addedNodes.length > 0) {
+        added.push(...record.addedNodes);
+      } else if (record.type === "childList") {
+        removed = true;
+      }
+    }
+    if (added.length > 0) scanWithin(added);
+    if (!removed) return;
     clearTimeout(scanTimer);
-    scanTimer = setTimeout(() => {
-      scan();
-      prune();
-    }, 200);
+    scanTimer = setTimeout(prune, 200);
   });
   observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  document.addEventListener("focusin", onFocusIn, true);
 
   window.addEventListener("pagehide", () => disposeRescue(), { once: true });
 

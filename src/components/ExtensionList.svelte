@@ -37,7 +37,7 @@
 <div class="flex min-h-0 flex-1 flex-col">
   <div class="px-3 pb-2 pt-3">
     <div
-      class="flex h-9 items-center gap-2 rounded-lg border border-slate-300 bg-slate-50 px-3.5 transition-all focus-within:border-ext-primary focus-within:bg-white focus-within:ring-2 focus-within:ring-ext-primary/10"
+      class="flex h-9 items-center gap-2 rounded-lg border border-ext-border-strong bg-ext-subtle px-3.5 transition-all focus-within:border-ext-primary focus-within:bg-ext-surface focus-within:ring-2 focus-within:ring-ext-primary/10"
     >
       <button
         type="button"
@@ -60,7 +60,7 @@
       {#if query}
         <button
           type="button"
-          class="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-ext-muted transition-colors hover:bg-slate-100 hover:text-ext-text"
+          class="flex h-4 w-4 cursor-pointer items-center justify-center rounded-full text-ext-muted transition-colors hover:bg-ext-subtle-strong hover:text-ext-text"
           aria-label="Clear search"
           onclick={() => (query = "")}
           >&times;</button
@@ -74,7 +74,7 @@
       Extensions
     </span>
     <span
-      class="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-label font-bold tabular-nums text-ext-text-secondary"
+      class="rounded-full border border-ext-border bg-ext-subtle-strong px-2.5 py-0.5 text-label font-bold tabular-nums text-ext-text-secondary"
       >{filtered.length}</span
     >
   </div>
@@ -89,7 +89,7 @@
       >
         {#snippet icon()}
           <span
-            class="flex h-10 w-10 items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 text-ext-muted"
+            class="flex h-10 w-10 items-center justify-center rounded-2xl border border-ext-border bg-ext-subtle text-ext-muted"
           >
             <Icon name="puzzle" size={18} />
           </span>

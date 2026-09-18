@@ -81,7 +81,7 @@ export function buildMenuHtml(): string {
         ${renderIcon("html", 13, "text-ext-primary")}
         <span>HTML Document</span>
       </button>
-      <div class="ext-composer-menu-divider my-1 h-px bg-slate-100"></div>
+      <div class="ext-composer-menu-divider my-1 h-px bg-ext-subtle-strong"></div>
       <button type="button" class="ext-composer-menu-item ext-composer-copy-btn flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-medium text-ext-text outline-none transition-all hover:bg-[#F1F5F9] hover:text-ext-text">
         ${renderIcon("copy", 13, "text-ext-muted")}
         <span>Copy to Clipboard</span>

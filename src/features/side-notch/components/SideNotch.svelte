@@ -3,9 +3,7 @@
   import { browser } from "wxt/browser";
   import { tempMailApi } from "@/features/temp-mail/api";
   import { USER_SCRIPTS_ACTIONS } from "@/features/user-scripts/constants/user-scripts.constants";
-  import {
-    copyToClipboard,
-  } from "@/lib/browser";
+  import { APP_ACTIONS, APP_COMMANDS, COPY_MESSAGES, copyWithFeedback } from "@/lib/browser";
   import {
     type FeatureModule,
     getFeatureColor,
@@ -35,6 +33,8 @@
 
   let view = $state<"list" | "detail">("list");
   let activeId = $state<string | null>(null);
+  
+  let hasOpened = $state(false);
   const toggles = createFeatureToggles(modules);
   const enabledMap = $derived(toggles.enabledMap);
   const masterOn = $derived(toggles.masterOn);
@@ -80,8 +80,11 @@
       await handleQuickGenerate();
       return;
     }
-    const ok = await copyToClipboard(activeTempAddress);
-    if (ok) showToast(shadowRoot, "Copied!", { durationMs: 1500 });
+    const message = await copyWithFeedback(activeTempAddress);
+    showToast(shadowRoot, message, {
+      isError: message !== COPY_MESSAGES.success,
+      durationMs: 1500,
+    });
   }
 
   function onKeyDown(e: KeyboardEvent): void {
@@ -114,9 +117,9 @@
         width: 34px;
         height: 120px;
         border-radius: 16px 0 0 16px;
-        background: rgba(255, 255, 255, 0.94);
+        background: var(--color-ext-glass);
         backdrop-filter: blur(16px);
-        border: 1px solid rgba(226, 232, 240, 0.85);
+        border: 1px solid var(--color-ext-border);
         border-right: none;
         box-shadow: -4px 10px 30px -4px rgba(15, 23, 42, 0.12), -1px 0 3px rgba(15, 23, 42, 0.04);
         box-sizing: border-box;
@@ -126,22 +129,36 @@
       }
       .ext-notch-handle-wrapper:hover {
         transform: translateY(-50%) translateX(-4px);
-        background: #ffffff;
+        background: var(--color-ext-surface);
         box-shadow: -6px 14px 36px -4px rgba(15, 23, 42, 0.18);
       }
     `;
     shadowRoot.appendChild(style);
 
+    
+    
     watchFeatureToggles(toggles);
-    void syncTempMail();
-    void loadScriptStats();
 
     
     
     browser.runtime.onMessage.addListener(
       (msg: { action?: string; payload?: Record<string, unknown> } | undefined) => {
-        if (!msg || msg.action !== "app:open_launcher") return;
-        void handleDeepOpen(msg.payload ?? {});
+        if (!msg) return;
+        if (msg.action === APP_ACTIONS.OPEN_LAUNCHER) {
+          void handleDeepOpen(msg.payload ?? {});
+          return;
+        }
+        if (msg.action === APP_ACTIONS.COMMAND) {
+          const command = (msg.payload as { command?: string } | undefined)?.command;
+          
+          
+          if (command === APP_COMMANDS.TOGGLE_DOCK) {
+            if (isOpen) closeDrawer();
+            else openDrawer();
+          } else if (command === APP_COMMANDS.COPY_TEMP_EMAIL) {
+            void handleQuickCopy();
+          }
+        }
       },
     );
   });
@@ -175,6 +192,7 @@
 
   function openDrawer(): void {
     isOpen = true;
+    hasOpened = true;
     void toggles.sync();
     void syncTempMail();
     void loadScriptStats();
@@ -191,6 +209,7 @@
     activeId = id;
     view = "detail";
     isOpen = true;
+    hasOpened = true;
     void toggles.sync();
     if (id === "temp-mail") void syncTempMail();
   }
@@ -203,7 +222,7 @@
 
 <div
   class="ext-notch-root select-none text-sm"
-  style="font-family: 'Plus Jakarta Sans', 'Inter', system-ui, 'Segoe UI', Roboto, Ubuntu, sans-serif; font-size: 14px; line-height: 1.5; color: #0F172A;"
+  style="font-family: 'Plus Jakarta Sans', 'Inter', system-ui, 'Segoe UI', Roboto, Ubuntu, sans-serif; font-size: 14px; line-height: 1.5; color: var(--color-ext-text);"
 >
   <div
     class="ext-notch-handle-wrapper {isOpen
@@ -216,7 +235,7 @@
   </div>
 
   <div
-    class="fixed inset-0 z-2147483646 flex items-center justify-center p-4 md:p-8 overflow-y-auto bg-[#E2E8F0]/75 backdrop-blur-xl transition-all duration-300 {isOpen
+    class="fixed inset-0 z-2147483646 flex items-center justify-center p-4 md:p-8 overflow-y-auto bg-ext-bg/75 backdrop-blur-xl transition-all duration-300 {isOpen
       ? 'pointer-events-auto opacity-100'
       : 'pointer-events-none opacity-0'}"
     role="presentation"
@@ -233,7 +252,8 @@
       role="dialog"
       aria-label="Extensible Hub"
     >
-      {#if view === "list"}
+      {#if hasOpened}
+        {#if view === "list"}
         <BentoLauncher
           {logo48}
           features={modules}
@@ -250,12 +270,13 @@
           onQuickCopy={() => void handleQuickCopy()}
         />
       {:else}
-        <DrawerDetail
-          feature={activeModule}
-          onBack={showList}
-          onClose={closeDrawer}
-          onModuleApi={(api) => (moduleApi = api)}
-        />
+          <DrawerDetail
+            feature={activeModule}
+            onBack={showList}
+            onClose={closeDrawer}
+            onModuleApi={(api) => (moduleApi = api)}
+          />
+        {/if}
       {/if}
     </div>
   </div>

@@ -36,7 +36,8 @@ export interface ExportHistoryItem {
   readonly exportedAt: number;
   readonly format: ExportFormat;
   readonly url: string;
-  readonly content?: string;
+
+  readonly hasContent?: boolean;
 }
 
 export interface CavemanSettings {

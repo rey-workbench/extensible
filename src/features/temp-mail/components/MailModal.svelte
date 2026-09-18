@@ -44,7 +44,7 @@
       aria-modal="true"
     >
       <div
-        class="flex items-center justify-between border-b border-slate-200/70 bg-white px-4 py-3"
+        class="flex items-center justify-between border-b border-ext-border/70 bg-ext-surface px-4 py-3"
       >
         <div class="flex min-w-0 items-center gap-2">
           <h3 class="min-w-0 truncate text-sm font-bold text-ext-text">
@@ -98,7 +98,7 @@
 
         {#if hasRemoteImages}
           <div
-            class="mb-2 flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50 px-2.5 py-1.5 text-label font-medium text-ext-text-secondary"
+            class="mb-2 flex items-center justify-between rounded-xl border border-ext-border/70 bg-ext-subtle px-2.5 py-1.5 text-label font-medium text-ext-text-secondary"
           >
             <span>Remote images hidden to prevent tracking.</span>
             <button
@@ -114,7 +114,7 @@
         {#if sanitizedContent}
           <iframe
             title="Email content"
-            class="h-64 w-full rounded-2xl border border-slate-200 bg-white"
+            class="h-64 w-full rounded-2xl border border-ext-border bg-ext-surface"
             sandbox="allow-popups allow-popups-to-escape-sandbox"
             srcdoc={`<!DOCTYPE html><html><head><meta http-equiv="Content-Security-Policy" content="${cspString}"><base target="_blank"><style>body{font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:12px;line-height:1.45;color:#0F172A;margin:8px;word-break:break-word;background:#FFFFFF;}img{max-width:100%;height:auto;}a{color:#1A73E8;text-decoration:underline;cursor:pointer;font-weight:600;}a:hover{color:#0F56BE;}</style></head><body>${sanitizedContent}</body></html>`}
           ></iframe>
@@ -123,7 +123,7 @@
         {/if}
       </div>
 
-      <div class="flex justify-end border-t border-slate-200/70 bg-slate-50/70 px-4 py-2.5">
+      <div class="flex justify-end border-t border-ext-border/70 bg-ext-subtle/70 px-4 py-2.5">
         <Button
           variant="danger"
           size="sm"

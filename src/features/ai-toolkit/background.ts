@@ -36,9 +36,8 @@ export function setupBackground(): void {
       exportedAt: Date.now(),
       format: payload.format,
       url: payload.conversation.url,
-      content: formatted.content,
     };
-    await recordHistory(historyItem);
+    await recordHistory(historyItem, formatted.content);
 
     return { success: true, filename, format: payload.format };
   });

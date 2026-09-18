@@ -39,6 +39,18 @@ const gmValuesItem = storage.defineItem<Record<string, Record<string, unknown>>>
 
 const RUN_LOG_LIMIT = 30;
 
+const GM_VALUE_MAX_BYTES = 64 * 1024;
+const GM_BUCKET_MAX_BYTES = 512 * 1024;
+const GM_KEY_LIMIT = 256;
+
+function approximateBytes(value: unknown): number {
+  try {
+    return JSON.stringify(value)?.length ?? 0;
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
 const scriptTokens = new Map<string, string>();
 
 export function getScriptToken(scriptId: string): string {
@@ -153,10 +165,28 @@ export async function gmGet(scriptId: string, key: string): Promise<unknown> {
 }
 
 export async function gmSet(scriptId: string, key: string, value: unknown): Promise<void> {
+  const size = approximateBytes(value);
+  if (size > GM_VALUE_MAX_BYTES) {
+    throw new Error(
+      `GM_setValue("${key}") rejected: value is ~${Math.round(size / 1024)} KB, the limit is ${GM_VALUE_MAX_BYTES / 1024} KB`,
+    );
+  }
+
   const all = await gmValuesItem.getValue();
   const bucket = all[scriptId] ?? {};
-  bucket[key] = value;
-  all[scriptId] = bucket;
+  if (!(key in bucket) && Object.keys(bucket).length >= GM_KEY_LIMIT) {
+    throw new Error(`GM_setValue rejected: "${scriptId}" already stores ${GM_KEY_LIMIT} keys`);
+  }
+
+  const next = { ...bucket, [key]: value };
+  const bucketSize = approximateBytes(next);
+  if (bucketSize > GM_BUCKET_MAX_BYTES) {
+    throw new Error(
+      `GM_setValue("${key}") rejected: "${scriptId}" would store ~${Math.round(bucketSize / 1024)} KB, the limit is ${GM_BUCKET_MAX_BYTES / 1024} KB`,
+    );
+  }
+
+  all[scriptId] = next;
   await gmValuesItem.setValue(all);
 }
 

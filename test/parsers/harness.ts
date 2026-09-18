@@ -8,8 +8,6 @@ import { FIXTURES, type ParserFixture } from "./fixtures";
 
 console.log("[Parsers] Checking every saved AI-site fixture...\n");
 
-// linkedom ships with the toolchain already; if it ever disappears the run is
-// reported as skipped instead of failing the whole suite.
 let parseMarkup: ((html: string) => Document) | null = null;
 try {
   const { DOMParser } = await import("linkedom");
@@ -24,7 +22,6 @@ const parse = parseMarkup as (html: string) => Document;
 const failures: string[] = [];
 let passed = 0;
 
-/** The parsers read the hostname off `window`, which Node does not have. */
 function withHostname<T>(origin: string, run: () => T): T {
   const url = new URL(origin);
   const globalScope = globalThis as Record<string, unknown>;
@@ -103,8 +100,6 @@ function check(fixture: ParserFixture): void {
 
 for (const fixture of FIXTURES) check(fixture);
 
-// Every platform we claim to support needs markup on hand, otherwise drift on
-// that site would go unnoticed until a user reports it.
 const supported = (Object.keys(AI_PLATFORMS) as SupportedAiPlatform[]).filter(
   (p) => p !== "generic",
 );

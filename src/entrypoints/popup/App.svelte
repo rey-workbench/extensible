@@ -2,10 +2,12 @@
   import { onMount } from "svelte";
   import Badge from "@/components/Badge.svelte";
   import ExtensionList from "@/components/ExtensionList.svelte";
+  import Icon from "@/components/Icon.svelte";
   import Toggle from "@/components/Toggle.svelte";
   import { openBentoLauncher } from "@/lib/browser";
   import { type FeatureModule, getToggleableFeatures } from "@/lib/feature-registry";
   import { createFeatureToggles, watchFeatureToggles } from "@/lib/feature-toggles.svelte";
+  import { clearAllStoredData } from "@/lib/utils";
 
   
   const features = getToggleableFeatures();
@@ -41,18 +43,30 @@
     view = "list";
   }
 
+  async function clearAllData(): Promise<void> {
+    const confirmed = window.confirm(
+      "Delete all Extensible data?\n\n" +
+        "This removes your saved AI chat exports, temporary email address and cached inbox, " +
+        "user scripts with their stored GM values and run logs, and every module toggle. " +
+        "It cannot be undone.",
+    );
+    if (!confirmed) return;
+    await clearAllStoredData();
+    await toggles.sync();
+  }
+
 </script>
 
 <div class="ext-container flex h-full min-h-0 flex-col select-none bg-ext-bg text-ext-text">
   {#if view === "list"}
     <header
-      class="flex h-12 shrink-0 items-center justify-between border-b border-slate-200/70 bg-white px-3"
+      class="flex h-12 shrink-0 items-center justify-between border-b border-ext-border/70 bg-ext-surface px-3"
     >
       <div class="flex items-center gap-2">
         <img
           src="/icon/icon-48.png"
           alt="Extensible Logo"
-          class="h-8 w-8 rounded-xl border border-slate-200 bg-white object-contain shadow-sm"
+          class="h-8 w-8 rounded-xl border border-ext-border bg-ext-surface object-contain shadow-sm"
         />
         <span class="flex items-center gap-1.5 text-sm font-extrabold tracking-tight text-ext-text">
           Extensible
@@ -65,7 +79,17 @@
       <div class="flex items-center gap-2.5">
         <button
           type="button"
-          class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-ext-text active:scale-95"
+          class="ext-icon-btn h-8 w-8 rounded-xl shadow-sm"
+          title="Delete all stored data"
+          aria-label="Delete all stored data"
+          onclick={() => void clearAllData()}
+        >
+          <Icon name="trash" size={14} />
+        </button>
+
+        <button
+          type="button"
+          class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-ext-border bg-ext-surface text-ext-text-secondary shadow-sm transition-all hover:border-ext-border-strong hover:bg-ext-subtle hover:text-ext-text active:scale-95"
           title="Open Bento Hub in current tab"
           onclick={() => void openBentoLauncher()}
         >
@@ -92,11 +116,11 @@
     />
   {:else}
     <header
-      class="flex h-12 shrink-0 items-center justify-between border-b border-slate-200/70 bg-white px-3"
+      class="flex h-12 shrink-0 items-center justify-between border-b border-ext-border/70 bg-ext-surface px-3"
     >
       <button
         type="button"
-        class="flex cursor-pointer items-center gap-1 rounded-xl border border-slate-200 bg-white py-1.5 pr-3 pl-1.5 text-body font-bold text-ext-text-secondary shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-ext-text"
+        class="flex cursor-pointer items-center gap-1 rounded-xl border border-ext-border bg-ext-surface py-1.5 pr-3 pl-1.5 text-body font-bold text-ext-text-secondary shadow-sm transition-colors hover:border-ext-border-strong hover:bg-ext-subtle hover:text-ext-text"
         onclick={showList}
       >
         <svg
@@ -117,7 +141,7 @@
       </span>
       <button
         type="button"
-        class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50 hover:text-ext-text active:scale-95"
+        class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-ext-border bg-ext-surface text-ext-text-secondary shadow-sm transition-all hover:border-ext-border-strong hover:bg-ext-subtle hover:text-ext-text active:scale-95"
         title="Open Dashboard in full tab"
         onclick={() => void openBentoLauncher()}
       >

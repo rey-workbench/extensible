@@ -1,4 +1,9 @@
+import { COPY_MESSAGES } from "@/lib/browser";
+import { installSharedStyles } from "@/lib/shadow-ui";
 import { showToast } from "@/lib/toast";
+
+const ALIGN_THROTTLE_MS = 150;
+
 import globalCss from "@/styles/global.css?inline";
 import { DEFAULT_CAVEMAN_SETTINGS } from "../constants/ai-toolkit.constants";
 import type { CavemanSettings, ExportFormat } from "../types/ai-toolkit.types";
@@ -32,6 +37,9 @@ export class AiToolkitComposerView {
   private observer: MutationObserver | null = null;
   private currentSettings: CavemanSettings = DEFAULT_CAVEMAN_SETTINGS;
   private alignScheduled = false;
+  private alignTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastAlignAt = 0;
+  private lastAnchor: { left: number; top: number; width: number; height: number } | null = null;
 
   constructor(private readonly callbacks: AiToolkitComposerViewCallbacks) {}
 
@@ -64,12 +72,17 @@ export class AiToolkitComposerView {
     this.hostEl = host;
     this.shadow = host.attachShadow({ mode: "open" });
 
-    const style = document.createElement("style");
-    style.textContent = `
-      ${globalCss}
-    `;
-    this.shadow.appendChild(style);
+    installSharedStyles(this.shadow, globalCss);
     return this.shadow;
+  }
+
+  public setBusy(busy: boolean, label = "Exporting…"): void {
+    const trigger = this.container?.querySelector<HTMLButtonElement>(".ext-export-trigger-btn");
+    if (!trigger) return;
+    trigger.disabled = busy;
+    trigger.style.opacity = busy ? "0.65" : "";
+    const text = trigger.querySelector<HTMLElement>(".ext-bar-btn-text");
+    if (text) text.textContent = busy ? label : "Export";
   }
 
   public updateSettings(settings: CavemanSettings): void {
@@ -169,6 +182,23 @@ export class AiToolkitComposerView {
     const editor = getEditor(document);
     const anchor = resolveDockAnchor(rect, editor ? editor.getBoundingClientRect() : null);
 
+    const previous = this.lastAnchor;
+    if (
+      previous &&
+      Math.abs(previous.left - anchor.left) < 1 &&
+      Math.abs(previous.top - anchor.top) < 1 &&
+      Math.abs(previous.width - anchor.width) < 1 &&
+      Math.abs(previous.height - anchor.height) < 1
+    ) {
+      return;
+    }
+    this.lastAnchor = {
+      left: anchor.left,
+      top: anchor.top,
+      width: anchor.width,
+      height: anchor.height,
+    };
+
     const width = this.container.offsetWidth || 170;
     const height = this.container.offsetHeight || 30;
     const { left, top } = computeDockPlacement(anchor, width, height);
@@ -194,25 +224,48 @@ export class AiToolkitComposerView {
     }
   }
 
-  private scheduleDockAlign(): void {
-    if (this.alignScheduled) return;
-    this.alignScheduled = true;
-    requestAnimationFrame(() => {
-      this.alignScheduled = false;
-      if (!this.container) return;
-      const composerBox = getComposerBox(document);
-      if (composerBox && this.container.classList.contains("ext-composer-floating")) {
-        this.alignDockTo(composerBox);
-      } else {
-        this.positionDock();
-      }
-    });
+  private scheduleDockAlign(immediate = false): void {
+    if (document.hidden && !immediate) return;
+    if (immediate) {
+      if (this.alignScheduled) return;
+      this.alignScheduled = true;
+      requestAnimationFrame(() => {
+        this.alignScheduled = false;
+        this.alignNow();
+      });
+      return;
+    }
+    if (this.alignTimer !== null) return;
+    const wait = Math.max(0, ALIGN_THROTTLE_MS - (performance.now() - this.lastAlignAt));
+    this.alignTimer = setTimeout(() => {
+      this.alignTimer = null;
+      this.alignNow();
+    }, wait);
+  }
+
+  private alignNow(): void {
+    if (!this.container) return;
+    this.lastAlignAt = performance.now();
+    const composerBox = getComposerBox(document);
+    if (composerBox && this.container.classList.contains("ext-composer-floating")) {
+      this.alignDockTo(composerBox);
+    } else {
+      this.positionDock();
+    }
   }
 
   private startComposerWatcher(): void {
     if (this.observer) return;
-    this.observer = new MutationObserver(() => {
-      this.scheduleDockAlign();
+    this.observer = new MutationObserver((records) => {
+      const relevant = records.some((record) => {
+        if (record.type !== "childList") return false;
+        const target = record.target;
+
+        const root = target.getRootNode();
+        if (root instanceof ShadowRoot && root.host === this.hostEl) return false;
+        return true;
+      });
+      if (relevant) this.scheduleDockAlign();
     });
     this.observer.observe(document.body, { childList: true, subtree: true });
   }
@@ -255,11 +308,11 @@ export class AiToolkitComposerView {
       this.closeMenu();
       try {
         await this.callbacks.onCopy();
-        this.showMessage("Copied to clipboard!");
+        this.showMessage(COPY_MESSAGES.success);
       } catch (err) {
         console.warn("[AiToolkit] Copy failed:", err);
         this.showMessage(
-          err instanceof Error && err.message ? `Copy failed: ${err.message}` : "Copy failed",
+          err instanceof Error && err.message ? err.message : COPY_MESSAGES.failure,
           true,
         );
       }
@@ -277,7 +330,7 @@ export class AiToolkitComposerView {
   };
 
   private onWindowScrollOrResize = (): void => {
-    this.scheduleDockAlign();
+    this.scheduleDockAlign(true);
     if (this.isOpen) {
       this.closeMenu();
     }
@@ -374,6 +427,11 @@ export class AiToolkitComposerView {
   public unmount(): void {
     this.observer?.disconnect();
     this.observer = null;
+    if (this.alignTimer !== null) {
+      clearTimeout(this.alignTimer);
+      this.alignTimer = null;
+    }
+    this.lastAnchor = null;
     window.removeEventListener("pointerdown", this.onDocPointerDown, true);
     window.removeEventListener("scroll", this.onWindowScrollOrResize, true);
     window.removeEventListener("resize", this.onWindowScrollOrResize, true);

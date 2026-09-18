@@ -10,6 +10,12 @@ export function showToast(
   const toast = document.createElement("div");
   toast.textContent = message;
   toast.setAttribute("role", "status");
+
+  mountInto.appendChild(toast);
+  const theme = getComputedStyle(toast);
+  const token = (name: string, fallback: string): string =>
+    theme.getPropertyValue(name).trim() || fallback;
+
   Object.assign(toast.style, {
     position: "fixed",
     zIndex: "2147483647",
@@ -20,9 +26,15 @@ export function showToast(
     whiteSpace: "nowrap",
     pointerEvents: "none",
     borderRadius: "9999px",
-    border: `1px solid ${isError ? DANGER_DARK : BORDER}`,
-    background: isError ? DANGER : SURFACE,
-    color: isError ? "#ffffff" : INK,
+    border: `1px solid ${token(
+      isError ? "--color-ext-danger-dark" : "--color-ext-border",
+      isError ? DANGER_DARK : BORDER,
+    )}`,
+    background: token(
+      isError ? "--color-ext-danger" : "--color-ext-surface",
+      isError ? DANGER : SURFACE,
+    ),
+    color: isError ? "#ffffff" : token("--color-ext-text", INK),
     boxShadow: "0 8px 24px -6px rgba(15, 23, 42, 0.25)",
     transition: "transform 0.2s ease, opacity 0.2s ease",
     opacity: "0",
@@ -38,7 +50,6 @@ export function showToast(
     toast.style.left = "50%";
   }
 
-  mountInto.appendChild(toast);
   requestAnimationFrame(() => {
     toast.style.opacity = "1";
     toast.style.transform = "translate(-50%, 0)";

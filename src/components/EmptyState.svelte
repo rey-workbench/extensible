@@ -25,7 +25,7 @@
 <div
   id={id || undefined}
   class="flex flex-col items-center justify-center gap-1.5 text-center {boxed
-    ? 'rounded-2xl border-2 border-dashed border-slate-200 bg-white/60 px-4 py-7'
+    ? 'rounded-2xl border-2 border-dashed border-ext-border bg-ext-surface/60 px-4 py-7'
     : 'py-6'} {cls}"
 >
   {#if icon}<div class="mb-1 text-ext-muted">{@render icon()}</div>{/if}

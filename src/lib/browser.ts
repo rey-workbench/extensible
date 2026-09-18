@@ -3,6 +3,14 @@ import { sendMessage } from "@/lib/messaging";
 
 export const APP_ACTIONS = {
   OPEN_LAUNCHER: "app:open_launcher",
+
+  COMMAND: "app:command",
+} as const;
+
+export const APP_COMMANDS = {
+  TOGGLE_DOCK: "toggle-dock",
+  COPY_TEMP_EMAIL: "copy-temp-email",
+  EXPORT_CHAT: "export-chat",
 } as const;
 
 export async function openBentoLauncher(): Promise<void> {
@@ -21,6 +29,12 @@ export async function openBentoLauncher(): Promise<void> {
   await sendMessage(APP_ACTIONS.OPEN_LAUNCHER);
 }
 
+export const COPY_MESSAGES = {
+  success: "Copied to clipboard",
+  failure: "Clipboard blocked — select and copy manually",
+  empty: "Nothing to copy",
+} as const;
+
 export async function copyToClipboard(text: string): Promise<boolean> {
   if (!text) return false;
   try {
@@ -29,6 +43,11 @@ export async function copyToClipboard(text: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function copyWithFeedback(text: string): Promise<string> {
+  if (!text) return COPY_MESSAGES.empty;
+  return (await copyToClipboard(text)) ? COPY_MESSAGES.success : COPY_MESSAGES.failure;
 }
 
 export async function setBadge(text: string, color = "#10b981"): Promise<void> {

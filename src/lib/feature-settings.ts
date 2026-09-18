@@ -7,7 +7,6 @@ export const featureEnabledItem = storage.defineItem<Record<string, boolean>>(
   { defaultValue: {} },
 );
 
-/** Read the "missing means enabled" flag from an already-loaded map. */
 export function isEnabledIn(map: Record<string, boolean>, id: string): boolean {
   return map[id] !== false;
 }

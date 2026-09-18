@@ -24,7 +24,7 @@
 </script>
 
 <div
-  class="group flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200/70 bg-white p-3.5 shadow-sm transition-all {enabled
+  class="group flex cursor-pointer items-center gap-3 rounded-2xl border border-ext-border/70 bg-ext-surface p-3.5 shadow-sm transition-all {enabled
     ? 'hover:border-blue-400 hover:shadow-md hover:scale-[1.01]'
     : 'opacity-60 hover:opacity-85'} {dropdownOpen
     ? 'relative z-20 border-blue-400 shadow-md'
@@ -52,7 +52,7 @@
       </span>
       {#if !enabled}
         <span
-          class="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-chip font-bold uppercase tracking-wider text-ext-text-secondary"
+          class="shrink-0 rounded-full bg-ext-subtle-strong px-2 py-0.5 text-chip font-bold uppercase tracking-wider text-ext-text-secondary"
           >Off</span
         >
       {/if}
@@ -98,7 +98,7 @@
             <Icon name="gear" size={12} class="opacity-60" />
             <span>Details</span>
           </button>
-          <div class="mx-2 my-1 h-px bg-slate-100"></div>
+          <div class="mx-2 my-1 h-px bg-ext-subtle-strong"></div>
         {/if}
         <button
           type="button"

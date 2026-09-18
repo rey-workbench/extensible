@@ -32,7 +32,6 @@ export function getToggleableFeatures(): FeatureModule[] {
   return [...registry.values()].filter((f) => !f.mandatory);
 }
 
-/** Accent for a module, falling back to the theme's primary token. */
 export function getFeatureColor(id: string): string {
   return registry.get(id)?.color ?? DESIGN_TOKENS.primary;
 }

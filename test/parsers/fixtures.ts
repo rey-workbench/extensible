@@ -1,14 +1,13 @@
 import type { SupportedAiPlatform } from "@/features/ai-toolkit/constants/ai-toolkit.constants";
 
 export interface ParserFixture {
-  /** Unique name, prefixed with the platform: "chatgpt.classic". */
   name: string;
-  /** Page the markup was copied from — drives platform detection. */
+
   origin: string;
-  /** Expected detected platform. */
+
   platform: SupportedAiPlatform;
   html: string;
-  /** null means "no conversation found". */
+
   expect: {
     count: number;
     roles?: string[];

@@ -67,7 +67,7 @@
           </div>
         </div>
         <div class="flex shrink-0 items-center gap-1">
-          {#if item.content}
+          {#if item.hasContent}
             <button
               type="button"
               class="ext-icon-btn h-7 w-7"

@@ -1,5 +1,5 @@
-import { copyToClipboard } from "@/lib/browser";
-import { sendMessage } from "@/lib/messaging";
+import { APP_ACTIONS, APP_COMMANDS, COPY_MESSAGES, copyWithFeedback } from "@/lib/browser";
+import { onMessage, sendMessage } from "@/lib/messaging";
 import { readSettings } from "@/lib/utils";
 import { AiToolkitComposerView } from "../components/composer.view";
 import {
@@ -16,16 +16,27 @@ import { setupCavemanInterceptors } from "./caveman-interceptors.service";
 export function setupComposerToolbar(initialSettings: CavemanSettings): void {
   let cavemanSettings = initialSettings;
 
-  const view = new AiToolkitComposerView({
-    onExport: async (format: ExportFormat) => {
+  const exportChat = async (format: ExportFormat) => {
+    view.setBusy(true, format === "pdf" ? "Preparing…" : "Exporting…");
+    try {
       const convo = await scrapeConvo(document, { hydrate: true, actionLabel: "export" });
       await sendMessage(AI_TOOLKIT_ACTIONS.EXPORT_FILE, { conversation: convo, format });
-    },
+    } finally {
+      view.setBusy(false);
+    }
+  };
+
+  const view = new AiToolkitComposerView({
+    onExport: exportChat,
     onCopy: async () => {
-      const convo = await scrapeConvo(document, { actionLabel: "copy" });
-      const mdText = formatMarkdown(convo);
-      if (!(await copyToClipboard(mdText))) {
-        throw new Error("Clipboard write was blocked");
+      view.setBusy(true, "Copying…");
+      try {
+        const convo = await scrapeConvo(document, { actionLabel: "copy" });
+        const mdText = formatMarkdown(convo);
+        const message = await copyWithFeedback(mdText);
+        if (message !== COPY_MESSAGES.success) throw new Error(message);
+      } finally {
+        view.setBusy(false);
       }
     },
     onToggleCaveman: async (): Promise<CavemanSettings> => {
@@ -58,6 +69,12 @@ export function setupComposerToolbar(initialSettings: CavemanSettings): void {
     },
   });
   view.mount(cavemanSettings);
+
+  onMessage<{ command?: string } | null, boolean>(APP_ACTIONS.COMMAND, (payload) => {
+    if (payload?.command !== APP_COMMANDS.EXPORT_CHAT) return false;
+    void exportChat("markdown");
+    return true;
+  });
 
   void cavemanSettingsItem.watch((next) => {
     const updated = readSettings(next, cavemanSettings);
