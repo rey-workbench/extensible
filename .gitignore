@@ -35,3 +35,4 @@ wxt-bestpractice.md
 # svelte-check generated proxies
 .svelte-check/
 download/
+.freebuff/*

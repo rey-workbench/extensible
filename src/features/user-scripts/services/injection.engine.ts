@@ -48,6 +48,13 @@ export async function runScriptsInTab(
   const url = navUrl ?? tab.url ?? "";
   if (!url || isBlockedUrl(url)) return 0;
 
+  // If auto-triggered on navigation and chrome.userScripts is supported,
+  // native Chrome engine runs scripts in USER_SCRIPT world (exempt from CSP).
+  const userScriptsApi = getUserScriptsApi();
+  if (trigger === "auto" && typeof userScriptsApi?.register === "function") {
+    return 0;
+  }
+
   const allScripts = await list();
   const scripts = targetScriptId
     ? allScripts.filter((s) => s.id === targetScriptId)
@@ -107,7 +114,9 @@ export async function syncUserScriptsApi(): Promise<void> {
       });
       items.push({
         id: script.id,
-        matches: script.meta.matches.length ? script.meta.matches : ["*://*/*"],
+        matches: Array.isArray(script.meta?.matches) && script.meta.matches.length
+          ? script.meta.matches
+          : ["*://*/*"],
         js: [{ code: source }],
         runAt: script.meta.runAt === "document-start" ? "document_start" : "document_idle",
         world: "USER_SCRIPT",
@@ -193,18 +202,68 @@ async function injectScript(
         func: (src: string) => {
           try {
             const el = document.createElement("script");
-            el.textContent = src;
+            const nonceEl = document.querySelector("script[nonce]");
+            const nonce =
+              nonceEl?.getAttribute("nonce") ||
+              (nonceEl as HTMLScriptElement | null)?.nonce;
+            if (nonce) {
+              el.setAttribute("nonce", nonce);
+              el.nonce = nonce;
+            }
+
+            let trustedCode: unknown = src;
+            const tt = (
+              window as unknown as {
+                trustedTypes?: {
+                  defaultPolicy?: { createScript: (s: string) => unknown };
+                  createPolicy?: (
+                    name: string,
+                    rules: unknown,
+                  ) => { createScript: (s: string) => unknown };
+                };
+              }
+            ).trustedTypes;
+
+            if (tt) {
+              try {
+                if (tt.defaultPolicy) {
+                  trustedCode = tt.defaultPolicy.createScript(src);
+                } else if (typeof tt.createPolicy === "function") {
+                  const policy = tt.createPolicy("extensible-runner", {
+                    createScript: (s: string) => s,
+                  });
+                  trustedCode = policy.createScript(src);
+                }
+              } catch {}
+            }
+
+            try {
+              (el as unknown as { textContent: unknown }).textContent =
+                trustedCode;
+            } catch {
+              try {
+                (el as unknown as { text: unknown }).text = trustedCode;
+              } catch {
+                el.appendChild(document.createTextNode(src));
+              }
+            }
+
             (document.head || document.documentElement).appendChild(el);
             el.remove();
             return { ok: true };
-          } catch {
+          } catch (domErr) {
             try {
               const run = new Function(src);
               run();
               return { ok: true };
             } catch (evalErr) {
-              const msg = evalErr instanceof Error ? evalErr.message : String(evalErr);
-              console.error("[UserScripts] execute error:", evalErr);
+              const msg =
+                domErr instanceof Error
+                  ? domErr.message
+                  : evalErr instanceof Error
+                    ? evalErr.message
+                    : "Execution blocked by page CSP / TrustedTypes";
+              console.error("[UserScripts] execute error:", msg);
               return { ok: false, error: msg };
             }
           }
@@ -262,7 +321,8 @@ async function injectScript(
 }
 
 export function urlMatches(script: UserScriptRecord, url: string): boolean {
-  const { matches, excludes } = script.meta;
+  const matches = Array.isArray(script.meta?.matches) ? script.meta.matches : [];
+  const excludes = Array.isArray(script.meta?.excludes) ? script.meta.excludes : [];
   if (!matches.length) return false;
   if (excludes.some((p) => patternToRegex(p).test(url))) return false;
   return matches.some((p) => patternToRegex(p).test(url));

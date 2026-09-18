@@ -3,6 +3,23 @@ import { USER_SCRIPTS_STORAGE_KEYS } from "../constants/user-scripts.constants";
 import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
 import { newScriptCopy } from "../utils/record-factory.utils";
 
+export function sanitizeRecord(s: UserScriptRecord): UserScriptRecord {
+  const meta = s.meta || ({} as UserScriptRecord["meta"]);
+  return {
+    ...s,
+    meta: {
+      ...meta,
+      matches: Array.isArray(meta.matches)
+        ? meta.matches
+        : typeof meta.matches === "string" && meta.matches
+          ? [meta.matches]
+          : ["*://*/*"],
+      excludes: Array.isArray(meta.excludes) ? meta.excludes : [],
+      grants: Array.isArray(meta.grants) && meta.grants.length ? meta.grants : ["none"],
+    },
+  };
+}
+
 export const scriptsItem = storage.defineItem<UserScriptRecord[]>(
   USER_SCRIPTS_STORAGE_KEYS.SCRIPTS,
   {
@@ -37,19 +54,21 @@ export function getAllScriptTokens(): Record<string, string> {
   return Object.fromEntries(scriptTokens.entries());
 }
 
-export function list(): Promise<UserScriptRecord[]> {
-  return scriptsItem.getValue();
+export async function list(): Promise<UserScriptRecord[]> {
+  const all = await scriptsItem.getValue();
+  return (all ?? []).map(sanitizeRecord);
 }
 
 export async function get(id: string): Promise<UserScriptRecord | null> {
-  const all = await scriptsItem.getValue();
+  const all = await list();
   return all.find((s) => s.id === id) ?? null;
 }
 
 export async function save(record: UserScriptRecord): Promise<UserScriptRecord> {
-  const all = await scriptsItem.getValue();
-  const idx = all.findIndex((s) => s.id === record.id);
-  const updated: UserScriptRecord = { ...record, updatedAt: Date.now() };
+  const all = await list();
+  const clean = sanitizeRecord(record);
+  const idx = all.findIndex((s) => s.id === clean.id);
+  const updated: UserScriptRecord = { ...clean, updatedAt: Date.now() };
   if (idx >= 0) all[idx] = updated;
   else all.push(updated);
   await scriptsItem.setValue(all);

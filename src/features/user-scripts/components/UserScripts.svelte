@@ -7,11 +7,17 @@
   import { openOrFocusDashboardTab, slugify } from "@/lib/browser";
   import { sendMessage } from "@/lib/messaging";
   import { showToast } from "@/lib/toast";
-  
+
   import { USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
-  import { scriptsItem } from "../services/user-scripts.service";
-  import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
-  import { makeScriptTemplate, parseUserScriptHeader } from "../utils/header-parser.utils";
+  import { list, sanitizeRecord, scriptsItem } from "../services/user-scripts.service";
+  import type {
+    UserScriptRecord,
+    UserScriptRunLogEntry,
+  } from "../types/user-scripts.types";
+  import {
+    makeScriptTemplate,
+    parseUserScriptHeader,
+  } from "../utils/header-parser.utils";
   import { recordFromCode } from "../utils/record-factory.utils";
   import ScriptEditor from "./ScriptEditor.svelte";
   import ScriptRow from "./ScriptRow.svelte";
@@ -48,7 +54,8 @@
   );
 
   const isDashboard = $derived(
-    typeof window !== "undefined" && window.location.pathname.includes("dashboard"),
+    typeof window !== "undefined" &&
+      window.location.pathname.includes("dashboard"),
   );
 
   function handleEdit(script: UserScriptRecord): void {
@@ -64,7 +71,9 @@
   }
 
   async function openFullDashboard(editScriptId?: string): Promise<void> {
-    const query = editScriptId ? `?editId=${encodeURIComponent(editScriptId)}` : "";
+    const query = editScriptId
+      ? `?editId=${encodeURIComponent(editScriptId)}`
+      : "";
     await openOrFocusDashboardTab(query);
   }
 
@@ -73,7 +82,7 @@
 
     const unwatch = scriptsItem.watch((val) => {
       if (val) {
-        scripts = val;
+        scripts = val.map(sanitizeRecord);
         isLoading = false;
       }
     });
@@ -87,7 +96,9 @@
     const editId = params.get("editId");
     if (editId) {
       void (async () => {
-        const all = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST);
+        const all = await sendMessage<UserScriptRecord[]>(
+          USER_SCRIPTS_ACTIONS.LIST,
+        );
         const found = all.find((s) => s.id === editId);
         if (found) startEditing(found);
       })();
@@ -104,7 +115,10 @@
     const timer = setTimeout(() => controller.abort(), 8000);
     try {
       showStatus("Fetching script from URL...", false);
-      const res = await fetch(url, { credentials: "omit", signal: controller.signal });
+      const res = await fetch(url, {
+        credentials: "omit",
+        signal: controller.signal,
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const code = await res.text();
       const meta = parseUserScriptHeader(code, "Incoming Script");
@@ -119,7 +133,10 @@
       };
       showStatus(`Loaded "${meta.name}"`);
     } catch (err) {
-      showStatus(err instanceof Error ? err.message : "Failed to load script", true);
+      showStatus(
+        err instanceof Error ? err.message : "Failed to load script",
+        true,
+      );
     } finally {
       clearTimeout(timer);
       installing = false;
@@ -130,9 +147,12 @@
     if (!pendingInstall) return;
     installing = true;
     try {
-      const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
-        record: recordFromCode(pendingInstall.code),
-      });
+      const record = await sendMessage<UserScriptRecord>(
+        USER_SCRIPTS_ACTIONS.SAVE,
+        {
+          record: recordFromCode(pendingInstall.code),
+        },
+      );
       scripts = [...scripts, record];
       showStatus(`Installed "${record.meta.name}"`);
       pendingInstall = null;
@@ -156,9 +176,18 @@
 
   async function refresh(): Promise<void> {
     try {
-      scripts = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST);
-    } catch (err) {
-      showStatus(err instanceof Error ? err.message : "Failed to load scripts", true);
+      scripts = await list();
+    } catch {
+      try {
+        scripts = (
+          await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST)
+        ).map(sanitizeRecord);
+      } catch (err) {
+        showStatus(
+          err instanceof Error ? err.message : "Failed to load scripts",
+          true,
+        );
+      }
     } finally {
       isLoading = false;
     }
@@ -168,12 +197,18 @@
     if (rootEl) showToast(rootEl, text, { isError });
   }
 
-  async function toggle(script: UserScriptRecord, enabled: boolean): Promise<void> {
+  async function toggle(
+    script: UserScriptRecord,
+    enabled: boolean,
+  ): Promise<void> {
     try {
-      scripts = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.TOGGLE, {
-        id: script.id,
-        enabled,
-      });
+      scripts = await sendMessage<UserScriptRecord[]>(
+        USER_SCRIPTS_ACTIONS.TOGGLE,
+        {
+          id: script.id,
+          enabled,
+        },
+      );
     } catch (err) {
       showStatus(err instanceof Error ? err.message : "Toggle failed", true);
     }
@@ -182,9 +217,12 @@
   async function createScript(): Promise<void> {
     const name = newScriptName.trim() || "New script";
     newScriptName = "";
-    const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
-      record: recordFromCode(makeScriptTemplate(name)),
-    });
+    const record = await sendMessage<UserScriptRecord>(
+      USER_SCRIPTS_ACTIONS.SAVE,
+      {
+        record: recordFromCode(makeScriptTemplate(name)),
+      },
+    );
     scripts = [...scripts, record];
     if (isDashboard) {
       startEditing(record);
@@ -194,11 +232,16 @@
   }
 
   async function duplicateScript(script: UserScriptRecord): Promise<void> {
-    const copy = await sendMessage<UserScriptRecord | null>(USER_SCRIPTS_ACTIONS.DUPLICATE, {
-      id: script.id,
-    });
+    const copy = await sendMessage<UserScriptRecord | null>(
+      USER_SCRIPTS_ACTIONS.DUPLICATE,
+      {
+        id: script.id,
+      },
+    );
     if (copy) {
-      scripts = await sendMessage<UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST);
+      scripts = await sendMessage<UserScriptRecord[]>(
+        USER_SCRIPTS_ACTIONS.LIST,
+      );
       showStatus(`Duplicated as "${copy.meta.name}"`);
     }
   }
@@ -214,14 +257,19 @@
       return;
     }
     deleteConfirmId = null;
-    const ok = await sendMessage<boolean>(USER_SCRIPTS_ACTIONS.DELETE, { id: script.id });
+    const ok = await sendMessage<boolean>(USER_SCRIPTS_ACTIONS.DELETE, {
+      id: script.id,
+    });
     if (ok) {
       scripts = scripts.filter((s) => s.id !== script.id);
       showStatus("Script deleted");
     }
   }
 
-  async function moveItem(script: UserScriptRecord, dir: -1 | 1): Promise<void> {
+  async function moveItem(
+    script: UserScriptRecord,
+    dir: -1 | 1,
+  ): Promise<void> {
     const idx = scripts.findIndex((s) => s.id === script.id);
     const target = idx + dir;
     if (target < 0 || target >= scripts.length) return;
@@ -254,9 +302,12 @@
     const script = scripts.find((s) => s.id === editingId);
     if (!script) return;
     try {
-      const saved = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
-        record: { ...script, code: draftCode, updatedAt: Date.now() },
-      });
+      const saved = await sendMessage<UserScriptRecord>(
+        USER_SCRIPTS_ACTIONS.SAVE,
+        {
+          record: { ...script, code: draftCode, updatedAt: Date.now() },
+        },
+      );
       scripts = scripts.map((s) => (s.id === saved.id ? saved : s));
       draftDirty = false;
       showStatus("Saved");
@@ -269,9 +320,12 @@
     const code = await file.text();
     const fallbackName = file.name.replace(/\.user\.js$|\.js$/i, "");
     const meta = parseUserScriptHeader(code, fallbackName);
-    const record = await sendMessage<UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, {
-      record: recordFromCode(code, fallbackName),
-    });
+    const record = await sendMessage<UserScriptRecord>(
+      USER_SCRIPTS_ACTIONS.SAVE,
+      {
+        record: recordFromCode(code, fallbackName),
+      },
+    );
     scripts = [...scripts, record];
     showStatus(`Imported "${record.meta.name}"`);
   }
@@ -319,9 +373,12 @@
   }
 
   async function loadRunLog(script: UserScriptRecord): Promise<void> {
-    const logs = await sendMessage<UserScriptRunLogEntry[]>(USER_SCRIPTS_ACTIONS.RUN_LOG, {
-      scriptId: script.id,
-    }).catch(() => [] as UserScriptRunLogEntry[]);
+    const logs = await sendMessage<UserScriptRunLogEntry[]>(
+      USER_SCRIPTS_ACTIONS.RUN_LOG,
+      {
+        scriptId: script.id,
+      },
+    ).catch(() => [] as UserScriptRunLogEntry[]);
     runLogs = { ...runLogs, [script.id]: logs };
   }
 
@@ -333,7 +390,11 @@
       const count = await sendMessage<number>(USER_SCRIPTS_ACTIONS.RUN_IN_TAB, {
         scriptId: script.id,
       });
-      showStatus(count > 0 ? `Ran ${count} script(s) in tab` : "No matching scripts for this tab");
+      showStatus(
+        count > 0
+          ? `Ran ${count} script(s) in tab`
+          : "No matching scripts for this tab",
+      );
       expandedId = script.id;
       await loadRunLog(script);
     } catch (err) {
@@ -342,45 +403,89 @@
   }
 </script>
 
-<div bind:this={rootEl} class="flex flex-col gap-3 p-1.5 sm:p-2 w-full max-w-full overflow-x-hidden box-border">
+<div
+  bind:this={rootEl}
+  class="flex flex-col gap-3 p-1.5 sm:p-2 w-full max-w-full overflow-x-hidden box-border"
+>
   {#if pendingInstall}
-    <div class="rounded-lg border-[1.5px] border-solid border-amber-600/50 bg-amber-500/10 p-2.5 shadow-[1.5px_1.5px_0_#1A1A1A] w-full max-w-full overflow-hidden">
+    <div
+      class="rounded-lg border-[1.5px] border-solid border-amber-600/50 bg-amber-500/10 p-2.5 shadow-[1.5px_1.5px_0_#1A1A1A] w-full max-w-full overflow-hidden"
+    >
       <div class="flex items-center justify-between">
-        <span class="rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm">
+        <span
+          class="rounded bg-amber-500 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-sm"
+        >
           Auto-Captured UserScript
         </span>
-        <span class="text-[10.5px] font-mono text-ext-text-secondary">v{pendingInstall.version}</span>
+        <span class="text-[10.5px] font-mono text-ext-text-secondary"
+          >v{pendingInstall.version}</span
+        >
       </div>
 
-      <h4 class="mt-2 text-[12.5px] font-bold text-ext-text truncate">{pendingInstall.name}</h4>
-      <p class="mt-0.5 text-[10.5px] text-ext-text-secondary line-clamp-2">{pendingInstall.description}</p>
+      <h4 class="mt-2 text-[12.5px] font-bold text-ext-text truncate">
+        {pendingInstall.name}
+      </h4>
+      <p class="mt-0.5 text-[10.5px] text-ext-text-secondary line-clamp-2">
+        {pendingInstall.description}
+      </p>
       {#if pendingInstall.namespace}
-        <div class="mt-1 text-[9.5px] text-ext-muted truncate">Namespace: {pendingInstall.namespace}</div>
+        <div class="mt-1 text-[9.5px] text-ext-muted truncate">
+          Namespace: {pendingInstall.namespace}
+        </div>
       {/if}
 
       <div class="mt-2 space-y-1">
-        <div class="font-bold uppercase tracking-wider text-ext-text-secondary text-[9px]">Applies To:</div>
+        <div
+          class="font-bold uppercase tracking-wider text-ext-text-secondary text-[9px]"
+        >
+          Applies To:
+        </div>
         <div class="flex flex-wrap gap-1 max-h-14 overflow-y-auto">
           {#each pendingInstall.matches as m}
-            <span class="rounded bg-[#EDE7DA] px-1 py-0.2 font-mono text-[8.5px] text-ext-text border border-ext-border/40 truncate max-w-[180px]">{m}</span>
+            <span
+              class="rounded bg-[#EDE7DA] px-1 py-0.2 font-mono text-[8.5px] text-ext-text border border-ext-border/40 truncate max-w-[180px]"
+              >{m}</span
+            >
           {/each}
         </div>
       </div>
 
-      <div class="mt-2.5 flex items-center justify-end gap-2 border-t border-solid border-amber-600/20 pt-2">
-        <Button size="sm" variant="secondary" onclick={cancelInstall} disabled={installing} class="h-6 px-2 text-[10.5px]">
+      <div
+        class="mt-2.5 flex items-center justify-end gap-2 border-t border-solid border-amber-600/20 pt-2"
+      >
+        <Button
+          size="sm"
+          variant="secondary"
+          onclick={cancelInstall}
+          disabled={installing}
+          class="h-6 px-2 text-[10.5px]"
+        >
           Cancel
         </Button>
-        <Button size="sm" variant="primary" onclick={confirmInstall} disabled={installing} class="h-6 px-2 text-[10.5px]">
+        <Button
+          size="sm"
+          variant="primary"
+          onclick={confirmInstall}
+          disabled={installing}
+          class="h-6 px-2 text-[10.5px]"
+        >
           {installing ? "Installing..." : "Install Script"}
         </Button>
       </div>
     </div>
   {/if}
 
-  <div class="w-full max-w-full {isDashboard ? 'flex flex-col lg:flex-row gap-4 items-start' : 'flex flex-col gap-3'}">
+  <div
+    class="w-full max-w-full {isDashboard
+      ? 'flex flex-col lg:flex-row gap-4 items-start'
+      : 'flex flex-col gap-3'}"
+  >
     <!-- Left Column: Add Script + Script List -->
-    <div class="{isDashboard ? 'w-full lg:w-[380px] lg:shrink-0' : 'w-full'} flex flex-col gap-2.5 min-w-0">
+    <div
+      class="{isDashboard
+        ? 'w-full lg:w-[380px] lg:shrink-0'
+        : 'w-full'} flex flex-col gap-2.5 min-w-0"
+    >
       <Card title="Add Script">
         <div class="flex flex-col gap-2">
           <div class="flex items-center gap-1.5 w-full">
@@ -406,7 +511,10 @@
               class="h-7 w-0 flex-1 min-w-0 rounded-md border-[1.5px] border-solid border-ext-border bg-ext-surface px-2 text-[11px] font-medium text-ext-text outline-none placeholder:text-ext-muted transition-all focus:border-ext-primary focus:ring-2 focus:ring-ext-primary/20"
               placeholder="New script name..."
               bind:value={newScriptName}
-              onkeydown={(e) => e.key === "Enter" && newScriptName.trim() && void createScript()}
+              onkeydown={(e) =>
+                e.key === "Enter" &&
+                newScriptName.trim() &&
+                void createScript()}
             />
             <Button
               size="sm"
@@ -422,9 +530,13 @@
       </Card>
 
       <div class="flex h-6 shrink-0 items-center justify-between px-0.5 pt-0.5">
-        <div class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-ext-muted">
+        <div
+          class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-ext-muted"
+        >
           <span>Scripts</span>
-          <span class="rounded-sm border border-solid border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-0.2 text-[10px] font-bold text-ext-text-secondary">
+          <span
+            class="rounded-sm border border-solid border-[#D4CEC2] bg-[#EDE7DA] px-1.5 py-0.2 text-[10px] font-bold text-ext-text-secondary"
+          >
             {scripts.length}
           </span>
         </div>
@@ -468,7 +580,9 @@
       </div>
 
       {#if isLoading}
-        <div class="py-8 text-center text-xs font-medium text-ext-muted">Loading scripts…</div>
+        <div class="py-8 text-center text-xs font-medium text-ext-muted">
+          Loading scripts…
+        </div>
       {:else if scripts.length === 0}
         <EmptyState
           title="No scripts yet"
@@ -481,7 +595,12 @@
       {:else}
         <div class="flex flex-col gap-2">
           {#each scripts as script, i (script.id)}
-            <div class="ext-card overflow-hidden rounded-lg transition-all {editingId === script.id ? 'ring-2 ring-ext-primary ring-offset-1 shadow-md' : ''}">
+            <div
+              class="ext-card overflow-hidden rounded-lg transition-all {editingId ===
+              script.id
+                ? 'ring-2 ring-ext-primary ring-offset-1 shadow-md'
+                : ''}"
+            >
               <ScriptRow
                 {script}
                 index={i}
@@ -518,13 +637,22 @@
             onRun={() => void runInTab(editingScript)}
           />
         {:else}
-          <div class="flex flex-col items-center justify-center min-h-[480px] rounded-xl border-[1.5px] border-dashed border-ext-border bg-ext-surface/60 p-8 text-center shadow-[1.5px_1.5px_0_#1A1A1A]">
-            <div class="flex h-12 w-12 items-center justify-center rounded-xl border border-solid border-ext-border bg-[#EDE7DA] text-ext-text mb-3 shadow-[1.5px_1.5px_0_#1A1A1A]">
+          <div
+            class="flex flex-col items-center justify-center min-h-[480px] rounded-xl border-[1.5px] border-dashed border-ext-border bg-ext-surface/60 p-8 text-center shadow-[1.5px_1.5px_0_#1A1A1A]"
+          >
+            <div
+              class="flex h-12 w-12 items-center justify-center rounded-xl border border-solid border-ext-border bg-[#EDE7DA] text-ext-text mb-3 shadow-[1.5px_1.5px_0_#1A1A1A]"
+            >
               <Icon name="puzzle" size={24} />
             </div>
-            <h3 class="text-sm font-bold uppercase tracking-wider text-ext-text">UserScript Workspace</h3>
+            <h3
+              class="text-sm font-bold uppercase tracking-wider text-ext-text"
+            >
+              UserScript Workspace
+            </h3>
             <p class="mt-1 text-xs text-ext-text-secondary max-w-sm">
-              Select an installed script on the left to edit code, or create a new script.
+              Select an installed script on the left to edit code, or create a
+              new script.
             </p>
           </div>
         {/if}

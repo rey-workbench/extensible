@@ -34,9 +34,11 @@ export function setupBackground(): void {
 
   onMessage<null, UserScriptRecord[]>(USER_SCRIPTS_ACTIONS.LIST, () => list());
 
-  onMessage<{ record: UserScriptRecord }, UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, (p) => {
+  onMessage<{ record: UserScriptRecord }, UserScriptRecord>(USER_SCRIPTS_ACTIONS.SAVE, async (p) => {
     if (!p?.record) throw new Error("Missing record");
-    return save(p.record);
+    const rec = await save(p.record);
+    void reinjectAll();
+    return rec;
   });
 
   onMessage<{ id: string }, boolean>(USER_SCRIPTS_ACTIONS.DELETE, async (p) => {

@@ -27,3 +27,4 @@ export function recordFromCode(code: string, fallbackName?: string): UserScriptR
     lastRunAt: null,
   };
 }
+

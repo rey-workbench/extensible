@@ -27,7 +27,7 @@ export function parseUserScriptHeader(code: string, fallbackDefaultName?: string
     return q ? q[1] : v;
   };
 
-  const matches = allListed(block, "match").map(unquote);
+  const matches = [...allListed(block, "match"), ...allListed(block, "include")].map(unquote);
   const runAtRaw = firstListed(block, "run-at").toLowerCase();
   const runAt: UserScriptMeta["runAt"] =
     runAtRaw === "document-start" || runAtRaw === "document-end" ? runAtRaw : "document-idle";
