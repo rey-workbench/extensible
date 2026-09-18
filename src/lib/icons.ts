@@ -25,10 +25,6 @@ export const ICON_NAMES = [
 
 export type IconName = (typeof ICON_NAMES)[number];
 
-/**
- * Caveman logo: an 8x8 pixel grid ("#" = block) drawn as rounded squares.
- * These are the blocks read off the original mark, row by row.
- */
 const CAVEMAN_PIXEL_GRID: readonly string[] = [
   "...##...",
   "..####..",
@@ -40,7 +36,6 @@ const CAVEMAN_PIXEL_GRID: readonly string[] = [
   "..####..",
 ];
 
-/** One rounded block of the Caveman logo, in 24x24 viewBox units. */
 export interface CavemanBlock {
   x: number;
   y: number;
@@ -48,14 +43,8 @@ export interface CavemanBlock {
   radius: number;
 }
 
-/** How much of each grid cell the block fills — the rest is the pixel gap. */
 const CAVEMAN_BLOCK_FILL = 0.78;
 
-/**
- * The Caveman mark as positioned blocks. Kept as data (not a path) so both the
- * Svelte `Icon` component and the injected-composer string builder can render
- * the exact same art, and so the mark scales cleanly at any size.
- */
 export function cavemanBlocks(): CavemanBlock[] {
   const rows = CAVEMAN_PIXEL_GRID.length;
   const pitch = 24 / rows;
@@ -78,7 +67,6 @@ export function cavemanBlocks(): CavemanBlock[] {
   return blocks;
 }
 
-/** Marks built from primitives instead of a single path. */
 const COMPOSITE_ICONS = ["spinner", "caveman"] as const;
 type CompositeIcon = (typeof COMPOSITE_ICONS)[number];
 
@@ -117,7 +105,6 @@ export function iconPath(name: IconName): string {
   return ICON_PATHS[name as Exclude<IconName, CompositeIcon>] ?? "";
 }
 
-/** Serialised `<rect>` markup for the Caveman mark, for string-built DOM. */
 export function cavemanRects(): string {
   return cavemanBlocks()
     .map(

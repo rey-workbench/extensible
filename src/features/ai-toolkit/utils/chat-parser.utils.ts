@@ -84,22 +84,57 @@ export async function scrapeConvo(
   }
   const convo = parseActivePage(doc);
   if (!convo || convo.messages.length === 0) {
-    throw new Error(`No chat messages detected to ${options.actionLabel ?? "export"}.`);
+    throw new Error(
+      `No chat messages detected to ${options.actionLabel ?? "export"}. Open the conversation, scroll through it, and try again.`,
+    );
   }
   return convo;
 }
 
-export async function hydrateVirtualizedChat(doc: Document = document): Promise<void> {
-  const scrollContainer = doc.querySelector(
-    'main, [class*="react-scroll-to-bottom"], [class*="conversation-container"], [data-scroll-anchor]',
-  ) as HTMLElement | null;
-  if (!scrollContainer) return;
+function scrollableAncestorOf(el: HTMLElement | null): HTMLElement | null {
+  let current = el;
+  while (current && current !== current.ownerDocument.body) {
+    if (current.scrollHeight - current.clientHeight > 80) return current;
+    current = current.parentElement;
+  }
+  return null;
+}
 
+export function findTranscriptScroller(doc: Document = document): HTMLElement | null {
+  const explicit = doc.querySelector<HTMLElement>(
+    '[class*="react-scroll-to-bottom"], [class*="conversation-container"], [data-scroll-anchor]',
+  );
+  const explicitScroller = scrollableAncestorOf(explicit);
+  if (explicitScroller) return explicitScroller;
+
+  let best: HTMLElement | null = null;
+  let bestRange = 120;
+  const view = doc.defaultView;
+  for (const el of doc.querySelectorAll<HTMLElement>("main *")) {
+    const range = el.scrollHeight - el.clientHeight;
+    if (range <= bestRange) continue;
+    const overflowY = view?.getComputedStyle(el).overflowY ?? "";
+    if (overflowY === "hidden" || overflowY === "clip") continue;
+    best = el;
+    bestRange = range;
+  }
+
+  return best ?? scrollableAncestorOf(doc.querySelector<HTMLElement>("main"));
+}
+
+export async function hydrateVirtualizedChat(doc: Document = document): Promise<void> {
+  const scroller = findTranscriptScroller(doc);
+  if (!scroller) return;
+
+  const previousTop = scroller.scrollTop;
+  const range = scroller.scrollHeight - scroller.clientHeight;
   try {
-    scrollContainer.scrollTop = 0;
-    await delay(250);
-    scrollContainer.scrollTop = scrollContainer.scrollHeight;
-    await delay(150);
+    for (const ratio of [0, 0.5, 1]) {
+      scroller.scrollTop = Math.round(range * ratio);
+      await delay(120);
+    }
+    scroller.scrollTop = previousTop;
+    await delay(60);
   } catch {}
 }
 

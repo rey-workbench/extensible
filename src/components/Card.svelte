@@ -8,7 +8,7 @@ import Icon from "@/components/Icon.svelte";
     id?: string;
     title?: string;
     subtitle?: string;
-    /** Optional mark shown before the title, tinted with the theme accent. */
+    
     icon?: IconName;
     class?: string;
     headerAction?: Snippet;

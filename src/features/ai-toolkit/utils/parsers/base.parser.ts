@@ -9,6 +9,46 @@ export function pushMessage(
   messages.push({ id, role, content, timestamp: Date.now() });
 }
 
+export interface RoleHints {
+  authorRole?: string | null;
+  author?: string | null;
+  role?: string | null;
+  className?: string | null;
+}
+
+const USER_HINTS = /(?:^|[^a-z])(?:user|human|me|prompt)(?:[^a-z]|$)/i;
+const ASSISTANT_HINTS = /(?:^|[^a-z])(?:assistant|bot|model|ai|gpt|chatbot)(?:[^a-z]|$)/i;
+
+export function roleFromHints(hints: RoleHints, index: number): MessageRole {
+  const attrText = [hints.authorRole, hints.author, hints.role]
+    .filter((v): v is string => !!v)
+    .join(" ")
+    .toLowerCase();
+
+  if (attrText) {
+    if (USER_HINTS.test(attrText)) return "user";
+    if (ASSISTANT_HINTS.test(attrText)) return "assistant";
+  }
+
+  const cls = hints.className || "";
+  if (ASSISTANT_HINTS.test(cls) && !USER_HINTS.test(cls)) return "assistant";
+  if (USER_HINTS.test(cls)) return "user";
+
+  return index % 2 === 0 ? "user" : "assistant";
+}
+
+export function innermost(elements: readonly Element[]): Element[] {
+  return elements.filter((el) => !elements.some((other) => other !== el && el.contains(other)));
+}
+
+export function outermost(elements: readonly Element[]): Element[] {
+  return elements.filter((el) => !elements.some((other) => other !== el && other.contains(el)));
+}
+
+export function classNamesOf(el: Element): string {
+  return el.getAttribute("class") || "";
+}
+
 export function cleanElementText(element: Element): string {
   const clone = element.cloneNode(true) as HTMLElement;
   const doc = element.ownerDocument || document;
