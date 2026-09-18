@@ -18,6 +18,7 @@ export const TEMPMAIL_STORAGE_KEYS = {
   STATE: "local:temp_mail:state",
   INBOX_CACHE: "local:temp_mail:inbox",
   SETTINGS: "local:temp_mail:settings",
+  RETRY: "local:temp_mail:retry",
 } as const;
 
 export const TEMPMAIL_CONFIG = {
@@ -25,4 +26,8 @@ export const TEMPMAIL_CONFIG = {
   DEFAULT_DURATION: 60,
   POLL_INTERVAL_SEC: 60,
   REQUEST_TIMEOUT_MS: 10_000,
+
+  MIN_FETCH_INTERVAL_MS: 20_000,
+
+  ERROR_BODY_LIMIT: 2_000,
 } as const;

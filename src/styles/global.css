@@ -35,6 +35,7 @@
   --color-ext-accent: #ff4b26;
   --color-ext-glass: rgba(255, 255, 255, 0.88);
   --color-ext-glass-border: rgba(255, 255, 255, 0.6);
+  --color-ext-focus-ring: rgba(26, 115, 232, 0.15);
 
   --shadow-ext-card:
     0 14px 34px -4px rgba(15, 23, 42, 0.05), 0 3px 10px -2px rgba(15, 23, 42, 0.02);
@@ -274,7 +275,7 @@
 
 .ext-icon-btn:hover:not(:disabled) {
   border-color: var(--color-ext-muted);
-  background: var(--color-ext-subtle);
+  background: var(--color-ext-subtle-strong);
   color: var(--color-ext-text);
 }
 
@@ -315,7 +316,7 @@
 .ext-field:focus {
   background: var(--color-ext-surface);
   border-color: var(--color-ext-primary);
-  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.15);
+  box-shadow: 0 0 0 3px var(--color-ext-focus-ring);
 }
 
 .ext-field:disabled {
@@ -356,54 +357,54 @@
   transform: scale(1.06);
 }
 
-@media (prefers-color-scheme: dark) {
+@supports (color: light-dark(#fff, #000)) {
   :root,
   :host {
-    --color-ext-bg: #0b1017;
-    --color-ext-surface: #151c26;
-    --color-ext-subtle: #1b2431;
-    --color-ext-subtle-strong: #232e3d;
-    --color-ext-border: #2a3546;
-    --color-ext-border-strong: #3c4a5f;
-    --color-ext-text: #eef2f8;
-    --color-ext-text-secondary: #c2cdda;
-    --color-ext-muted: #9dabbd;
-    --color-ext-primary: #6aa9ff;
-    --color-ext-primary-dark: #4a90e8;
-    --color-ext-primary-light: #9cc8ff;
-    --color-ext-success: #34d399;
-    --color-ext-danger: #ff7b76;
-    --color-ext-danger-dark: #e5484d;
-    --color-ext-danger-soft: #2c1a1c;
-    --color-ext-danger-ink: #ff9d99;
-    --color-ext-danger-soft-border: #5e2b2f;
-    --color-ext-info-soft: #14243d;
-    --color-ext-info-ink: #91bcff;
-    --color-ext-info-soft-border: #24457a;
-    --color-ext-success-soft: #10281f;
-    --color-ext-success-ink: #5cdca6;
-    --color-ext-success-soft-border: #1f5140;
-    --color-ext-warning-soft: #2c2311;
-    --color-ext-warning-ink: #f0b64f;
-    --color-ext-warning-soft-border: #5c4a1d;
-    --color-ext-warning: #f5b942;
-    --color-ext-coral: #ff7a5c;
-    --color-ext-accent: #ff7a5c;
-    --color-ext-glass: rgba(21, 28, 38, 0.9);
-    --color-ext-glass-border: rgba(60, 74, 95, 0.65);
+    color-scheme: light dark;
 
-    --shadow-ext-card: 0 14px 34px -4px rgba(0, 0, 0, 0.5), 0 3px 10px -2px rgba(0, 0, 0, 0.35);
+    --color-ext-bg: light-dark(#eaeff5, #0b1017);
+    --color-ext-surface: light-dark(#ffffff, #151c26);
+    --color-ext-subtle: light-dark(#f8fafc, #1b2431);
+    --color-ext-subtle-strong: light-dark(#f1f5f9, #232e3d);
+    --color-ext-border: light-dark(#e2e8f0, #2a3546);
+    --color-ext-border-strong: light-dark(#cbd5e1, #3c4a5f);
+    --color-ext-text: light-dark(#0f172a, #eef2f8);
+    --color-ext-text-secondary: light-dark(#475569, #c2cdda);
+    --color-ext-muted: light-dark(#5a6879, #9dabbd);
+    --color-ext-primary: light-dark(#1a73e8, #6aa9ff);
+    --color-ext-primary-dark: light-dark(#0f56be, #4a90e8);
+    --color-ext-primary-light: light-dark(#4c8ff5, #9cc8ff);
+    --color-ext-success: light-dark(#10b981, #34d399);
+    --color-ext-danger: light-dark(#ef4444, #ff7b76);
+    --color-ext-danger-dark: light-dark(#dc2626, #e5484d);
+    --color-ext-danger-soft: light-dark(#fef2f2, #2c1a1c);
+    --color-ext-danger-ink: light-dark(#b91c1c, #ff9d99);
+    --color-ext-danger-soft-border: light-dark(#fecaca, #5e2b2f);
+    --color-ext-info-soft: light-dark(#eff6ff, #14243d);
+    --color-ext-info-ink: light-dark(#1558b8, #91bcff);
+    --color-ext-info-soft-border: light-dark(#bfdbfe, #24457a);
+    --color-ext-success-soft: light-dark(#ecfdf5, #10281f);
+    --color-ext-success-ink: light-dark(#047857, #5cdca6);
+    --color-ext-success-soft-border: light-dark(#a7f3d0, #1f5140);
+    --color-ext-warning-soft: light-dark(#fffbeb, #2c2311);
+    --color-ext-warning-ink: light-dark(#b45309, #f0b64f);
+    --color-ext-warning-soft-border: light-dark(#fde68a, #5c4a1d);
+    --color-ext-warning: light-dark(#f59e0b, #f5b942);
+    --color-ext-coral: light-dark(#ff4b26, #ff7a5c);
+    --color-ext-accent: light-dark(#ff4b26, #ff7a5c);
+    --color-ext-glass: light-dark(rgba(255, 255, 255, 0.88), rgba(21, 28, 38, 0.9));
+    --color-ext-glass-border: light-dark(rgba(255, 255, 255, 0.6), rgba(60, 74, 95, 0.65));
+    --color-ext-focus-ring: light-dark(rgba(26, 115, 232, 0.15), rgba(106, 169, 255, 0.25));
+
+    --shadow-ext-card:
+      0 14px 34px -4px light-dark(rgba(15, 23, 42, 0.05), rgba(0, 0, 0, 0.5)),
+      0 3px 10px -2px light-dark(rgba(15, 23, 42, 0.02), rgba(0, 0, 0, 0.35));
     --shadow-ext-card-hover:
-      0 20px 42px -4px rgba(0, 0, 0, 0.6), 0 4px 14px -2px rgba(0, 0, 0, 0.4);
-    --shadow-ext-menu: 0 12px 32px -8px rgba(0, 0, 0, 0.6), 0 2px 8px -2px rgba(0, 0, 0, 0.4);
-    --shadow-ext-glass: 0 20px 48px -10px rgba(0, 0, 0, 0.55);
-  }
-
-  .ext-icon-btn:hover:not(:disabled) {
-    background: var(--color-ext-subtle-strong);
-  }
-
-  .ext-field:focus {
-    box-shadow: 0 0 0 3px rgba(106, 169, 255, 0.25);
+      0 20px 42px -4px light-dark(rgba(15, 23, 42, 0.08), rgba(0, 0, 0, 0.6)),
+      0 4px 14px -2px light-dark(rgba(15, 23, 42, 0.03), rgba(0, 0, 0, 0.4));
+    --shadow-ext-menu:
+      0 12px 32px -8px light-dark(rgba(15, 23, 42, 0.14), rgba(0, 0, 0, 0.6)),
+      0 2px 8px -2px light-dark(rgba(15, 23, 42, 0.06), rgba(0, 0, 0, 0.4));
+    --shadow-ext-glass: 0 20px 48px -10px light-dark(rgba(15, 23, 42, 0.1), rgba(0, 0, 0, 0.55));
   }
 }

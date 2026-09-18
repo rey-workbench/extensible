@@ -7,7 +7,27 @@
   import { openBentoLauncher } from "@/lib/browser";
   import { type FeatureModule, getToggleableFeatures } from "@/lib/feature-registry";
   import { createFeatureToggles, watchFeatureToggles } from "@/lib/feature-toggles.svelte";
+  import type { IconName } from "@/lib/icons";
+  import {
+    applyTheme,
+    bindTheme,
+    getThemePreference,
+    nextTheme,
+    setThemePreference,
+    type ThemePreference,
+  } from "@/lib/theme";
   import { clearAllStoredData } from "@/lib/utils";
+
+  const THEME_ICON: Record<ThemePreference, IconName> = {
+    system: "auto",
+    light: "sun",
+    dark: "moon",
+  };
+  const THEME_LABEL: Record<ThemePreference, string> = {
+    system: "System",
+    light: "Light",
+    dark: "Dark",
+  };
 
   
   const features = getToggleableFeatures();
@@ -23,7 +43,22 @@
     activeId ? (features.find((f) => f.id === activeId) ?? null) : null,
   );
 
-  onMount(() => watchFeatureToggles(toggles));
+  let themePref = $state<ThemePreference>("system");
+
+  onMount(() => {
+    bindTheme(document.documentElement);
+    void getThemePreference().then((preference) => (themePref = preference));
+    return watchFeatureToggles(toggles);
+  });
+
+  async function cycleTheme(): Promise<void> {
+    const next = nextTheme(themePref);
+    themePref = next;
+    
+    
+    applyTheme(document.documentElement, next);
+    await setThemePreference(next);
+  }
 
   function toggleFeature(feature: FeatureModule, enabled: boolean): void {
     void toggles.toggle(feature.id, enabled);
@@ -76,7 +111,17 @@
         </span>
       </div>
 
-      <div class="flex items-center gap-2.5">
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-ext-border bg-ext-surface text-ext-text-secondary shadow-sm transition-all hover:border-ext-border-strong hover:bg-ext-subtle hover:text-ext-text active:scale-95"
+          title={`Theme: ${THEME_LABEL[themePref]} — click for ${THEME_LABEL[nextTheme(themePref)]}`}
+          aria-label={`Theme: ${THEME_LABEL[themePref]}`}
+          onclick={() => void cycleTheme()}
+        >
+          <Icon name={THEME_ICON[themePref]} size={14} />
+        </button>
+
         <button
           type="button"
           class="ext-icon-btn h-8 w-8 rounded-xl shadow-sm"

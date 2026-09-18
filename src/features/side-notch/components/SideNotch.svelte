@@ -70,6 +70,13 @@
         activeTempAddress = res.address;
         showToast(shadowRoot, "Created!", { durationMs: 1500 });
       }
+    } catch (err) {
+      
+      showToast(
+        shadowRoot,
+        err instanceof Error ? err.message : "Could not create an address",
+        { isError: true, durationMs: 4000 },
+      );
     } finally {
       isGeneratingMail = false;
     }

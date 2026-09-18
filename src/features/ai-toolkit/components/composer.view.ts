@@ -1,5 +1,6 @@
 import { COPY_MESSAGES } from "@/lib/browser";
 import { installSharedStyles } from "@/lib/shadow-ui";
+import { bindTheme } from "@/lib/theme";
 import { showToast } from "@/lib/toast";
 
 const ALIGN_THROTTLE_MS = 150;
@@ -70,6 +71,7 @@ export class AiToolkitComposerView {
     document.body.appendChild(host);
 
     this.hostEl = host;
+    bindTheme(host);
     this.shadow = host.attachShadow({ mode: "open" });
 
     installSharedStyles(this.shadow, globalCss);

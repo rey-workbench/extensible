@@ -6,11 +6,13 @@
 
   interface Props {
     emails: EmailMessage[];
+    
+    notice: string | null;
     isRefreshing: boolean;
     onRefresh: () => void;
     onOpen: (item: EmailMessage) => void;
   }
-  let { emails, isRefreshing, onRefresh, onOpen }: Props = $props();
+  let { emails, notice, isRefreshing, onRefresh, onOpen }: Props = $props();
 </script>
 
 <div class="flex h-7 shrink-0 items-center justify-between px-1">
@@ -36,6 +38,16 @@
     />
   </button>
 </div>
+
+{#if notice}
+  <div
+    class="flex items-start gap-2 rounded-xl border border-ext-warning-soft-border bg-ext-warning-soft px-3.5 py-2.5 text-label font-medium leading-snug text-ext-warning-ink"
+    role="status"
+  >
+    <span class="font-bold" aria-hidden="true">!</span>
+    <span>{notice}</span>
+  </div>
+{/if}
 
 <div class="flex flex-col space-y-1">
   {#if emails.length === 0}

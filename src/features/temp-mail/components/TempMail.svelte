@@ -7,9 +7,11 @@
   import type {
     EmailMessage,
     InboxState,
+    RetryNotice,
     TempEmail,
     TempMailCurrentState,
   } from "../types/temp-mail.types";
+  import { retryNoticeText } from "../utils/provider-error.utils";
   import AddressCard from "./AddressCard.svelte";
   import InboxList from "./InboxList.svelte";
   import MailModal from "./MailModal.svelte";
@@ -21,14 +23,45 @@
   let rootEl = $state<HTMLElement | null>(null);
   let countdownTimer: ReturnType<typeof setInterval> | null = null;
   let pollTimer: ReturnType<typeof setInterval> | null = null;
-
   
+  let retry = $state<RetryNotice | null>(null);
+  let noticeTimer: ReturnType<typeof setInterval> | null = null;
+  let nowTick = $state(Date.now());
+
   let modalEmail = $state<EmailMessage | null>(null);
 
   const isActive = $derived(email !== null && remainingSeconds > 0);
+  const notice = $derived(
+    retry && retry.until > nowTick ? retryNoticeText(retry, nowTick) : null,
+  );
+
+  $effect(() => {
+    const active = retry;
+    if (!active) {
+      stopNoticeTimer();
+      return;
+    }
+    stopNoticeTimer();
+    nowTick = Date.now();
+    noticeTimer = setInterval(() => {
+      nowTick = Date.now();
+      if (active.until <= nowTick) retry = null;
+    }, 1000);
+  });
+
+  function stopNoticeTimer(): void {
+    if (!noticeTimer) return;
+    clearInterval(noticeTimer);
+    noticeTimer = null;
+  }
 
   function showToastMsg(msg: string, isError = false): void {
     if (rootEl) showToast(rootEl, msg, { isError });
+  }
+
+  function errorText(err: unknown, fallback: string): string {
+    const message = err instanceof Error ? err.message : "";
+    return message || fallback;
   }
 
   function startCountdown(initial: number): void {
@@ -47,13 +80,17 @@
     }
   }
 
-  async function refreshInbox(): Promise<void> {
+  
+  async function refreshInbox(force = false): Promise<RetryNotice | null> {
     try {
-      const res = await sendMessage<InboxState>(TEMPMAIL_ACTIONS.GET_INBOX);
+      const res = await sendMessage<InboxState>(TEMPMAIL_ACTIONS.GET_INBOX, { force });
       emails = res?.emails ?? [];
+      retry = res?.retry ?? null;
+      return retry;
     } catch (err) {
       if (!isContextInvalidated(err))
-        console.error("[TempMail] Inbox refresh error:", err);
+        console.error("[TempMail] Inbox refresh error:", errorText(err, "unknown"));
+      return null;
     }
   }
 
@@ -68,12 +105,16 @@
         email = newEmail;
         startCountdown((newEmail.durationMinutes ?? 60) * 60);
         emails = [];
+        retry = null;
         showToastMsg("Generated new address!");
       }
     } catch (err) {
       if (isContextInvalidated(err)) return;
-      console.error("[TempMail] Generate error:", err);
-      showToastMsg("Failed to generate address");
+      const message = errorText(err, "Failed to generate address");
+      console.warn("[TempMail] Generate error:", message);
+      showToastMsg(message, true);
+      
+      retry = await refreshInbox();
     } finally {
       isRefreshing = false;
     }
@@ -99,11 +140,9 @@
     if (isRefreshing) return;
     isRefreshing = true;
     try {
-      await refreshInbox();
-      showToastMsg("Inbox refreshed");
-    } catch (err) {
-      if (isContextInvalidated(err)) return;
-      console.error("[TempMail] Refresh error:", err);
+      const noticeNow = await refreshInbox(true);
+      if (noticeNow) showToastMsg(retryNoticeText(noticeNow), true);
+      else showToastMsg("Inbox refreshed");
     } finally {
       isRefreshing = false;
     }
@@ -143,20 +182,26 @@
         email = state.email;
         startCountdown(state.remainingSeconds);
       }
+      retry = state?.retry ?? null;
       await refreshInbox();
     } catch (err) {
       if (!isContextInvalidated(err))
-        console.error("[TempMail] Initial load error:", err);
+        console.error("[TempMail] Initial load error:", errorText(err, "unknown"));
     } finally {
       isRefreshing = false;
     }
 
     
-    pollTimer = setInterval(() => void refreshInbox(), 10_000);
+    
+    pollTimer = setInterval(() => {
+      if (document.hidden) return;
+      void refreshInbox();
+    }, 10_000);
   });
 
   onDestroy(() => {
     stopCountdown();
+    stopNoticeTimer();
     if (pollTimer) clearInterval(pollTimer);
   });
 </script>
@@ -174,6 +219,7 @@
 
   <InboxList
     {emails}
+    {notice}
     {isRefreshing}
     onRefresh={() => void handleRefresh()}
     onOpen={(item) => (modalEmail = item)}

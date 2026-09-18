@@ -9,35 +9,47 @@ function createFakeBrowser(): Record<string, unknown> {
   const listeners = new Set<(changes: unknown, area: string) => void>();
   const persistentStore = new Map<string, unknown>();
 
-  const mkArea = (store: Map<string, unknown>, name: string) => ({
-    get(
-      keys: string | string[] | Record<string, unknown> | null | undefined,
-    ): Record<string, unknown> {
-      const wanted = Array.isArray(keys)
-        ? keys
-        : typeof keys === "string"
-          ? [keys]
-          : Object.keys(keys ?? {});
-      const out: Record<string, unknown> = {};
-      for (const k of wanted) if (store.has(k)) out[k] = store.get(k);
-      return out;
-    },
-    set(items: Record<string, unknown>): void {
-      const changes: Record<string, { oldValue?: unknown; newValue: unknown }> = {};
-      for (const [k, v] of Object.entries(items)) {
-        const old = store.get(k);
-        store.set(k, v);
-        changes[k] = { oldValue: old, newValue: v };
-      }
-      for (const fn of listeners) fn(changes, name);
-    },
-    remove(keys: string | string[]): void {
-      for (const k of Array.isArray(keys) ? keys : [keys]) store.delete(k);
-    },
-    clear(): void {
-      store.clear();
-    },
-  });
+  const mkArea = (store: Map<string, unknown>, name: string) => {
+    const areaListeners = new Set<(changes: unknown, area: string) => void>();
+    return {
+      get(
+        keys: string | string[] | Record<string, unknown> | null | undefined,
+      ): Record<string, unknown> {
+        const wanted = Array.isArray(keys)
+          ? keys
+          : typeof keys === "string"
+            ? [keys]
+            : Object.keys(keys ?? {});
+        const out: Record<string, unknown> = {};
+        for (const k of wanted) if (store.has(k)) out[k] = store.get(k);
+        return out;
+      },
+      set(items: Record<string, unknown>): void {
+        const changes: Record<string, { oldValue?: unknown; newValue: unknown }> = {};
+        for (const [k, v] of Object.entries(items)) {
+          const old = store.get(k);
+          store.set(k, v);
+          changes[k] = { oldValue: old, newValue: v };
+        }
+        for (const fn of listeners) fn(changes, name);
+        for (const fn of areaListeners) fn(changes, name);
+      },
+      remove(keys: string | string[]): void {
+        for (const k of Array.isArray(keys) ? keys : [keys]) store.delete(k);
+      },
+      clear(): void {
+        store.clear();
+      },
+      onChanged: {
+        addListener: (fn: (changes: unknown, area: string) => void): void => {
+          areaListeners.add(fn);
+        },
+        removeListener: (fn: (changes: unknown, area: string) => void): void => {
+          areaListeners.delete(fn);
+        },
+      },
+    };
+  };
 
   return {
     runtime: { id: "test-extension" },
@@ -97,6 +109,8 @@ const [
   { getAllScriptTokens, getScriptToken, gmDelete, gmGet, gmList, gmSet },
   { DESIGN_TOKENS },
   { roleFromHints },
+  providerErrors,
+  theme,
 ] = await Promise.all([
   import("@/features/temp-mail/utils/temp-mail.utils"),
   import("@/lib/browser"),
@@ -110,6 +124,8 @@ const [
   import("@/features/user-scripts/services/user-scripts.service"),
   import("@/lib/design-tokens"),
   import("@/features/ai-toolkit/utils/parsers/base.parser"),
+  import("@/features/temp-mail/utils/provider-error.utils"),
+  import("@/lib/theme"),
 ]);
 let passed = 0;
 
@@ -413,10 +429,60 @@ console.log("\n8. Testing theme contrast (light + dark):");
 {
   const css = readFileSync(new URL("../src/styles/global.css", import.meta.url), "utf8");
   const themeBlock = css.slice(css.indexOf("@theme"), css.indexOf(":host {"));
-  const darkBlock = css.slice(css.indexOf("prefers-color-scheme: dark"));
+  const themeAware = css.slice(css.indexOf("@supports (color: light-dark"));
 
-  const tokenIn = (block: string, name: string): string | null =>
-    block.match(new RegExp(`--color-ext-${name}:\\s*([^;]+);`))?.[1].trim() ?? null;
+  const splitTopLevel = (value: string): string[] => {
+    const parts: string[] = [];
+    let depth = 0;
+    let current = "";
+    for (const char of value) {
+      if (char === "(") depth++;
+      else if (char === ")") depth--;
+      else if (char === "," && depth === 0) {
+        parts.push(current);
+        current = "";
+        continue;
+      }
+      current += char;
+    }
+    parts.push(current);
+    return parts.map((part) => part.trim());
+  };
+
+  const pairs = new Map<string, [string, string]>();
+  for (const match of themeAware.matchAll(/--color-ext-([a-z0-9-]+):\s*light-dark\(/g)) {
+    const start = (match.index ?? 0) + match[0].length;
+    let depth = 1;
+    let end = start;
+    while (end < themeAware.length && depth > 0) {
+      if (themeAware[end] === "(") depth++;
+      else if (themeAware[end] === ")") depth--;
+      end++;
+    }
+    const values = splitTopLevel(themeAware.slice(start, end - 1));
+    if (values.length === 2) pairs.set(match[1], [values[0], values[1]]);
+  }
+
+  const themeTokens = [...themeBlock.matchAll(/--color-ext-([a-z0-9-]+):/g)].map((m) => m[1]);
+  const withoutPair = themeTokens.filter((name) => !pairs.has(name));
+  assert.ok(
+    withoutPair.length === 0 && themeTokens.length > 0,
+    `every colour token needs a light-dark() pair, missing: ${withoutPair.join(", ") || "none"}`,
+  );
+
+  for (const name of [...themeBlock.matchAll(/--shadow-ext-([a-z0-9-]+):/g)].map((m) => m[1])) {
+    const at = themeAware.indexOf(`--shadow-ext-${name}:`);
+    const declaration = themeAware.slice(at, themeAware.indexOf(";", at));
+    assert.ok(
+      at >= 0 && declaration.includes("light-dark("),
+      `--shadow-ext-${name} must flip its colours between themes`,
+    );
+  }
+
+  assert.ok(
+    !/@media\s*\(prefers-color-scheme/.test(css),
+    "the app must switch through color-scheme, not a second copy of the palette",
+  );
 
   const luminance = (hex: string): number => {
     const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
@@ -449,12 +515,12 @@ console.log("\n8. Testing theme contrast (light + dark):");
   for (const theme of ["light", "dark"] as const) {
     for (const [fg, bg] of PAIRS) {
       const resolve = (name: string): string => {
-        const value =
-          (theme === "dark" ? tokenIn(darkBlock, name) : null) ?? tokenIn(themeBlock, name);
-        assert.ok(value, `${theme}: token --color-ext-${name} is missing`);
+        const pair = pairs.get(name);
+        assert.ok(pair, `${theme}: token --color-ext-${name} is missing a theme pair`);
+        const value = theme === "dark" ? pair[1] : pair[0];
         assert.ok(
           /^#[0-9a-f]{6}$/i.test(value),
-          `${theme}: --color-ext-${name} must be a hex value`,
+          `${theme}: --color-ext-${name} must be a hex value (got ${value})`,
         );
         return value;
       };
@@ -467,10 +533,12 @@ console.log("\n8. Testing theme contrast (light + dark):");
   }
 
   assert.ok(
-    tokenIn(darkBlock, "surface") !== tokenIn(themeBlock, "surface"),
-    "Dark theme should override the surface token",
+    pairs.get("surface")?.[0] !== pairs.get("surface")?.[1],
+    "The two halves of a light-dark() pair must differ",
   );
-  console.log(`   ✓ Theme contrast passed (${PAIRS.length} pairs × 2 themes).`);
+  console.log(
+    `   ✓ Theme contrast passed (${PAIRS.length} pairs \u00d7 2 themes, ${pairs.size} paired tokens).`,
+  );
 }
 
 console.log("\n9. Testing Security & Hardening Validations:");
@@ -568,5 +636,225 @@ const allTokens = getAllScriptTokens();
 ok(allTokens["test-script-1"] === token1, "getAllScriptTokens must include registered token");
 
 console.log("   ✓ Security & Hardening validations passed.");
+
+console.log("\n10. Testing provider failure handling (the Cloudflare 429 block):");
+{
+  const {
+    TempMailApiError,
+    cooldownFor,
+    describeProviderFailure,
+    formatCooldown,
+    isCoolingDown,
+    parseRetryAfter,
+    readCloudflare,
+    retryNoticeFrom,
+    retryNoticeText,
+  } = providerErrors;
+
+  const cloudflarePage = `<!doctype html>
+<html class="no-js" lang="en-US">
+<head><title>Access denied | api.tempmail.ing used Cloudflare to restrict access</title>
+<script>(function(){var a={event:"feedback clicked",properties:{errorCode: 1015 }};})();</script>
+</head>
+<body><h1><span data-translate="error">Error</span> <span>1015</span></h1>
+<span>Ray ID: a3d39920abf9ce23 &bull;</span>
+<h2>You are being rate limited</h2>
+<p>The owner of this website (api.tempmail.ing) has banned you temporarily.</p></body></html>`;
+
+  const cloudflare = readCloudflare(cloudflarePage);
+  ok(cloudflare.code === 1015, "Cloudflare error code must be read from the body");
+  ok(cloudflare.rayId === "a3d39920abf9ce23", "Cloudflare ray id must be read from the body");
+  ok(
+    cloudflare.reason === "You are being rate limited",
+    "Cloudflare reason must be read from the h2",
+  );
+
+  const failure = describeProviderFailure({ status: 429, body: cloudflarePage });
+  ok(failure.kind === "rate-limit", "A 429 must classify as rate-limit");
+  ok(!/[<>]/.test(failure.message), "The user-facing message must never contain markup");
+  ok(
+    failure.message === "Temp mail provider is rate-limiting this network.",
+    "A rate limit must produce one short sentence",
+  );
+
+  const blocked = describeProviderFailure({
+    status: 403,
+    body: "<script>errorCode: 1020</script>",
+  });
+  ok(blocked.kind === "blocked", "A firewall denial must classify as blocked, not rate-limit");
+  ok(
+    cooldownFor(blocked.kind, 1) > cooldownFor("rate-limit", 1),
+    "A firewall block must wait longer than a rate limit",
+  );
+  ok(
+    describeProviderFailure({ status: 404, body: "{}" }).kind === "not-found",
+    "A 404 must be its own kind so an empty inbox is not a failure",
+  );
+
+  ok(parseRetryAfter("120") === 120_000, "Retry-After delta-seconds must be honoured");
+  const stamp = Date.now();
+  ok(
+    Math.abs(parseRetryAfter(new Date(stamp + 90_000).toUTCString(), stamp) - 90_000) < 2000,
+    "Retry-After HTTP dates must be honoured",
+  );
+  ok(parseRetryAfter("later, maybe", stamp) === 0, "An invalid Retry-After must not create a wait");
+
+  ok(cooldownFor("rate-limit", 1) === 60_000, "First rate limit must wait a minute");
+  ok(cooldownFor("rate-limit", 2) === 300_000, "A repeat must escalate to five minutes");
+  ok(cooldownFor("rate-limit", 99) === 3_600_000, "The ladder must cap at an hour");
+  ok(
+    cooldownFor("rate-limit", 1, 2_000) === 2_000,
+    "A provider Retry-After must win over the ladder",
+  );
+  ok(
+    cooldownFor("rate-limit", 1, 99 * 3_600_000) === 3_600_000,
+    "An absurd Retry-After must still be capped",
+  );
+
+  const notice = retryNoticeFrom(failure, null, stamp);
+  ok(notice?.until === stamp + 60_000, "The notice must end when the cooldown does");
+  ok(
+    retryNoticeFrom(failure, notice, stamp)?.attempts === 2,
+    "Consecutive same-kind failures must escalate",
+  );
+  ok(
+    retryNoticeFrom(failure, { ...(notice ?? {}), kind: "server", attempts: 4 } as never, stamp)
+      ?.attempts === 1,
+    "A different failure kind must restart the ladder",
+  );
+  ok(
+    retryNoticeFrom(
+      { kind: "not-found", status: 404, message: "x", retryAfterMs: 0 },
+      null,
+      stamp,
+    ) === null,
+    "A 404 must not create a cooldown",
+  );
+  ok(
+    retryNoticeText(notice as never, stamp) ===
+      "Temp mail provider is rate-limiting this network. Retry in 1m.",
+    "The notice text must state what happened and when to retry",
+  );
+  ok(
+    formatCooldown(45_000) === "45s" &&
+      formatCooldown(120_000) === "2m" &&
+      formatCooldown(200_000) === "3m 20s",
+    "Cooldown copy must stay short",
+  );
+  ok(
+    isCoolingDown(notice, stamp) && !isCoolingDown(notice, stamp + 60_001),
+    "A cooldown must expire on its own",
+  );
+
+  fakeBrowser.storage.local.remove("local:temp_mail:retry");
+  const realFetch = globalThis.fetch;
+  let calls = 0;
+  globalThis.fetch = (() => {
+    calls++;
+    return Promise.resolve(
+      new Response(cloudflarePage, {
+        status: 429,
+        headers: { "content-type": "text/html" },
+      }),
+    );
+  }) as typeof fetch;
+  try {
+    let thrown: unknown = null;
+    try {
+      await tempMail.generateEmail(60);
+    } catch (err) {
+      thrown = err;
+    }
+    const message = thrown instanceof Error ? thrown.message : String(thrown);
+    ok(thrown instanceof TempMailApiError, "The service must throw a classified error");
+    ok(!/<!doctype|<html/i.test(message), "The Cloudflare page must never leak into the message");
+    ok(/Retry in/.test(message), "The error must tell the user when to retry");
+    ok(calls === 1, "The failing request must touch the network exactly once");
+
+    const secondMessage = await tempMail.generateEmail(60).then(
+      () => "",
+      (err: unknown) => (err instanceof Error ? err.message : String(err)),
+    );
+    ok(calls === 1, "A cooldown must block the next call without any network hit");
+    ok(/rate-limiting/.test(secondMessage), "The blocked call must explain itself");
+    ok(
+      (await tempMail.getRetryNotice())?.kind === "rate-limit",
+      "The cooldown must be persisted so every surface sees it",
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+    fakeBrowser.storage.local.remove("local:temp_mail:retry");
+  }
+  console.log("   ✓ Provider failure handling passed.");
+}
+
+console.log("\n11. Testing theme switching (system / light / dark):");
+{
+  const {
+    applyTheme,
+    bindTheme,
+    colorSchemeFor,
+    getThemePreference,
+    nextTheme,
+    setThemePreference,
+    supportsTheming,
+  } = theme;
+
+  ok(colorSchemeFor("system") === "light dark", "System must delegate to the browser");
+  ok(colorSchemeFor("light") === "light", "The light preference must pin light");
+  ok(colorSchemeFor("dark") === "dark", "The dark preference must pin dark");
+  ok(
+    nextTheme("system") === "light" &&
+      nextTheme("light") === "dark" &&
+      nextTheme("dark") === "system",
+    "The header button must cycle system → light → dark → system",
+  );
+  ok(nextTheme("nonsense" as never) === "system", "An unknown stored value must restart at system");
+
+  const globalObject = globalThis as Record<string, unknown>;
+  const realCss = globalObject.CSS;
+  globalObject.CSS = { supports: () => true };
+  ok(supportsTheming(), "light-dark() support must be detected");
+
+  const fakeRoot = () =>
+    ({ style: {} as CSSStyleDeclaration, isConnected: true }) as unknown as HTMLElement;
+
+  const darkRoot = fakeRoot();
+  applyTheme(darkRoot, "dark");
+  ok(darkRoot.style.colorScheme === "dark", "An explicit dark choice must pin the scheme");
+  const autoRoot = fakeRoot();
+  applyTheme(autoRoot, "system");
+  ok(autoRoot.style.colorScheme === "light dark", "System must leave the decision to the OS, live");
+
+  await setThemePreference("light");
+  ok((await getThemePreference()) === "light", "The preference must survive a reload");
+  const host = fakeRoot();
+  bindTheme(host);
+  ok(
+    host.style.colorScheme === "light dark",
+    "A bound host must be themed from the very first frame, before the read lands",
+  );
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  ok(host.style.colorScheme === "light", "bindTheme must apply the value already stored");
+
+  await setThemePreference("dark");
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  ok(
+    host.style.colorScheme === "dark",
+    "A stored change must re-theme hosts that are already bound (dock, badges, composer)",
+  );
+
+  globalObject.CSS = { supports: () => false };
+  const oldBrowser = fakeRoot();
+  applyTheme(oldBrowser, "dark");
+  ok(
+    !oldBrowser.style.colorScheme,
+    "Without light-dark() the app must stay light rather than half broken",
+  );
+
+  globalObject.CSS = realCss;
+  await setThemePreference("system");
+  console.log("   ✓ Theme switching passed.");
+}
 
 console.log(`\n[Test] All ${passed} assertions passed. ✓`);

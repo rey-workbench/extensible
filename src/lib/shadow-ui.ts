@@ -1,3 +1,5 @@
+import { bindTheme } from "@/lib/theme";
+
 type UiHandledEvent = Event & { __usUiHandled?: boolean };
 
 interface HostRegistry {
@@ -126,6 +128,8 @@ export function createShadowHost(
   const host = document.createElement("div");
   host.id = id;
   host.style.all = "initial";
+
+  bindTheme(host);
   document.body.appendChild(host);
   const shadow = host.attachShadow({ mode: "open" });
   installSharedStyles(shadow, extraCss);

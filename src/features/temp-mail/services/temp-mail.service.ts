@@ -7,10 +7,21 @@ import {
 import type {
   EmailMessage,
   InboxState,
+  RetryNotice,
   TempEmail,
   TempMailCurrentState,
   TempMailSettings,
 } from "../types/temp-mail.types";
+import {
+  describeNetworkFailure,
+  describeProviderFailure,
+  isCoolingDown,
+  type ProviderFailure,
+  retryNoticeFrom,
+  retryNoticeText,
+  sanitizeProviderText,
+  TempMailApiError,
+} from "../utils/provider-error.utils";
 
 const emailItem = storage.defineItem<TempEmail | null>(TEMPMAIL_STORAGE_KEYS.STATE, {
   defaultValue: null,
@@ -23,29 +34,114 @@ export const tempMailSettings = storage.defineItem<TempMailSettings>(
   { defaultValue: DEFAULT_TEMPMAIL_SETTINGS },
 );
 
-async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${TEMPMAIL_CONFIG.API_BASE}${path}`, {
-    ...init,
-    signal: AbortSignal.timeout(TEMPMAIL_CONFIG.REQUEST_TIMEOUT_MS),
-  });
-  if (!res.ok) throw new Error(`TempMail API error (${res.status}): ${await res.text()}`);
-  return (await res.json()) as T;
+const retryItem = storage.defineItem<RetryNotice | null>(TEMPMAIL_STORAGE_KEYS.RETRY, {
+  defaultValue: null,
+});
+
+const MAX_CACHED_EMAILS = 30;
+
+export function getRetryNotice(): Promise<RetryNotice | null> {
+  return retryItem.getValue();
+}
+
+async function activeRetryNotice(): Promise<RetryNotice | null> {
+  const notice = await retryItem.getValue();
+  return isCoolingDown(notice) ? notice : null;
+}
+
+async function readErrorBody(res: Response): Promise<string> {
+  try {
+    return (await res.text()).slice(0, TEMPMAIL_CONFIG.ERROR_BODY_LIMIT);
+  } catch {
+    return "";
+  }
+}
+
+async function failWith(failure: ProviderFailure, body?: string): Promise<TempMailApiError> {
+  const previous = await retryItem.getValue();
+  const notice = retryNoticeFrom(failure, previous);
+  await retryItem.setValue(notice);
+  console.debug(
+    `[TempMail] ${failure.kind}${failure.status ? ` HTTP ${failure.status}` : ""}` +
+      `${failure.rayId ? ` ray ${failure.rayId}` : ""}` +
+      `${notice ? ` — next attempt in ${Math.round((notice.until - Date.now()) / 1000)}s` : ""}`,
+  );
+  return new TempMailApiError(
+    { ...failure, message: notice ? retryNoticeText(notice) : failure.message },
+    body,
+  );
+}
+
+async function call<T>(path: string, init?: RequestInit): Promise<T> {
+  const cooling = await activeRetryNotice();
+  if (cooling) {
+    throw new TempMailApiError({
+      kind: cooling.kind,
+      status: 0,
+      message: retryNoticeText(cooling),
+      retryAfterMs: cooling.until - Date.now(),
+    });
+  }
+
+  let res: Response;
+  try {
+    res = await fetch(`${TEMPMAIL_CONFIG.API_BASE}${path}`, {
+      ...init,
+      signal: AbortSignal.timeout(TEMPMAIL_CONFIG.REQUEST_TIMEOUT_MS),
+    });
+  } catch (err) {
+    throw await failWith(describeNetworkFailure(err));
+  }
+
+  if (!res.ok) {
+    const body = await readErrorBody(res);
+    throw await failWith(
+      describeProviderFailure({
+        status: res.status,
+        body,
+        retryAfter: res.headers.get("retry-after"),
+      }),
+      body,
+    );
+  }
+
+  if (await retryItem.getValue()) await retryItem.setValue(null);
+
+  try {
+    return (await res.json()) as T;
+  } catch {
+    throw await failWith({
+      kind: "bad-response",
+      status: res.status,
+      message: "Temp mail provider returned an unreadable response.",
+      retryAfterMs: 0,
+    });
+  }
 }
 
 export async function generateEmail(durationMinutes?: number): Promise<TempEmail> {
   const duration = durationMinutes ?? TEMPMAIL_CONFIG.DEFAULT_DURATION;
-  const data = await api<{ success: boolean; email?: TempEmail; error?: string }>("/api/generate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ duration }),
-  });
-  if (!data.success || !data.email) throw new Error(data.error || "Failed to generate email");
+  const data = await call<{ success: boolean; email?: TempEmail; error?: string }>(
+    "/api/generate",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ duration }),
+    },
+  );
+  if (!data.success || !data.email) {
+    const detail = sanitizeProviderText(data.error ?? "");
+    throw new TempMailApiError({
+      kind: "unknown",
+      status: 200,
+      message: detail || "Temp mail provider did not return an address.",
+      retryAfterMs: 0,
+    });
+  }
   await emailItem.setValue(data.email);
   await inboxItem.setValue([]);
   return data.email;
 }
-
-const MAX_CACHED_EMAILS = 30;
 
 function isExpired(email: TempEmail | null): boolean {
   return !email || Date.now() >= new Date(email.expiresAt).getTime();
@@ -82,6 +178,7 @@ export async function getCurrentState(autoGenerate = false): Promise<TempMailCur
     remainingSeconds: await getRemainingSeconds(),
     hasValidEmail: email !== null,
     unreadCount: unread,
+    retry: await activeRetryNotice(),
   };
 }
 
@@ -90,18 +187,17 @@ export async function fetchInbox(): Promise<EmailMessage[]> {
   if (!email) return [];
 
   const addr = encodeURIComponent(email.address);
-  const res = await fetch(`${TEMPMAIL_CONFIG.API_BASE}/api/emails/${addr}`, {
-    signal: AbortSignal.timeout(TEMPMAIL_CONFIG.REQUEST_TIMEOUT_MS),
-  });
-  if (!res.ok) {
-    if (res.status === 404) {
+  let data: { emails?: EmailMessage[] };
+  try {
+    data = await call<{ emails?: EmailMessage[] }>(`/api/emails/${addr}`);
+  } catch (err) {
+    if (err instanceof TempMailApiError && err.kind === "not-found") {
       await inboxItem.setValue([]);
       return [];
     }
-    throw new Error(`Inbox fetch error: HTTP ${res.status}`);
+    throw err;
   }
 
-  const data = (await res.json()) as { emails?: EmailMessage[] };
   const existing = await inboxItem.getValue();
   const readIds = new Set(existing.filter((e) => e.is_read).map((e) => e.id));
   const merged = (data.emails ?? []).map((item) => ({
@@ -117,6 +213,7 @@ export async function getInboxState(): Promise<InboxState> {
   return {
     emails: await inboxItem.getValue(),
     remainingSeconds: await getRemainingSeconds(),
+    retry: await activeRetryNotice(),
   };
 }
 
@@ -125,17 +222,22 @@ export async function deleteMessage(messageId: string | number): Promise<boolean
   if (!email) return false;
 
   const addr = encodeURIComponent(email.address);
-  try {
-    await fetch(
-      `${TEMPMAIL_CONFIG.API_BASE}/api/emails/${addr}/${encodeURIComponent(String(messageId))}`,
-      {
-        method: "DELETE",
-        signal: AbortSignal.timeout(TEMPMAIL_CONFIG.REQUEST_TIMEOUT_MS),
-      },
-    );
-  } catch (err) {
-    console.warn("[TempMail] server delete failed:", err);
+  const cooling = await activeRetryNotice();
+  if (!cooling) {
+    try {
+      const res = await fetch(
+        `${TEMPMAIL_CONFIG.API_BASE}/api/emails/${addr}/${encodeURIComponent(String(messageId))}`,
+        {
+          method: "DELETE",
+          signal: AbortSignal.timeout(TEMPMAIL_CONFIG.REQUEST_TIMEOUT_MS),
+        },
+      );
+      if (!res.ok) console.warn(`[TempMail] server delete failed: HTTP ${res.status}`);
+    } catch (err) {
+      console.warn("[TempMail] server delete failed:", describeNetworkFailure(err).message);
+    }
   }
+
   const emails = (await inboxItem.getValue()).filter((e) => String(e.id) !== String(messageId));
   await inboxItem.setValue(emails);
   return true;

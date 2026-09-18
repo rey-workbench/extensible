@@ -18,14 +18,33 @@ export interface TempMailSettings {
   showFloatingButton: boolean;
 }
 
+export type ProviderErrorKind =
+  | "rate-limit"
+  | "blocked"
+  | "server"
+  | "timeout"
+  | "offline"
+  | "not-found"
+  | "bad-response"
+  | "unknown";
+
+export interface RetryNotice {
+  until: number;
+  kind: ProviderErrorKind;
+  attempts: number;
+  message: string;
+}
+
 export interface TempMailCurrentState {
   email: TempEmail | null;
   remainingSeconds: number;
   hasValidEmail: boolean;
   unreadCount: number;
+  retry: RetryNotice | null;
 }
 
 export interface InboxState {
   emails: EmailMessage[];
   remainingSeconds: number;
+  retry: RetryNotice | null;
 }

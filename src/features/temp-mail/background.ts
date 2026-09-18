@@ -9,11 +9,17 @@ import {
   generateEmail,
   getCurrentState,
   getInboxState,
+  getRetryNotice,
   hasValidEmail,
   inboxItem,
   tempMailSettings,
 } from "./services/temp-mail.service";
-import type { InboxState, TempEmail, TempMailSettings } from "./types/temp-mail.types";
+import type {
+  InboxState,
+  TempEmail,
+  TempMailCurrentState,
+  TempMailSettings,
+} from "./types/temp-mail.types";
 
 const ALARM_NAME = "tempmail_poll";
 
@@ -21,24 +27,40 @@ let consecutiveErrors = 0;
 let nextAllowedPollTime = 0;
 let lastFetchTime = 0;
 
-async function executeInboxPoll(): Promise<void> {
-  if (Date.now() < nextAllowedPollTime) return;
-  if (!(await hasValidEmail())) return;
-
+async function pollInbox(): Promise<void> {
+  lastFetchTime = Date.now();
   try {
-    lastFetchTime = Date.now();
     await fetchInbox();
     consecutiveErrors = 0;
-    await updateBadge();
+    nextAllowedPollTime = 0;
   } catch (err) {
     consecutiveErrors++;
-    const backoffSec = Math.min(300, 2 ** Math.min(consecutiveErrors, 5) * 10);
-    nextAllowedPollTime = Date.now() + backoffSec * 1000;
+    const backoffMs = Math.min(300_000, 2 ** Math.min(consecutiveErrors, 5) * 10_000);
+    const providerUntil = (await getRetryNotice())?.until ?? 0;
+    nextAllowedPollTime = Math.max(Date.now() + backoffMs, providerUntil);
+    throw err;
+  } finally {
+    await updateBadge();
+  }
+}
+
+async function pollInboxQuietly(): Promise<void> {
+  try {
+    await pollInbox();
+  } catch (err) {
     console.debug(
-      `[TempMail] poll failed (${consecutiveErrors} consecutive); backing off ${backoffSec}s:`,
-      err,
+      `[TempMail] poll failed (${consecutiveErrors} consecutive): ${
+        err instanceof Error ? err.message : String(err)
+      }`,
     );
   }
+}
+
+async function executeInboxPoll(): Promise<void> {
+  if (Date.now() < nextAllowedPollTime) return;
+  if (Date.now() - lastFetchTime < TEMPMAIL_CONFIG.MIN_FETCH_INTERVAL_MS) return;
+  if (!(await hasValidEmail())) return;
+  await pollInboxQuietly();
 }
 
 async function updateBadge(): Promise<void> {
@@ -49,16 +71,22 @@ async function updateBadge(): Promise<void> {
 }
 
 export function setupBackground(): void {
-  onMessage<
-    { autoGenerate?: boolean; duration?: number } | null,
-    Awaited<ReturnType<typeof getCurrentState>>
-  >(TEMPMAIL_ACTIONS.GET_CURRENT, async (payload) => {
-    const state = await getCurrentState(payload?.autoGenerate ?? false);
-    if (state.hasValidEmail && Date.now() - lastFetchTime > 5000) {
-      void executeInboxPoll();
-    }
-    return state;
-  });
+  onMessage<{ autoGenerate?: boolean } | null, TempMailCurrentState>(
+    TEMPMAIL_ACTIONS.GET_CURRENT,
+    async (payload) => {
+      let state: TempMailCurrentState;
+      try {
+        state = await getCurrentState(payload?.autoGenerate ?? false);
+      } catch (err) {
+        console.debug(
+          `[TempMail] state read failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+        state = await getCurrentState(false);
+      }
+      if (state.hasValidEmail) void executeInboxPoll();
+      return state;
+    },
+  );
 
   onMessage<{ duration?: number } | null, TempEmail>(
     TEMPMAIL_ACTIONS.GENERATE_NEW,
@@ -72,12 +100,20 @@ export function setupBackground(): void {
     },
   );
 
-  onMessage<null, InboxState>(TEMPMAIL_ACTIONS.GET_INBOX, async () => {
-    lastFetchTime = Date.now();
-    consecutiveErrors = 0;
-    nextAllowedPollTime = 0;
-    await fetchInbox();
-    await updateBadge();
+  onMessage<{ force?: boolean } | null, InboxState>(TEMPMAIL_ACTIONS.GET_INBOX, async (payload) => {
+    if (payload?.force === true) {
+      if (await hasValidEmail()) {
+        try {
+          await pollInbox();
+        } catch (err) {
+          console.debug(
+            `[TempMail] manual refresh failed: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
+      }
+    } else {
+      await executeInboxPoll();
+    }
     return getInboxState();
   });
 
@@ -152,32 +188,48 @@ export function setupBackground(): void {
     if (info.menuItemId === "tempmail_fill") {
       await fillActiveTab(tab.id);
     } else if (info.menuItemId === "tempmail_copy") {
-      const s = await getCurrentState(true);
-      const addr = s.email?.address ?? (await generateEmail()).address;
+      const addr = await resolveAddress();
+      if (!addr) return;
       await browser.scripting.executeScript({
         target: { tabId: tab.id },
         func: (text: string) => navigator.clipboard.writeText(text),
         args: [addr],
       });
     } else if (info.menuItemId === "tempmail_new") {
-      await generateEmail();
-      await updateBadge();
+      try {
+        await generateEmail();
+        await updateBadge();
+      } catch (err) {
+        console.debug(
+          `[TempMail] menu generate failed: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
     }
   });
 }
 
+async function resolveAddress(): Promise<string | null> {
+  try {
+    const state = await getCurrentState(true);
+    return state.email?.address ?? null;
+  } catch (err) {
+    console.debug(
+      `[TempMail] no address available: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return null;
+  }
+}
+
 async function fillActiveTab(tabId: number | null): Promise<boolean> {
-  const s = await getCurrentState(true);
-  if (!s.email) return false;
+  const address = await resolveAddress();
+  if (!address) return false;
   try {
     const targetTabId =
       tabId ??
       (await browser.tabs.query({ active: true, lastFocusedWindow: true }))[0]?.id ??
       (await browser.tabs.query({ active: true }))[0]?.id;
     if (targetTabId == null) return false;
-    await sendToTab(targetTabId, TEMPMAIL_ACTIONS.AUTOFILL_EMAIL, {
-      email: s.email.address,
-    });
+    await sendToTab(targetTabId, TEMPMAIL_ACTIONS.AUTOFILL_EMAIL, { email: address });
     return true;
   } catch {
     return false;
