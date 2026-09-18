@@ -133,9 +133,14 @@ export function setupBackground(): void {
   });
 
   browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status !== "complete") return;
+    const isNavigation =
+      changeInfo.status === "complete" || typeof changeInfo.url === "string";
+    if (!isNavigation) return;
     const url = changeInfo.url ?? tab.url ?? "";
     if (!url || isBlockedUrl(url)) return;
+    if (changeInfo.url) {
+      forgetTab(tabId);
+    }
     void runScriptsInTab(tabId, "auto", url).catch(() => {});
   });
 

@@ -75,6 +75,15 @@ export async function save(record: UserScriptRecord): Promise<UserScriptRecord> 
   return updated;
 }
 
+export async function updateLastRun(id: string, lastRunAt: number): Promise<void> {
+  const all = await list();
+  const idx = all.findIndex((s) => s.id === id);
+  if (idx >= 0) {
+    all[idx] = { ...all[idx], lastRunAt };
+    await scriptsItem.setValue(all);
+  }
+}
+
 export async function remove(id: string): Promise<boolean> {
   const all = await scriptsItem.getValue();
   const next = all.filter((s) => s.id !== id);

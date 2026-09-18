@@ -8,16 +8,17 @@ import {
 } from "../constants/user-scripts.constants";
 import type { UserScriptRecord } from "../types/user-scripts.types";
 import { buildScriptSource } from "../utils/gm-shim.source";
-import { appendRunLog, getScriptToken, list, save } from "./user-scripts.service";
+import { appendRunLog, getScriptToken, list, updateLastRun } from "./user-scripts.service";
 
 const injectedTabs = new Map<number, Set<string>>();
+const nativeRegisteredScriptIds = new Set<string>();
 
 const requireCache = new Map<string, string>();
 
 interface UserScriptsApi {
   register?: (items: unknown[]) => Promise<unknown>;
   unregister?: () => Promise<unknown>;
-  execute?: (details: unknown) => Promise<unknown>;
+  configureWorld?: (opts: unknown) => Promise<unknown>;
 }
 
 function getUserScriptsApi(): UserScriptsApi | undefined {
@@ -34,7 +35,7 @@ async function markRun(script: UserScriptRecord): Promise<void> {
   const now = Date.now();
   if (now - (lastRunSavedAt.get(script.id) ?? 0) < 60_000) return;
   lastRunSavedAt.set(script.id, now);
-  await save({ ...script, lastRunAt: now });
+  await updateLastRun(script.id, now);
 }
 
 export async function runScriptsInTab(
@@ -48,13 +49,6 @@ export async function runScriptsInTab(
   const url = navUrl ?? tab.url ?? "";
   if (!url || isBlockedUrl(url)) return 0;
 
-  // If auto-triggered on navigation and chrome.userScripts is supported,
-  // native Chrome engine runs scripts in USER_SCRIPT world (exempt from CSP).
-  const userScriptsApi = getUserScriptsApi();
-  if (trigger === "auto" && typeof userScriptsApi?.register === "function") {
-    return 0;
-  }
-
   const allScripts = await list();
   const scripts = targetScriptId
     ? allScripts.filter((s) => s.id === targetScriptId)
@@ -64,6 +58,12 @@ export async function runScriptsInTab(
   for (const script of scripts) {
     const seen = injectedTabs.get(tabId) ?? new Set<string>();
     if (trigger === "auto" && seen.has(script.id)) continue;
+
+    // If auto-triggered on navigation and this script was registered natively,
+    // Chrome's userScripts runner already injected it into USER_SCRIPT world.
+    if (trigger === "auto" && nativeRegisteredScriptIds.has(script.id)) {
+      continue;
+    }
 
     const ok = await injectScript(tabId, script, url);
     if (ok) count++;
@@ -90,43 +90,100 @@ export async function reinjectAll(): Promise<void> {
   }
 }
 
-export async function syncUserScriptsApi(): Promise<void> {
+function cleanMatchPattern(pattern: string): string {
+  const p = pattern.trim();
+  if (p === "<all_urls>") return p;
+  const clean = p.split("?")[0].split("#")[0];
+  if (/^(\*|https?|file|ftp):\/\/(\*|\*\.[^/*]+|[^/*]+)(\/.*)$/.test(clean)) {
+    return clean;
+  }
+  return "*://*/*";
+}
+
+async function prepareScriptPayload(
+  script: UserScriptRecord,
+  forWorld?: "MAIN" | "ISOLATED",
+): Promise<{ source: string; rpcToken: string }> {
+  const rpcToken = getScriptToken(script.id);
+  const requires: string[] = [];
+  for (const req of script.meta.requires || []) {
+    try {
+      requires.push(await fetchRequire(req));
+    } catch (err) {
+      console.warn(`[UserScripts] @require failed for ${req}:`, err);
+    }
+  }
+
+  const allApis = resolveGrants(script.meta.grants);
+  const apis =
+    forWorld === "ISOLATED"
+      ? allApis.filter((a) => a !== "unsafeWindow")
+      : allApis;
+
+  const source = buildScriptSource({
+    scriptId: script.id,
+    rpcToken,
+    apis,
+    requires,
+    body: stripHeaderOnly(script.code),
+  });
+
+  return { source, rpcToken };
+}
+
+export async function initNativeUserScripts(): Promise<void> {
   const userScriptsApi = getUserScriptsApi();
   if (typeof userScriptsApi?.register !== "function") return;
 
   try {
+    if (typeof userScriptsApi.configureWorld === "function") {
+      await userScriptsApi.configureWorld({ messaging: true }).catch(() => {});
+    }
     if (typeof userScriptsApi.unregister === "function") {
       await userScriptsApi.unregister().catch(() => {});
     }
+    nativeRegisteredScriptIds.clear();
+
     const allScripts = await list();
     const enabled = allScripts.filter((s) => s.enabled);
     if (!enabled.length) return;
 
-    const items = [];
     for (const script of enabled) {
-      const rpcToken = getScriptToken(script.id);
-      const source = buildScriptSource({
-        scriptId: script.id,
-        rpcToken,
-        apis: resolveGrants(script.meta.grants),
-        requires: [],
-        body: stripHeaderOnly(script.code),
-      });
-      items.push({
-        id: script.id,
-        matches: Array.isArray(script.meta?.matches) && script.meta.matches.length
-          ? script.meta.matches
-          : ["*://*/*"],
-        js: [{ code: source }],
-        runAt: script.meta.runAt === "document-start" ? "document_start" : "document_idle",
-        world: "USER_SCRIPT",
-      });
+      try {
+        const { source } = await prepareScriptPayload(script);
+        const rawMatches =
+          Array.isArray(script.meta?.matches) && script.meta.matches.length
+            ? script.meta.matches
+            : ["*://*/*"];
+        const matches = rawMatches.map(cleanMatchPattern);
+
+        await userScriptsApi.register([
+          {
+            id: script.id,
+            matches,
+            js: [{ code: source }],
+            runAt:
+              script.meta.runAt === "document-start"
+                ? "document_start"
+                : "document_idle",
+            world: "USER_SCRIPT",
+          },
+        ]);
+
+        nativeRegisteredScriptIds.add(script.id);
+      } catch (scriptErr) {
+        console.warn(
+          `[UserScripts] Failed to register script ${script.id} natively:`,
+          scriptErr,
+        );
+      }
     }
-    await userScriptsApi.register(items);
   } catch (err) {
-    console.debug("[UserScripts] syncUserScriptsApi error:", err);
+    console.debug("[UserScripts] initNativeUserScripts error:", err);
   }
 }
+
+export const syncUserScriptsApi = initNativeUserScripts;
 
 export function forgetTab(tabId: number): void {
   injectedTabs.delete(tabId);
@@ -137,62 +194,18 @@ async function injectScript(
   script: UserScriptRecord,
   url: string,
 ): Promise<boolean> {
-  const apis = resolveGrants(script.meta.grants);
-  const requires: string[] = [];
-  for (const req of script.meta.requires) {
-    try {
-      requires.push(await fetchRequire(req));
-    } catch (err) {
-      await appendRunLog({
-        scriptId: script.id,
-        ts: Date.now(),
-        url,
-        ok: false,
-        message: `@require failed: ${err instanceof Error ? err.message : String(err)}`,
-      });
-    }
-  }
+  const needsMainWorld =
+    script.meta.injectInto === "page" ||
+    resolveGrants(script.meta.grants).includes("unsafeWindow");
+  const world = needsMainWorld ? "MAIN" : "ISOLATED";
 
-  const apisForWorld =
-    script.meta.injectInto === "page" || apis.includes("unsafeWindow")
-      ? apis
-      : apis.filter((a) => a !== "unsafeWindow");
+  const { source, rpcToken } = await prepareScriptPayload(script, world);
 
-  const rpcToken = getScriptToken(script.id);
   await sendToTab(tabId, USER_SCRIPTS_ACTIONS.REGISTER_SESSION_TOKEN, {
     scriptId: script.id,
     token: rpcToken,
   }).catch(() => {});
 
-  const source = buildScriptSource({
-    scriptId: script.id,
-    rpcToken,
-    apis: apisForWorld,
-    requires,
-    body: stripHeaderOnly(script.code),
-  });
-
-  try {
-    const userScriptsApi = getUserScriptsApi();
-    if (typeof userScriptsApi?.execute === "function") {
-      await userScriptsApi.execute({
-        target: { tabId },
-        js: [{ code: source }],
-      });
-      await appendRunLog({
-        scriptId: script.id,
-        ts: Date.now(),
-        url,
-        ok: true,
-      });
-      await markRun(script);
-      return true;
-    }
-  } catch (e) {
-    console.debug("[UserScripts] chrome.userScripts.execute fallback:", e);
-  }
-
-  const world = "MAIN";
   try {
     if (typeof browser.scripting?.executeScript === "function") {
       const results = await browser.scripting.executeScript({
