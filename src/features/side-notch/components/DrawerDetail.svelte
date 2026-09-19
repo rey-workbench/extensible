@@ -1,5 +1,6 @@
 <script lang="ts">
   import Icon from "@/components/Icon.svelte";
+  import ModuleSettings from "@/components/ModuleSettings.svelte";
   import type { FeatureModule } from "@/lib/feature-registry";
 
   
@@ -18,6 +19,13 @@
 
   let moduleInstance = $state<unknown>(null);
   let lastApi: ModuleApi | null = null;
+
+  
+  
+  let settingsFor = $state<string | null>(null);
+  const showSettings = $derived(
+    Boolean(feature?.settings) && settingsFor === feature?.id,
+  );
 
   $effect(() => {
     const api =
@@ -38,7 +46,7 @@
     
     <button
       type="button"
-      class="flex h-15 w-15 shrink-0 cursor-pointer items-center justify-center rounded-2xl border border-ext-border bg-ext-surface text-ext-text-secondary shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)] transition-all hover:bg-ext-subtle hover:text-ext-text active:scale-95"
+      class="ext-hub-panel ext-hub-action flex h-15 w-15 shrink-0 items-center justify-center text-ext-text-secondary hover:text-ext-text"
       onclick={onBack}
       title="Back to Hub"
       aria-label="Back to Hub"
@@ -58,7 +66,7 @@
 
     
     <div
-      class="flex h-15 min-w-0 flex-1 flex-col justify-center rounded-2xl border border-ext-border bg-ext-surface px-5 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)]"
+      class="ext-hub-panel flex h-15 min-w-0 flex-1 flex-col justify-center px-5"
     >
       <h2 class="truncate text-hero font-extrabold tracking-tight text-ext-text">
         {feature?.name ?? "Module"}
@@ -69,6 +77,22 @@
         </p>
       {/if}
     </div>
+
+    
+    {#if feature?.settings}
+      <button
+        type="button"
+        class="ext-hub-panel ext-hub-action flex h-15 w-15 shrink-0 items-center justify-center hover:text-ext-text {showSettings
+          ? 'text-ext-text'
+          : 'text-ext-text-secondary'}"
+        onclick={() => (settingsFor = showSettings ? null : (feature?.id ?? null))}
+        title={showSettings ? "Back to module" : "Module settings"}
+        aria-label={showSettings ? "Back to module" : "Module settings"}
+        aria-pressed={showSettings}
+      >
+        <Icon name="gear" size={17} />
+      </button>
+    {/if}
 
     
     <button
@@ -89,7 +113,14 @@
   <div class="mt-3 min-h-0 flex-1 overflow-y-auto">
     {#if feature?.popup}
       {@const DetailView = feature.popup}
-      <DetailView bind:this={moduleInstance} />
+      
+      
+      <div class={showSettings ? "hidden" : ""}>
+        <DetailView bind:this={moduleInstance} />
+      </div>
+    {/if}
+    {#if showSettings && feature}
+      <ModuleSettings {feature} />
     {/if}
   </div>
 </div>

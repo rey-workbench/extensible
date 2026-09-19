@@ -12,34 +12,36 @@ export interface FeatureContext {
   icon: string;
   color: string;
   withContent: boolean;
+  withApi: boolean;
 }
 
 export type TemplateWriter = (rel: string, content: string) => void;
 
 export function writeTemplates(ctx: FeatureContext, write: TemplateWriter): void {
-  const { id, prefix, camel, Pascal, Name, Description } = ctx;
-  /* eslint-disable prettier/prettier */
+  const { id, prefix, camel, Pascal, Name, Description, icon } = ctx;
+  const upper = prefix.toUpperCase();
 
   write(
     "register.ts",
     `import { defineFeature } from "@/lib/feature-registry";
-import { setupBackground } from "./background";
 import ${Pascal} from "./components/${Pascal}.svelte";
+import { setupBackground } from "./background";
 
-// Satu-satunya titik daftar fitur. Entry (background/content/popup) membaca
-// dari registry ini — TIDAK ada pendaftaran manual di entrypoints.
+// Satu-satunya titik daftar fitur. Entry membaca registry ini — tidak ada
+// pendaftaran manual di entrypoints; features/index.ts meng-glob semua
+// */register.ts.
 defineFeature({
   id: "${id}",
   name: "${Name}",
   description: "${Description}",
-  icon: "${ctx.icon}", // dari --icon; daftar: src/lib/icons.ts
+  icon: "${icon}", // daftar: src/lib/icons.ts
   color: "${ctx.color}",
   background: setupBackground,${
     ctx.withContent
       ? `
-  // Lazy import: bundle fitur hanya dimuat bila fitur aktif (kontrak #register-lazy).
+  // Lazy: bundle hanya dimuat saat fitur aktif (kontrak register-lazy).
   content: () => import("./content").then((m) => m.setupContent()),`
-      : "\n  // --no-content: tanpa content script. Tambahkan content: bila nanti perlu."
+      : ""
   }
   popup: ${Pascal},
 });
@@ -49,19 +51,19 @@ defineFeature({
   write(
     `constants/${prefix}.constants.ts`,
     `// Konstanta fitur ${Name}.
-// ATURAN PREFIX (dicek pnpm check:structure): semua action & storage key
-// WAJIB diawali "${prefix}:" / "local:${prefix}:" — turunan langsung dari id "${id}".
-// Jangan pernah hardcode string action di luar file ini — selalu pakai ${prefix.toUpperCase()}_ACTIONS.X.
+// ATURAN PREFIX (dicek pnpm check:structure): action & storage key WAJIB
+// diawali "${prefix}:" / "local:${prefix}:" — turunan langsung dari id "${id}".
+// String action tidak boleh ditulis ulang di file lain: selalu pakai ${upper}_ACTIONS.
 
-export const ${prefix.toUpperCase()}_ACTIONS = {
+export const ${upper}_ACTIONS = {
   EXAMPLE: "${prefix}:example", // TODO: ganti dengan aksi nyata
 } as const;
 
-export const ${prefix.toUpperCase()}_STORAGE_KEYS = {
+export const ${upper}_STORAGE_KEYS = {
   SETTINGS: "local:${prefix}:settings",
 } as const;
 
-export const DEFAULT_${prefix.toUpperCase()}_SETTINGS = {
+export const DEFAULT_${upper}_SETTINGS = {
   enabled: true, // TODO: sesuaikan
 };
 `,
@@ -72,8 +74,7 @@ export const DEFAULT_${prefix.toUpperCase()}_SETTINGS = {
     `// Tipe data fitur ${Name}.
 
 export interface ${Pascal}Settings {
-  // TODO: bentuk settings fitur ini (disimpan di chrome.storage.local).
-  enabled: boolean;
+  enabled: boolean; // TODO: bentuk settings fitur ini
 }
 `,
   );
@@ -82,23 +83,23 @@ export interface ${Pascal}Settings {
     `services/${prefix}.service.ts`,
     `import { storage } from "wxt/utils/storage";
 import { readSettings } from "@/lib/utils";
-import { DEFAULT_${prefix.toUpperCase()}_SETTINGS, ${prefix.toUpperCase()}_STORAGE_KEYS } from "../constants/${prefix}.constants";
+import { DEFAULT_${upper}_SETTINGS, ${upper}_STORAGE_KEYS } from "../constants/${prefix}.constants";
 import type { ${Pascal}Settings } from "../types/${prefix}.types";
 
-// ---- Storage items -------------------------------------------------------
-// Satu storage.defineItem per key. defaultValue menjaga data korup/stale tetap aman.
-
+// Satu storage.defineItem per key; defaultValue menjaga data rusak tetap aman.
 export const ${camel}SettingsItem = storage.defineItem<${Pascal}Settings>(
-  ${prefix.toUpperCase()}_STORAGE_KEYS.SETTINGS,
-  { defaultValue: DEFAULT_${prefix.toUpperCase()}_SETTINGS },
+  ${upper}_STORAGE_KEYS.SETTINGS,
+  { defaultValue: DEFAULT_${upper}_SETTINGS },
 );
 
-// ---- Service functions ---------------------------------------------------
-// GAYA WAJIB: fungsi polos (BUKAN class dengan static) — dicek pnpm check:structure.
-// Semua akses storage/logika bisnis fitur ada di sini, TIDAK di content.ts.
+// GAYA WAJIB: fungsi polos, bukan class dengan static (dicek check:structure).
+// Semua akses storage & logika bisnis di sini, bukan di content.ts/komponen.
 
 export async function get${Pascal}Settings(): Promise<${Pascal}Settings> {
-  return readSettings(await ${camel}SettingsItem.getValue(), DEFAULT_${prefix.toUpperCase()}_SETTINGS);
+  return readSettings(
+    await ${camel}SettingsItem.getValue(),
+    DEFAULT_${upper}_SETTINGS,
+  );
 }
 
 export async function update${Pascal}Settings(
@@ -113,33 +114,17 @@ export async function update${Pascal}Settings(
   );
 
   write(
-    "api.ts",
-    `// Pintu lintas-fitur (satu-satunya file yang boleh diimpor fitur LAIN).
-// Fitur lain TIDAK boleh mengimpor constants/types/service langsung —
-// agar refactor internal ${Name} tidak merusak fitur lain.
-// Contoh pemakaian di fitur lain:
-//   import { ${camel}Api } from "@/features/${id}/api";
-
-import { sendMessage } from "@/lib/messaging";
-import { ${prefix.toUpperCase()}_ACTIONS } from "./constants/${prefix}.constants";
-
-export const ${camel}Api = {
-  example: () => sendMessage(${prefix.toUpperCase()}_ACTIONS.EXAMPLE),
-};
-`,
-  );
-
-  write(
     "background.ts",
     `import { onMessage } from "@/lib/messaging";
-import { ${prefix.toUpperCase()}_ACTIONS } from "./constants/${prefix}.constants";
+import { ${upper}_ACTIONS } from "./constants/${prefix}.constants";
 
 // Wiring background (service worker). Nama export WAJIB setupBackground
-// (dicek pnpm check:structure). Isi: daftarkan onMessage handler + alarm.
-// CATATAN: handler TANPA await -> jangan pakai async (biome useAwait).
+// (dicek check:structure). Semua yang butuh tab/izin/network lintas-halaman
+// dikerjakan di sini, bukan di content script.
+// CATATAN: handler tanpa await jangan ditandai async (biome useAwait).
 export function setupBackground(): void {
-  onMessage(${prefix.toUpperCase()}_ACTIONS.EXAMPLE, () => {
-    // TODO: implementasi aksi background. Return nilai -> dikirim balik ke caller.
+  onMessage(${upper}_ACTIONS.EXAMPLE, () => {
+    // TODO: implementasi. Nilai yang di-return otomatis dikirim ke pemanggil.
     return null;
   });
 }
@@ -150,16 +135,15 @@ export function setupBackground(): void {
     write(
       "content.ts",
       `import { onMessage } from "@/lib/messaging";
-import { ${prefix.toUpperCase()}_ACTIONS } from "./constants/${prefix}.constants";
+import { ${upper}_ACTIONS } from "./constants/${prefix}.constants";
 
-// Wiring content script — HARUS TIPIS (≤40 baris, dicek pnpm check:structure).
+// Wiring content script — HARUS TIPIS (≤40 baris, dicek check:structure).
 // Nama export WAJIB setupContent. Logika nyata → services/ atau utils/.
 // UI yang diinjeksi ke halaman → shadow DOM via @/lib/shadow-ui
-// (isolasi CSS + klik aman dari handler halaman; lihat side-notch/temp-mail).
-// CATATAN: handler TANPA await -> deklarasi non-async (biome useAwait).
+// (contoh lengkap: side-notch/content.ts dan temp-mail/services/badge-manager).
 export function setupContent(): void {
-  onMessage(${prefix.toUpperCase()}_ACTIONS.EXAMPLE, () => {
-    // TODO: aksi dari popup/background ke halaman ini. Return -> balasan ke caller.
+  onMessage(${upper}_ACTIONS.EXAMPLE, () => {
+    // TODO: aksi dari background/popup ke halaman ini.
     return null;
   });
 }
@@ -167,20 +151,78 @@ export function setupContent(): void {
     );
   }
 
+  if (ctx.withApi) {
+    write(
+      "api.ts",
+      `// Pintu lintas-fitur (satu-satunya file yang boleh diimpor fitur lain),
+// supaya refactor internal ${Name} tidak merusak pemanggilnya.
+// Pakai hanya kalau ada fitur lain yang benar-benar memanggil — file ini
+// dihitung mati oleh knip selama belum ada pemanggil.
+// Contoh: import { ${camel}Api } from "@/features/${id}/api";
+
+import { sendMessage } from "@/lib/messaging";
+import { ${upper}_ACTIONS } from "./constants/${prefix}.constants";
+
+export const ${camel}Api = {
+  example: () => sendMessage(${upper}_ACTIONS.EXAMPLE),
+};
+`,
+    );
+  }
+
   write(
     `components/${Pascal}.svelte`,
     `<script lang="ts">
-  // Popup UI fitur ${Name} — dirender di dalam popup/drawer.
-  // Pakai komponen bersama: @/components (Button, Card, Toggle, Icon, EmptyState…).
+  import { onMount } from "svelte";
   import Button from "@/components/Button.svelte";
+  import Toggle from "@/components/Toggle.svelte";
+  import { sendMessage } from "@/lib/messaging";
+  import { ${upper}_ACTIONS } from "../constants/${prefix}.constants";
+  import { get${Pascal}Settings, update${Pascal}Settings } from "../services/${prefix}.service";
+  import type { ${Pascal}Settings } from "../types/${prefix}.types";
 
-  // TODO: state & aksi. Komunikasi ke background selalu via sendMessage(ACTIONS.X).
+  // UI fitur ${Name}, dirender di popup maupun drawer hub (satu komponen untuk
+  // dua permukaan). Komponen bersama: @/components/… — jangan bikin ulang
+  // tombol, kartu, atau daftar kosong.
+  let settings = $state<${Pascal}Settings | null>(null);
+  let busy = $state(false);
+
+  onMount(async () => {
+    settings = await get${Pascal}Settings();
+  });
+
+  async function toggle(enabled: boolean): Promise<void> {
+    settings = await update${Pascal}Settings({ enabled });
+  }
+
+  async function run(): Promise<void> {
+    busy = true;
+    try {
+      await sendMessage(${upper}_ACTIONS.EXAMPLE);
+    } finally {
+      busy = false;
+    }
+  }
 </script>
 
-<div class="flex flex-col gap-2.5 p-2.5">
-  <h2 class="text-sm font-bold text-ext-text">${Name}</h2>
-  <p class="text-xs text-ext-text-secondary">${Description}</p>
-  <Button onclick={() => {}}>Example action</Button>
+<div class="flex flex-col gap-3 p-2.5">
+  <div class="ext-card flex items-center justify-between p-4">
+    <div class="min-w-0">
+      <div class="text-body font-bold text-ext-text">${Name}</div>
+      <div class="text-label text-ext-muted">${Description}</div>
+    </div>
+    {#if settings}
+      <Toggle
+        checked={settings.enabled}
+        label="Toggle ${Name}"
+        onchange={(value) => void toggle(value)}
+      />
+    {/if}
+  </div>
+
+  <Button variant="primary" icon="${icon}" disabled={busy} onclick={() => void run()}>
+    Example action
+  </Button>
 </div>
 `,
   );
@@ -193,16 +235,28 @@ export function logSummary(ctx: FeatureContext): void {
     ["Prefix", prefix],
     ["Icon", ctx.icon],
     ["Color", ctx.color],
+    ["API", ctx.withApi ? "api.ts dibuat" : "tanpa api.ts (--api bila perlu)"],
   ] as const;
   const pad = (label: string): string => label.padEnd(8, " ");
+
   console.log(`
 ${GREEN}✔ Feature "${Name}" generated successfully!${RESET}
 ${summary.map(([k, v]) => `${CYAN}  ${pad(`${k}:`)}${RESET}${v}`).join("\n")}
-${YELLOW}\n Next steps:${RESET}
-  1. Definisikan aksi nyata di ${CYAN}constants/${prefix}.constants.ts${RESET} (jaga prefix!)
-  2. Tulis logika di ${CYAN}services/${RESET} — jaga content.ts tetap tipis
-  3. Daftarkan feature ke registry (otomatis terbaca entrypoints)
-  4. Verifikasi: ${CYAN}pnpm check:structure && pnpm typecheck && pnpm lint${RESET}
+${YELLOW}
+ Next steps:${RESET}
+  1. Aksi nyata di ${CYAN}constants/${prefix}.constants.ts${RESET} (jaga prefix!)
+  2. Logika di ${CYAN}services/${RESET}, util murni di ${CYAN}utils/${RESET},
+     ${CYAN}content.ts${RESET} tetap ≤40 baris${ctx.withContent ? "" : " (fitur ini tanpa content script)"}
+  3. Fitur sudah terdaftar: ${CYAN}features/index.ts${RESET} meng-glob
+     ${CYAN}*/register.ts${RESET} — tidak ada daftar manual
+  4. Kalau menambah storage key: catat di ${CYAN}docs/data.md${RESET}
+  5. Butuh setting? Tulis schema-nya di ${CYAN}settings.ts${RESET} (kind/label/hint +
+     read/write) lalu pasang di ${CYAN}register.ts${RESET}; layar pengaturannya sudah
+     ada di hub (tombol gear) — jangan bikin UI setting sendiri
+  6. Verifikasi: ${CYAN}pnpm check:structure && pnpm knip && pnpm test && pnpm lint${RESET}
+
+ Referensi implementasi: ${CYAN}temp-mail${RESET} (storage + inbox), ${CYAN}youtube${RESET}
+ (aksi background + fetch), ${CYAN}user-scripts${RESET} (daftar + editor).
 `);
 }
 

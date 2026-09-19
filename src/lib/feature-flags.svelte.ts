@@ -1,10 +1,10 @@
-import type { FeatureModule } from "./feature-registry";
 import {
   featureEnabledItem,
   isEnabledIn,
   setFeatureEnabled,
   setFeaturesEnabled,
-} from "./feature-settings";
+} from "./feature-flags";
+import type { FeatureModule } from "./feature-registry";
 
 export function createFeatureToggles(features: readonly FeatureModule[]) {
   let enabledMap = $state<Record<string, boolean>>({});

@@ -11,7 +11,6 @@ export const TEMPMAIL_ACTIONS = {
   DELETE_MESSAGE: "temp_mail:delete_message",
   AUTOFILL_ACTIVE_TAB: "temp_mail:autofill_active_tab",
   AUTOFILL_EMAIL: "temp_mail:autofill_email",
-  UPDATE_SETTINGS: "temp_mail:update_settings",
 } as const;
 
 export const TEMPMAIL_STORAGE_KEYS = {

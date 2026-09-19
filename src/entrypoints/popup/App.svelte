@@ -3,10 +3,11 @@
   import Badge from "@/components/Badge.svelte";
   import ExtensionList from "@/components/ExtensionList.svelte";
   import Icon from "@/components/Icon.svelte";
+  import ModuleSettings from "@/components/ModuleSettings.svelte";
   import Toggle from "@/components/Toggle.svelte";
   import { openBentoLauncher } from "@/lib/browser";
+  import { createFeatureToggles, watchFeatureToggles } from "@/lib/feature-flags.svelte";
   import { type FeatureModule, getToggleableFeatures } from "@/lib/feature-registry";
-  import { createFeatureToggles, watchFeatureToggles } from "@/lib/feature-toggles.svelte";
   import type { IconName } from "@/lib/icons";
   import {
     applyTheme,
@@ -42,6 +43,10 @@
   const activeFeature = $derived(
     activeId ? (features.find((f) => f.id === activeId) ?? null) : null,
   );
+
+  
+  let settingsFor = $state<string | null>(null);
+  const showSettings = $derived(Boolean(activeFeature?.settings) && settingsFor === activeId);
 
   let themePref = $state<ThemePreference>("system");
 
@@ -95,7 +100,7 @@
 <div class="ext-container flex h-full min-h-0 flex-col select-none bg-ext-bg text-ext-text">
   {#if view === "list"}
     <header
-      class="flex h-12 shrink-0 items-center justify-between border-b border-ext-border/70 bg-ext-surface px-3"
+      class="ext-hub-bar flex items-center justify-between px-3"
     >
       <div class="flex items-center gap-2">
         <img
@@ -114,7 +119,7 @@
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-ext-border bg-ext-surface text-ext-text-secondary shadow-sm transition-all hover:border-ext-border-strong hover:bg-ext-subtle hover:text-ext-text active:scale-95"
+          class="ext-icon-btn ext-icon-btn-outline h-8 w-8"
           title={`Theme: ${THEME_LABEL[themePref]} — click for ${THEME_LABEL[nextTheme(themePref)]}`}
           aria-label={`Theme: ${THEME_LABEL[themePref]}`}
           onclick={() => void cycleTheme()}
@@ -124,7 +129,7 @@
 
         <button
           type="button"
-          class="ext-icon-btn h-8 w-8 rounded-xl shadow-sm"
+          class="ext-icon-btn ext-icon-btn-outline h-8 w-8"
           title="Delete all stored data"
           aria-label="Delete all stored data"
           onclick={() => void clearAllData()}
@@ -134,15 +139,11 @@
 
         <button
           type="button"
-          class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-ext-border bg-ext-surface text-ext-text-secondary shadow-sm transition-all hover:border-ext-border-strong hover:bg-ext-subtle hover:text-ext-text active:scale-95"
+          class="ext-icon-btn ext-icon-btn-outline h-8 w-8"
           title="Open Bento Hub in current tab"
           onclick={() => void openBentoLauncher()}
         >
-          <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-            <polyline points="15 3 21 3 21 9" />
-            <line x1="10" y1="14" x2="21" y2="3" />
-          </svg>
+          <Icon name="external" size={14} />
         </button>
 
         <Toggle
@@ -161,7 +162,7 @@
     />
   {:else}
     <header
-      class="flex h-12 shrink-0 items-center justify-between border-b border-ext-border/70 bg-ext-surface px-3"
+      class="ext-hub-bar flex items-center justify-between px-3"
     >
       <button
         type="button"
@@ -184,23 +185,40 @@
       <span class="max-w-42.5 truncate text-body font-bold text-ext-text">
         {activeFeature?.name ?? ""}
       </span>
-      <button
-        type="button"
-        class="flex h-8 w-8 cursor-pointer items-center justify-center rounded-xl border border-ext-border bg-ext-surface text-ext-text-secondary shadow-sm transition-all hover:border-ext-border-strong hover:bg-ext-subtle hover:text-ext-text active:scale-95"
-        title="Open Dashboard in full tab"
-        onclick={() => void openBentoLauncher()}
-      >
-        <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-          <polyline points="15 3 21 3 21 9" />
-          <line x1="10" y1="14" x2="21" y2="3" />
-        </svg>
-      </button>
+      <div class="flex items-center gap-2">
+        {#if activeFeature?.settings}
+          <button
+            type="button"
+            class="ext-icon-btn ext-icon-btn-outline h-8 w-8 {showSettings
+              ? 'text-ext-primary'
+              : ''}"
+            title={showSettings ? "Back to module" : "Module settings"}
+            aria-label={showSettings ? "Back to module" : "Module settings"}
+            aria-pressed={showSettings}
+            onclick={() => (settingsFor = showSettings ? null : activeId)}
+          >
+            <Icon name="gear" size={14} />
+          </button>
+        {/if}
+        <button
+          type="button"
+          class="ext-icon-btn ext-icon-btn-outline h-8 w-8"
+          title="Open Dashboard in full tab"
+          onclick={() => void openBentoLauncher()}
+        >
+          <Icon name="external" size={14} />
+        </button>
+      </div>
     </header>
     <div class="min-h-0 flex-1 overflow-y-auto">
       {#if activeFeature?.popup}
         {@const DetailView = activeFeature.popup}
-        <DetailView />
+        <div class={showSettings ? "hidden" : ""}>
+          <DetailView />
+        </div>
+      {/if}
+      {#if showSettings && activeFeature}
+        <ModuleSettings feature={activeFeature} />
       {/if}
     </div>
   {/if}

@@ -9,7 +9,7 @@
   import { showToast } from "@/lib/toast";
 
   import { USER_SCRIPTS_ACTIONS } from "../constants/user-scripts.constants";
-  import { list, sanitizeRecord, scriptsItem } from "../services/user-scripts.service";
+  import { list, scriptsItem } from "../services/user-scripts.service";
   import type {
     UserScriptRecord,
     UserScriptRunLogEntry,
@@ -19,6 +19,7 @@
     parseUserScriptHeader,
   } from "../utils/header-parser.utils";
   import { recordFromCode } from "../utils/record-factory.utils";
+  import { sanitizeRecord } from "../utils/record-shape.utils";
   import ScriptEditor from "./ScriptEditor.svelte";
   import ScriptRow from "./ScriptRow.svelte";
 
@@ -524,7 +525,7 @@
         >
           <span>Scripts</span>
           <span
-            class="rounded-full border border-ext-border bg-ext-subtle-strong px-2.5 py-0.5 text-label font-bold text-ext-text-secondary"
+            class="ext-count-pill"
           >
             {scripts.length}
           </span>

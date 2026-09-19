@@ -1,5 +1,6 @@
 import assert from "node:assert";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import type { SettingField } from "@/lib/feature-registry";
 
 console.log("[Test] Running WXT + Svelte Unit & Integration Tests...\n");
 
@@ -111,6 +112,12 @@ const [
   { roleFromHints },
   providerErrors,
   theme,
+  youtubeUtils,
+  youtubeService,
+  { tempMailSettingsSchema },
+  { aiToolkitSettingsSchema },
+  { DEFAULT_TEMPMAIL_SETTINGS },
+  { DEFAULT_CAVEMAN_SETTINGS },
 ] = await Promise.all([
   import("@/features/temp-mail/utils/temp-mail.utils"),
   import("@/lib/browser"),
@@ -126,6 +133,12 @@ const [
   import("@/features/ai-toolkit/utils/parsers/base.parser"),
   import("@/features/temp-mail/utils/provider-error.utils"),
   import("@/lib/theme"),
+  import("@/features/youtube/utils/youtube.utils"),
+  import("@/features/youtube/services/youtube.service"),
+  import("@/features/temp-mail/settings"),
+  import("@/features/ai-toolkit/settings"),
+  import("@/features/temp-mail/constants/temp-mail.constants"),
+  import("@/features/ai-toolkit/constants/ai-toolkit.constants"),
 ]);
 let passed = 0;
 
@@ -855,6 +868,286 @@ console.log("\n11. Testing theme switching (system / light / dark):");
   globalObject.CSS = realCss;
   await setThemePreference("system");
   console.log("   ✓ Theme switching passed.");
+}
+
+console.log("\n12. Testing YouTube link parsing:");
+{
+  const { embedUrl, oembedUrl, parseStartSeconds, parseVideoId, thumbnailUrl, toEntry, watchUrl } =
+    youtubeUtils;
+
+  const ID = "dQw4w9WgXcQ";
+  const forms = [
+    [ID, "bare id"],
+    [`https://www.youtube.com/watch?v=${ID}`, "watch url"],
+    [`https://www.youtube.com/watch?v=${ID}&list=PL123&index=4`, "watch url with playlist"],
+    [`https://youtu.be/${ID}?t=90`, "short link with timestamp"],
+    [`https://youtu.be/${ID}`, "short link"],
+    [`https://m.youtube.com/watch?v=${ID}`, "mobile host"],
+    [`https://music.youtube.com/watch?v=${ID}`, "music host"],
+    [`https://www.youtube.com/shorts/${ID}`, "shorts"],
+    [`https://www.youtube.com/embed/${ID}?rel=0`, "embed"],
+    [`https://www.youtube.com/live/${ID}`, "live"],
+    [`https://www.youtube-nocookie.com/embed/${ID}`, "nocookie embed"],
+    [`youtube.com/watch?v=${ID}`, "url without scheme"],
+  ] as const;
+  for (const [value, label] of forms) {
+    ok(parseVideoId(value) === ID, `Should parse ${label}`);
+  }
+
+  const rejects = [
+    "",
+    "hello world",
+    `https://vimeo.com/${ID}`,
+    `https://notyoutube.com/watch?v=${ID}`,
+    "https://www.youtube.com/watch?v=tooshort",
+    "https://www.youtube.com/playlist?list=PL123",
+    "https://www.youtube.com/results?search_query=lofi",
+  ];
+  for (const value of rejects) {
+    ok(parseVideoId(value) === null, `Should reject "${value.slice(0, 42)}"`);
+  }
+
+  ok(parseStartSeconds(`https://youtu.be/${ID}?t=90`) === 90, "?t= seconds");
+  ok(parseStartSeconds(`https://www.youtube.com/watch?v=${ID}&t=1m30s`) === 90, "?t= h/m/s form");
+  ok(parseStartSeconds(`https://youtu.be/${ID}#t=45s`) === 45, "#t= seconds form");
+  ok(parseStartSeconds(`https://www.youtube.com/watch?v=${ID}&start=120`) === 120, "start= param");
+  ok(parseStartSeconds(ID) === null, "A bare id has no start offset");
+  ok(parseStartSeconds(`https://youtu.be/${ID}?t=0`) === null, "A zero offset is the same as none");
+
+  ok(watchUrl(ID) === `https://www.youtube.com/watch?v=${ID}`, "watch url is built from constants");
+  ok(watchUrl(ID, 90).endsWith("&t=90"), "watch url keeps the start offset");
+  ok(thumbnailUrl(ID).endsWith(`/vi/${ID}/hqdefault.jpg`), "thumbnail url shape");
+  ok(
+    embedUrl(ID).includes(`/embed/${ID}?`) && embedUrl(ID).includes("rel=0"),
+    "embed url must disable related videos",
+  );
+  ok(embedUrl(ID, { start: 30 }).includes("start=30"), "embed url carries the start offset");
+  ok(
+    !embedUrl(ID).includes("origin="),
+    "Without an origin the player gets no referrer from the page",
+  );
+  ok(
+    oembedUrl(ID).startsWith("https://www.youtube.com/oembed?url=https%3A%2F%2F"),
+    "oembed must encode the watch url",
+  );
+
+  const entry = toEntry(ID);
+  ok(entry.title === ID, "A missing title falls back to the id so the list stays readable");
+  ok(entry.author === "", "A missing author is empty, not undefined");
+  ok(toEntry(ID, "  Song  ", "  Channel ").title === "Song", "Titles are trimmed");
+  ok(toEntry(ID, "", "X").title === ID, "A blank title falls back to the id");
+
+  console.log("   ✓ YouTube link parsing passed.");
+}
+
+console.log("\n13. Testing YouTube oEmbed resolve (live):");
+try {
+  const resolved = await youtubeService.resolveVideo("dQw4w9WgXcQ");
+  ok(
+    resolved.title.length > 0 && resolved.title !== "dQw4w9WgXcQ",
+    "A real video must come back with its title",
+  );
+  ok(resolved.author.length > 0, "A real video must come back with its channel");
+  console.log(`   Resolved: ${resolved.title} — ${resolved.author}`);
+  const fallback = await youtubeService.resolveVideo("aaaaaaaaaaa");
+  ok(fallback.id === "aaaaaaaaaaa", "An unknown id must still return a playable entry");
+  console.log("   ✓ YouTube oEmbed resolve passed.");
+} catch (err) {
+  console.warn(
+    `   ⚠ Live oEmbed test skipped (${err instanceof Error ? err.message : String(err)})`,
+  );
+}
+
+console.log("\n15. Testing floating player geometry:");
+{
+  const viewport = { width: 1440, height: 900 };
+  const inside = (g: { x: number; y: number; width: number; height: number }, v = viewport) =>
+    g.x >= 0 && g.y >= 0 && g.x + g.width <= v.width && g.y + g.height <= v.height;
+
+  const fresh = youtubeUtils.readPlayerGeometry(null, viewport);
+  ok(inside(fresh), "A fresh player must open fully inside the viewport");
+  ok(
+    fresh.x > viewport.width / 2 && fresh.y > viewport.height / 2,
+    "A fresh player must open in the bottom-right corner, not over the hub",
+  );
+  ok(fresh.width >= 260 && fresh.height >= 180, "A fresh player must respect the minimum size");
+
+  const junk = ["nope", 42, { x: "10" }, { x: 1, y: 2 }, {}];
+  for (const raw of junk) {
+    const g = youtubeUtils.readPlayerGeometry(raw, viewport);
+    ok(inside(g), `Junk geometry (${JSON.stringify(raw)}) must fall back to a usable window`);
+  }
+
+  const draggedOffTop = youtubeUtils.clampPlayerGeometry(
+    { x: -400, y: -300, width: 420, height: 280 },
+    viewport,
+  );
+  ok(draggedOffTop.x === 0 && draggedOffTop.y === 0, "A window dragged past the edge snaps back");
+  ok(inside(draggedOffTop), "A clamped window stays reachable");
+
+  const draggedOffRight = youtubeUtils.clampPlayerGeometry(
+    { x: 1400, y: 880, width: 420, height: 280 },
+    viewport,
+  );
+  ok(inside(draggedOffRight), "A window dragged past the far edge stays inside");
+
+  const tiny = youtubeUtils.clampPlayerGeometry({ x: 10, y: 10, width: 20, height: 20 }, viewport);
+  ok(
+    tiny.width === 260 && tiny.height === 180,
+    "A window resized to nothing grows back to the minimum",
+  );
+
+  const huge = youtubeUtils.clampPlayerGeometry(
+    { x: 0, y: 0, width: 5000, height: 5000 },
+    viewport,
+  );
+  ok(inside(huge), "A window larger than the screen is clamped to it");
+
+  const unmeasured = youtubeUtils.defaultPlayerGeometry({ width: 0, height: 0 });
+  ok(
+    unmeasured.x >= 0 && unmeasured.y >= 0,
+    "An unmeasured viewport must not push the window negative",
+  );
+  const clampedFromZero = youtubeUtils.clampPlayerGeometry(
+    { x: 5, y: 5, width: 100, height: 100 },
+    { width: 0, height: 0 },
+  );
+  ok(
+    clampedFromZero.x === 0 && clampedFromZero.y === 0,
+    "A zero viewport clamps the position to 0,0",
+  );
+
+  const phone = { width: 360, height: 640 };
+  const small = youtubeUtils.defaultPlayerGeometry(phone);
+  ok(
+    small.width >= 260 && small.width <= phone.width,
+    `The default width must fit a phone viewport (got ${small.width})`,
+  );
+  ok(inside(small, phone), "A phone-sized viewport still gets a fully visible window");
+
+  await youtubeService.savePlayerGeometry({ x: 40, y: 60, width: 500, height: 320 });
+  const restored = await youtubeService.getPlayerGeometry(viewport);
+  ok(
+    restored.x === 40 && restored.y === 60 && restored.width === 500 && restored.height === 320,
+    "A saved position must come back unchanged when it still fits",
+  );
+  const fromOtherScreen = await youtubeService.getPlayerGeometry({ width: 300, height: 400 });
+  ok(
+    inside(fromOtherScreen, { width: 300, height: 400 }),
+    "A position saved on a big screen must be pulled back onto a small one",
+  );
+
+  ok(
+    youtubeUtils.embedOrigin("chrome-extension://abc/popup.html") === "chrome-extension://abc",
+    "The popup may tell YouTube its own origin",
+  );
+  ok(
+    youtubeUtils.embedOrigin("https://mail.example.com/inbox") === "",
+    "A content script must not hand the page origin to YouTube",
+  );
+  ok(youtubeUtils.embedOrigin(undefined) === "", "A missing location yields no origin");
+
+  console.log("   ✓ Floating player geometry passed.");
+}
+
+console.log("\n14. Testing module settings schemas:");
+{
+  function changedValues(fields: SettingField[]): Record<string, unknown> {
+    const patch: Record<string, unknown> = {};
+    for (const field of fields) {
+      if (field.kind === "toggle") patch[field.key] = false;
+      else if (field.kind === "select") patch[field.key] = field.options.at(-1)?.value ?? "";
+      else patch[field.key] = 1;
+    }
+    return patch;
+  }
+
+  const cases = [
+    { id: "temp-mail", schema: tempMailSettingsSchema, defaults: { ...DEFAULT_TEMPMAIL_SETTINGS } },
+    {
+      id: "ai-toolkit",
+      schema: aiToolkitSettingsSchema,
+      defaults: { ...DEFAULT_CAVEMAN_SETTINGS },
+    },
+  ];
+
+  const NOT_EXPOSED: Record<string, string[]> = { "ai-toolkit": ["sites"] };
+
+  for (const { id, schema, defaults } of cases) {
+    const keys = schema.fields.map((f) => f.key);
+    ok(new Set(keys).size === keys.length, `${id}: setting keys must be unique`);
+    ok(schema.fields.length > 0, `${id}: a declared schema must have at least one field`);
+
+    for (const field of schema.fields) {
+      ok(
+        Object.hasOwn(defaults, field.key),
+        `${id}: unknown setting key "${field.key}" — declared fields must exist in the stored record`,
+      );
+      ok(field.label.length > 0, `${id}: "${field.key}" needs a label`);
+      ok(
+        ["toggle", "select", "number"].includes(field.kind),
+        `${id}: "${field.key}" uses unsupported kind "${field.kind}"`,
+      );
+      if (field.kind === "select") {
+        const values = (field.options ?? []).map((o) => o.value);
+        ok(values.length > 1, `${id}: "${field.key}" select needs options`);
+        ok(new Set(values).size === values.length, `${id}: "${field.key}" options must be unique`);
+      }
+    }
+
+    const hidden = NOT_EXPOSED[id] ?? [];
+    const uncovered = Object.keys(defaults).filter((k) => !keys.includes(k) && !hidden.includes(k));
+    ok(
+      uncovered.length === 0,
+      `${id}: stored settings ${uncovered.join(", ")} are neither in the UI nor listed as intentionally hidden`,
+    );
+
+    const current = await schema.read();
+    for (const key of keys) {
+      assert.ok(key in current, `${id}: read() must return "${key}"`);
+    }
+
+    const next = await schema.write(changedValues(schema.fields));
+    for (const key of keys) {
+      assert.ok(key in next, `${id}: write() must return "${key}"`);
+    }
+    const reloaded = await schema.read();
+    for (const key of keys) {
+      assert.ok(
+        JSON.stringify(reloaded[key]) === JSON.stringify(next[key]),
+        `${id}: write("${key}") must persist`,
+      );
+    }
+  }
+
+  const cavemanPreserved = await aiToolkitSettingsSchema.write({ level: "ultra" });
+  ok(cavemanPreserved.level === "ultra", "ai-toolkit: level patches must round-trip");
+  ok(
+    JSON.stringify(cavemanPreserved.sites) === JSON.stringify(DEFAULT_CAVEMAN_SETTINGS.sites),
+    "ai-toolkit: patching one field must not drop per-site overrides",
+  );
+  let rejected = false;
+  try {
+    await aiToolkitSettingsSchema.write({ level: "nope" });
+  } catch {
+    rejected = true;
+  }
+  ok(rejected, "ai-toolkit: an invalid select value must be rejected, not stored");
+
+  const badgeOff = await tempMailSettingsSchema.write({ showFloatingButton: false });
+  ok(badgeOff.showFloatingButton === false, "temp-mail: the badge toggle must persist");
+  await tempMailSettingsSchema.write({ showFloatingButton: true });
+
+  const renderer = readFileSync("src/components/ModuleSettings.svelte", "utf8");
+  for (const kind of ["toggle", "select", "number"]) {
+    ok(renderer.includes(`"${kind}"`), `ModuleSettings must render the "${kind}" field kind`);
+  }
+  ok(
+    !existsSync("src/features/ai-toolkit/components/CavemanCard.svelte"),
+    "Caveman settings must come from the shared screen, not a hand-built card",
+  );
+
+  console.log(`   ✓ Settings schemas passed (${cases.length} modules).`);
 }
 
 console.log(`\n[Test] All ${passed} assertions passed. ✓`);

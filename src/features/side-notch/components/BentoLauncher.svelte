@@ -1,8 +1,8 @@
 <script lang="ts">
   import Icon from "@/components/Icon.svelte";
   import Toggle from "@/components/Toggle.svelte";
+  import { isEnabledIn } from "@/lib/feature-flags";
   import { type FeatureModule, getFeatureColor } from "@/lib/feature-registry";
-  import { isEnabledIn } from "@/lib/feature-settings";
 
   interface Props {
     logo48: string;
@@ -74,7 +74,7 @@
   <div class="mb-5 flex shrink-0 items-stretch gap-3">
     
     <div
-      class="flex h-15 min-w-0 flex-1 items-center gap-3 rounded-2xl border border-ext-border bg-ext-surface px-5 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)]"
+      class="ext-hub-panel flex h-15 min-w-0 flex-1 items-center gap-3 px-5"
     >
       <img src={logo48} alt="Extensible" class="h-10 w-10 shrink-0 object-contain" />
       <div class="flex min-w-0 flex-col leading-tight">
@@ -89,7 +89,7 @@
 
     
     <div
-      class="hidden h-15 w-72 items-center gap-2.5 rounded-2xl border border-ext-border bg-ext-surface px-4 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)] transition-all focus-within:border-ext-primary/40 focus-within:ring-2 focus-within:ring-ext-primary/15 sm:flex"
+      class="ext-hub-panel hidden h-15 w-72 items-center gap-2.5 px-4 transition-all focus-within:border-ext-primary/40 focus-within:ring-2 focus-within:ring-ext-primary/15 sm:flex"
     >
       <Icon name="search" size={14} class="shrink-0 text-ext-muted" />
       <input
@@ -116,7 +116,7 @@
       role="switch"
       aria-checked={masterOn}
       title="Toggle all modules"
-      class="flex h-15 shrink-0 cursor-pointer items-center gap-3 whitespace-nowrap rounded-2xl border border-ext-border bg-ext-surface px-5 text-body font-semibold text-ext-text-secondary shadow-[0_10px_30px_-14px_rgba(15,23,42,0.22)] transition-all hover:bg-ext-subtle active:scale-95"
+      class="ext-hub-panel ext-hub-action flex h-15 shrink-0 items-center gap-3 whitespace-nowrap px-5 text-body font-semibold text-ext-text-secondary"
       onclick={() => onToggleAll(!masterOn)}
     >
       <span>All Modules</span>
@@ -152,7 +152,7 @@
       
       <div class="ext-card flex items-center justify-between p-5">
         <div>
-          <div class="text-label font-bold tracking-wider text-ext-text-secondary uppercase">
+          <div class="ext-label-caps">
             Total Active
           </div>
           <div class="text-lg font-black text-ext-text">
@@ -334,7 +334,7 @@
             : 'opacity-70'}"
         >
           <div class="flex items-center justify-between">
-            <span class="text-label font-bold tracking-wider text-ext-text-secondary uppercase">
+            <span class="ext-label-caps">
               Disposable Mail
             </span>
             <div class="flex items-center gap-2">
@@ -401,7 +401,7 @@
           onclick={() => onOpenDetail("user-scripts")}
         >
           <div class="flex items-center justify-between">
-            <span class="text-label font-bold tracking-wider text-ext-text-secondary uppercase">
+            <span class="ext-label-caps">
               User Scripts
             </span>
             <span

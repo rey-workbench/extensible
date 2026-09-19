@@ -46,7 +46,11 @@ export async function readHistoryContent(id: string): Promise<string | null> {
 async function removeHistoryContent(id: string): Promise<void> {
   try {
     await storage.removeItem(historyBlobKey(id));
-  } catch {}
+  } catch (err) {
+    console.debug(
+      `[AiToolkit] could not drop transcript blob ${id}: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
 }
 
 export async function getHistory(): Promise<ExportHistoryItem[]> {

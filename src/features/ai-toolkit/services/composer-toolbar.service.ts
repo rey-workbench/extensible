@@ -2,15 +2,11 @@ import { APP_ACTIONS, APP_COMMANDS, COPY_MESSAGES, copyWithFeedback } from "@/li
 import { onMessage, sendMessage } from "@/lib/messaging";
 import { readSettings } from "@/lib/utils";
 import { AiToolkitComposerView } from "../components/composer.view";
-import {
-  AI_TOOLKIT_ACTIONS,
-  CAVEMAN_LEVELS,
-  DEFAULT_CAVEMAN_SETTINGS,
-} from "../constants/ai-toolkit.constants";
+import { AI_TOOLKIT_ACTIONS, CAVEMAN_LEVELS } from "../constants/ai-toolkit.constants";
 import type { CavemanSettings, ExportFormat } from "../types/ai-toolkit.types";
 import { scrapeConvo } from "../utils/chat-parser.utils";
 import { formatMarkdown } from "../utils/export-formatters";
-import { cavemanSettingsItem } from "./ai-toolkit.service";
+import { cavemanSettingsItem, updateCavemanSettings } from "./ai-toolkit.service";
 import { setupCavemanInterceptors } from "./caveman-interceptors.service";
 
 export function setupComposerToolbar(initialSettings: CavemanSettings): void {
@@ -40,9 +36,10 @@ export function setupComposerToolbar(initialSettings: CavemanSettings): void {
       }
     },
     onToggleCaveman: async (): Promise<CavemanSettings> => {
-      const updated: CavemanSettings = { ...cavemanSettings, enabled: !cavemanSettings.enabled };
+      const updated = await updateCavemanSettings({
+        enabled: !cavemanSettings.enabled,
+      });
       cavemanSettings = updated;
-      await cavemanSettingsItem.setValue(updated);
       return updated;
     },
     onCycleCavemanLevel: async (): Promise<CavemanSettings> => {
@@ -62,9 +59,8 @@ export function setupComposerToolbar(initialSettings: CavemanSettings): void {
         }
       }
 
-      const updated: CavemanSettings = { ...cavemanSettings, enabled: newEnabled, level: newLevel };
+      const updated = await updateCavemanSettings({ enabled: newEnabled, level: newLevel });
       cavemanSettings = updated;
-      await cavemanSettingsItem.setValue(updated);
       return updated;
     },
   });
@@ -83,12 +79,4 @@ export function setupComposerToolbar(initialSettings: CavemanSettings): void {
   });
 
   setupCavemanInterceptors(cavemanSettings);
-}
-
-export async function loadCavemanSettings(): Promise<CavemanSettings> {
-  try {
-    return readSettings(await cavemanSettingsItem.getValue(), DEFAULT_CAVEMAN_SETTINGS);
-  } catch {
-    return DEFAULT_CAVEMAN_SETTINGS;
-  }
 }

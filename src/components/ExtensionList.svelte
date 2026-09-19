@@ -1,6 +1,7 @@
 <script lang="ts">
-  import { type FeatureModule, getFeatureColor } from "@/lib/feature-registry";
-  import { isEnabledIn } from "@/lib/feature-settings";
+  
+  import { isEnabledIn } from "@/lib/feature-flags";
+import { type FeatureModule, getFeatureColor } from "@/lib/feature-registry";
   import EmptyState from "./EmptyState.svelte";
   import ExtensionRow from "./ExtensionRow.svelte";
   import Icon from "./Icon.svelte";
@@ -74,7 +75,7 @@
       Extensions
     </span>
     <span
-      class="rounded-full border border-ext-border bg-ext-subtle-strong px-2.5 py-0.5 text-label font-bold tabular-nums text-ext-text-secondary"
+      class="ext-count-pill"
       >{filtered.length}</span
     >
   </div>

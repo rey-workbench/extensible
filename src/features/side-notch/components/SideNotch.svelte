@@ -3,18 +3,22 @@
   import { browser } from "wxt/browser";
   import { tempMailApi } from "@/features/temp-mail/api";
   import { USER_SCRIPTS_ACTIONS } from "@/features/user-scripts/constants/user-scripts.constants";
-  import { APP_ACTIONS, APP_COMMANDS, COPY_MESSAGES, copyWithFeedback } from "@/lib/browser";
+  import YoutubePlayer from "@/features/youtube/components/YoutubePlayer.svelte";
+  import { youtubePlayer } from "@/features/youtube/player.svelte";
+  import { APP_ACTIONS, APP_COMMANDS, copyAndReport } from "@/lib/browser";
+  import { createFeatureToggles, watchFeatureToggles } from "@/lib/feature-flags.svelte";
   import {
     type FeatureModule,
     getFeatureColor,
     getToggleableFeatures,
   } from "@/lib/feature-registry";
-  import { createFeatureToggles, watchFeatureToggles } from "@/lib/feature-toggles.svelte";
   import { sendMessage } from "@/lib/messaging";
   import { showToast } from "@/lib/toast";
   import globalCss from "@/styles/global.css?inline";
   import BentoLauncher from "./BentoLauncher.svelte";
-  import DrawerDetail from "./DrawerDetail.svelte";
+  
+  
+  import DrawerDetail, { type ModuleApi } from "./DrawerDetail.svelte";
   import NotchHandle from "./NotchHandle.svelte";
 
   const logo48 = browser.runtime.getURL("/icon/icon-48.png");
@@ -58,7 +62,11 @@
     try {
       const state = await tempMailApi.getCurrentState({ autoGenerate: false });
       activeTempAddress = state?.email?.address ?? null;
-    } catch {}
+    } catch {
+      
+      
+      activeTempAddress = null;
+    }
   }
 
   async function handleQuickGenerate(): Promise<void> {
@@ -87,11 +95,9 @@
       await handleQuickGenerate();
       return;
     }
-    const message = await copyWithFeedback(activeTempAddress);
-    showToast(shadowRoot, message, {
-      isError: message !== COPY_MESSAGES.success,
-      durationMs: 1500,
-    });
+    await copyAndReport(activeTempAddress, (message, isError) =>
+      showToast(shadowRoot, message, { isError, durationMs: 1500 }),
+    );
   }
 
   function onKeyDown(e: KeyboardEvent): void {
@@ -169,11 +175,6 @@
       },
     );
   });
-
-  type ModuleApi = {
-    openEditorFor?: (scriptId: string) => void;
-    installFromCapturedUrl?: (url: string) => void;
-  };
 
   let moduleApi = $state<ModuleApi | null>(null);
 
@@ -287,4 +288,10 @@
       {/if}
     </div>
   </div>
+
+  
+  
+  {#if youtubePlayer.video && enabledMap["youtube"] !== false}
+    <YoutubePlayer />
+  {/if}
 </div>

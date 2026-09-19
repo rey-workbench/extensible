@@ -44,6 +44,19 @@ export function getRetryNotice(): Promise<RetryNotice | null> {
   return retryItem.getValue();
 }
 
+export async function getTempMailSettings(): Promise<TempMailSettings> {
+  const stored = await tempMailSettings.getValue();
+  return { ...DEFAULT_TEMPMAIL_SETTINGS, ...(stored ?? {}) };
+}
+
+export async function updateTempMailSettings(
+  partial: Partial<TempMailSettings>,
+): Promise<TempMailSettings> {
+  const updated = { ...(await getTempMailSettings()), ...partial };
+  await tempMailSettings.setValue(updated);
+  return updated;
+}
+
 async function activeRetryNotice(): Promise<RetryNotice | null> {
   const notice = await retryItem.getValue();
   return isCoolingDown(notice) ? notice : null;

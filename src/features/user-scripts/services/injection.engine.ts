@@ -1,5 +1,5 @@
 import { browser } from "wxt/browser";
-import { isFeatureEnabled } from "@/lib/feature-settings";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { sendToTab } from "@/lib/messaging";
 import {
   isBlockedUrl,
@@ -231,7 +231,10 @@ async function injectScript(
                   });
                   trustedCode = policy.createScript(src);
                 }
-              } catch {}
+              } catch {
+                // Trusted Types tidak tersedia / CSP menolak policy: jatuh ke
+                // skrip biasa, bukan berhenti.
+              }
             }
 
             try {
@@ -328,7 +331,9 @@ function patternToRegex(pattern: string): RegExp {
   if (pattern.startsWith("/") && pattern.endsWith("/") && pattern.length > 2) {
     try {
       return new RegExp(pattern.slice(1, -1));
-    } catch {}
+    } catch {
+      // Regex tidak valid dari penulis script: perlakukan sebagai pola wildcard.
+    }
   }
   if (/^(\*|http|https|file|ftp):\/\/\*?/.test(pattern) || pattern.includes("://")) {
     const esc = pattern

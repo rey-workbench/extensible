@@ -1,8 +1,8 @@
 import { browser } from "wxt/browser";
 import "@/features";
 import { APP_ACTIONS, APP_COMMANDS } from "@/lib/browser";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getFeatures } from "@/lib/feature-registry";
-import { isFeatureEnabled } from "@/lib/feature-settings";
 import { onMessage, sendToTab } from "@/lib/messaging";
 
 export default defineBackground({
@@ -48,7 +48,7 @@ export default defineBackground({
       void runCommand(command);
     });
 
-    console.log("[WXT] Background service worker ready.");
+    console.debug("[Extensible] Background service worker ready.");
   },
 });
 

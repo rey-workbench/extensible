@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { browser } from "wxt/browser";
-  import { COPY_MESSAGES, copyWithFeedback, slugify } from "@/lib/browser";
+  import { COPY_MESSAGES, copyAndReport, slugify } from "@/lib/browser";
   import { sendMessage, sendToTab } from "@/lib/messaging";
   import { delay } from "@/lib/utils";
   import { AI_TOOLKIT_ACTIONS } from "../constants/ai-toolkit.constants";
@@ -9,13 +9,10 @@
     clearHistory,
     deleteHistoryItem,
     formatMeta,
-    getCavemanSettings,
     getHistory,
     readHistoryContent,
-    updateCavemanSettings,
   } from "../services/ai-toolkit.service";
   import type {
-    CavemanSettings,
     ChatConversation,
     ExportFormat,
     ExportHistoryItem,
@@ -23,12 +20,10 @@
   import { hydrateVirtualizedChat, parseActivePage } from "../utils/chat-parser.utils";
   import { formatMarkdown } from "../utils/export-formatters";
   import ActiveSessionCard from "./ActiveSessionCard.svelte";
-  import CavemanCard from "./CavemanCard.svelte";
   import HistoryList from "./HistoryList.svelte";
 
   let convo = $state<ChatConversation | null>(null);
   let history = $state<ExportHistoryItem[]>([]);
-  let caveman = $state<CavemanSettings | null>(null);
   let isLoading = $state(false);
   let status = $state<{ text: string; isError?: boolean } | null>(null);
   let statusTimer: ReturnType<typeof setTimeout> | null = null;
@@ -140,8 +135,7 @@
     isLoading = true;
     try {
       const mdText = formatMarkdown(convo);
-      const message = await copyWithFeedback(mdText);
-      showStatus(message, message !== COPY_MESSAGES.success);
+      await copyAndReport(mdText, showStatus);
     } catch {
       showStatus(COPY_MESSAGES.failure, true);
     } finally {
@@ -176,8 +170,7 @@
       showStatus("Transcript expired — export again", true);
       return;
     }
-    const message = await copyWithFeedback(content);
-    showStatus(message, message !== COPY_MESSAGES.success);
+    await copyAndReport(content, showStatus);
   }
 
   async function handleDeleteHistory(id: string): Promise<void> {
@@ -192,20 +185,7 @@
     showStatus("History cleared");
   }
 
-  async function handleToggleCaveman(enabled: boolean): Promise<void> {
-    caveman = await updateCavemanSettings({ enabled });
-    showStatus(enabled ? "Caveman Mode enabled" : "Caveman Mode disabled");
-  }
-
-  async function handleSetLevel(level: CavemanSettings["level"]): Promise<void> {
-    caveman = await updateCavemanSettings({ level });
-    showStatus(`Caveman level: ${level.toUpperCase()}`);
-  }
-
   onMount(async () => {
-    try {
-      caveman = await getCavemanSettings();
-    } catch {}
     await Promise.all([loadHistory(), detectActiveTabChat(false)]);
   });
 </script>
@@ -222,21 +202,13 @@
     </div>
   {/if}
 
-  {#if caveman}
-    <ActiveSessionCard
-      {convo}
-      {isLoading}
-      onInspect={(deep) => void detectActiveTabChat(deep)}
-      onExport={(format) => void handleExport(format)}
-      onCopy={() => void handleCopy()}
-    />
-
-    <CavemanCard
-      {caveman}
-      onToggle={(v) => void handleToggleCaveman(v)}
-      onSetLevel={(lvl) => void handleSetLevel(lvl)}
-    />
-  {/if}
+  <ActiveSessionCard
+    {convo}
+    {isLoading}
+    onInspect={(deep) => void detectActiveTabChat(deep)}
+    onExport={(format) => void handleExport(format)}
+    onCopy={() => void handleCopy()}
+  />
 
   <HistoryList
     {history}

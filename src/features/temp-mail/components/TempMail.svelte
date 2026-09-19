@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount } from "svelte";
-  import { COPY_MESSAGES, copyWithFeedback, isContextInvalidated } from "@/lib/browser";
+  import { copyAndReport, isContextInvalidated } from "@/lib/browser";
   import { sendMessage } from "@/lib/messaging";
   import { showToast } from "@/lib/toast";
   import { TEMPMAIL_ACTIONS } from "../constants/temp-mail.constants";
@@ -164,9 +164,7 @@
   }
 
   async function handleCopy(text: string, successMsg?: string): Promise<void> {
-    const message = await copyWithFeedback(text);
-    const failed = message !== COPY_MESSAGES.success;
-    showToastMsg(failed ? message : (successMsg ?? message), failed);
+    await copyAndReport(text, showToastMsg, successMsg);
   }
 
   onMount(async () => {

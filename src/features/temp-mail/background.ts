@@ -1,7 +1,6 @@
 import { browser } from "wxt/browser";
 import { setBadge, showNotification } from "@/lib/browser";
 import { onMessage, sendToTab } from "@/lib/messaging";
-import { mergeSettings } from "@/lib/utils";
 import { TEMPMAIL_ACTIONS, TEMPMAIL_CONFIG } from "./constants/temp-mail.constants";
 import {
   deleteMessage,
@@ -12,14 +11,8 @@ import {
   getRetryNotice,
   hasValidEmail,
   inboxItem,
-  tempMailSettings,
 } from "./services/temp-mail.service";
-import type {
-  InboxState,
-  TempEmail,
-  TempMailCurrentState,
-  TempMailSettings,
-} from "./types/temp-mail.types";
+import type { InboxState, TempEmail, TempMailCurrentState } from "./types/temp-mail.types";
 
 const ALARM_NAME = "tempmail_poll";
 
@@ -124,16 +117,6 @@ export function setupBackground(): void {
       const ok = await deleteMessage(payload.messageId);
       await updateBadge();
       return ok;
-    },
-  );
-
-  onMessage<Partial<TempMailSettings>, TempMailSettings>(
-    TEMPMAIL_ACTIONS.UPDATE_SETTINGS,
-    async (payload) => {
-      const current = await tempMailSettings.getValue();
-      const updated = mergeSettings(current, payload);
-      await tempMailSettings.setValue(updated);
-      return updated;
     },
   );
 

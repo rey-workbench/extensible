@@ -34,7 +34,7 @@
       {isActive ? "Active Address" : "Expired"}
     </span>
     <span
-      class="rounded-full border border-ext-border/70 bg-ext-subtle-strong px-2.5 py-0.5 text-xs font-bold tabular-nums text-ext-text-secondary"
+      class="ext-count-pill"
     >
       {isActive ? formatCountdown(remainingSeconds) : "00:00"}
     </span>

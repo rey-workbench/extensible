@@ -25,9 +25,9 @@
 
 <div
   class="group flex cursor-pointer items-center gap-3 rounded-2xl border border-ext-border/70 bg-ext-surface p-3.5 shadow-sm transition-all {enabled
-    ? 'hover:border-blue-400 hover:shadow-md hover:scale-[1.01]'
+    ? 'hover:border-ext-primary hover:shadow-md hover:scale-[1.01]'
     : 'opacity-60 hover:opacity-85'} {dropdownOpen
-    ? 'relative z-20 border-blue-400 shadow-md'
+    ? 'relative z-20 border-ext-primary shadow-md'
     : ''}"
   role="button"
   tabindex="0"
@@ -116,7 +116,7 @@
 
   {#if feature.popup}
     <svg
-      class="h-3.5 w-3.5 shrink-0 text-ext-muted transition-all group-hover:translate-x-0.5 group-hover:text-blue-600"
+      class="h-3.5 w-3.5 shrink-0 text-ext-muted transition-all group-hover:translate-x-0.5 group-hover:text-ext-primary"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

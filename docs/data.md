@@ -11,6 +11,9 @@ outbound requests are the ones a feature needs:
 | Destination | Why | Feature |
 | --- | --- | --- |
 | `https://api.tempmail.ing/*` | create/read/delete disposable inboxes | Temp Mail |
+| `https://www.youtube.com/oembed` | read a pasted video's title and channel | YouTube |
+| `https://i.ytimg.com/vi/*` | thumbnails for the recents list | YouTube |
+| `https://www.youtube-nocookie.com/embed/*` | plays the video — requested only after you press Play | YouTube |
 | the site you are on | content scripts read the page DOM to build the dock, badges and chat exports | Quick Dock, Temp Mail, AI Toolkit |
 
 Chat text, email bodies and script sources are never sent anywhere else.
@@ -22,16 +25,28 @@ Survives browser restarts. Visible to anyone who can read the browser profile.
 | Key | Contents | Cap |
 | --- | --- | --- |
 | `app:theme` | `system` \| `light` \| `dark` — the appearance choice | single string |
-| `feature_settings` | per-module on/off map | one boolean per module |
+| `feature:enabled` | per-module on/off map — the module toggles, not a module's own settings | one boolean per module |
+| `youtube:recents` | recently played videos: id, title, channel, timestamp | 12 entries |
+| `youtube:player` | position + size of the floating player window (x, y, width, height) | single record |
 | `temp_mail:state` | current address, expiry, unread count | single record |
 | `temp_mail:inbox` | cached inbox — **contains message bodies, including OTP codes** | 30 messages |
 | `temp_mail:settings` | `showFloatingButton` | single record |
 | `temp_mail:retry` | provider cooldown: end time, kind, consecutive count, one-line reason — no message content | single record |
 | `ai_toolkit_history` | export metadata only (title, platform, message count, date, format, URL) — **never the transcript** | 50 entries |
 | `ai_toolkit_caveman` | Caveman mode on/off, level, per-site overrides | single record |
-| `user_scripts:list` | userscript metadata **and source code** | unbounded, guarded by the local quota |
+| `user_scripts:scripts` | userscript metadata **and source code** (the `user_scripts:list` action reads it) | unbounded, guarded by the local quota |
 | `user_scripts:gm_values` | whatever scripts passed to `GM_setValue` — may contain tokens | 256 keys / 64 KB per value / 512 KB per script |
 | `user_scripts:run_logs` | last run result per script | 30 entries per script |
+
+### Editing these settings
+
+`temp_mail:settings` and `ai_toolkit_caveman` are edited through the shared module
+settings screen (gear icon in a module's detail header), which reads and writes the
+same records the module itself uses — declaring a field in
+`src/features/<id>/settings.ts` is what makes it reachable. `showFloatingButton` and
+`enabled`/`level` are the declared fields; `ai_toolkit_caveman.sites` is not exposed.
+The Caveman `enabled`/`level` pair is also flipped from the in-page composer toolbar,
+and both paths go through the same service functions.
 
 ### When the mail provider says no
 
@@ -51,7 +66,7 @@ Cleared by the browser when it closes — the point of keeping transcripts here.
 
 | Key | Contents | Cap |
 | --- | --- | --- |
-| `ai_toolkit_history_blob:<id>` | the exported transcript for one history entry | 50, dropped with its index entry |
+| `ai_toolkit:history_blob:<id>` | the exported transcript for one history entry | 50, dropped with its index entry |
 
 Older builds stored the transcript inside the persistent index. The first read
 after upgrading migrates those blobs into the session area and strips `content`
@@ -95,6 +110,13 @@ after a confirmation. It is the manual equivalent of an uninstall, so it also
 drops module toggles and userscripts — the confirm text names each of them.
 
 Programmatically: `clearAllStoredData()` in `src/lib/utils.ts`.
+
+## Third-party content
+
+The YouTube module embeds `youtube-nocookie.com` and only builds the player
+iframe after you press Play — listing a video fetches nothing but its
+thumbnail. oEmbed runs from the service worker, so the request carries no page
+referrer and no cookies from the site you are on.
 
 ## Threat model in one line
 

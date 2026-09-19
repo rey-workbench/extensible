@@ -1,6 +1,7 @@
 import { defineFeature } from "@/lib/feature-registry";
 import { setupBackground } from "./background";
 import AiToolkit from "./components/AiToolkit.svelte";
+import { aiToolkitSettingsSchema } from "./settings";
 
 defineFeature({
   id: "ai-toolkit",
@@ -11,4 +12,5 @@ defineFeature({
   background: setupBackground,
   content: () => import("./content").then((m) => m.setupContent()),
   popup: AiToolkit,
+  settings: aiToolkitSettingsSchema,
 });

@@ -1,6 +1,6 @@
 import "@/features";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getFeatures } from "@/lib/feature-registry";
-import { isFeatureEnabled } from "@/lib/feature-settings";
 
 export default defineContentScript({
   matches: ["<all_urls>"],

@@ -142,7 +142,9 @@ export async function hydrateVirtualizedChat(doc: Document = document): Promise<
     }
     scroller.scrollTop = previousTop;
     await delay(50);
-  } catch {}
+  } catch {
+    // Halaman dengan scroller terkunci: biarkan posisi apa adanya, isi sudah terbaca.
+  }
 }
 
 function extractTitle(doc: Document, messages: readonly ChatMessage[]): string {

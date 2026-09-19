@@ -1,6 +1,7 @@
 import { defineFeature } from "@/lib/feature-registry";
 import { setupBackground } from "./background";
 import TempMail from "./components/TempMail.svelte";
+import { tempMailSettingsSchema } from "./settings";
 
 defineFeature({
   id: "temp-mail",
@@ -11,4 +12,5 @@ defineFeature({
   background: setupBackground,
   content: () => import("./content").then((m) => m.setupContent()),
   popup: TempMail,
+  settings: tempMailSettingsSchema,
 });

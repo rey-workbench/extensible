@@ -23,7 +23,11 @@ export async function checkAll(): Promise<void> {
           message: `${script.meta.name} → v${meta.version}`,
         });
       }
-    } catch {}
+    } catch (err) {
+      console.debug(
+        `[UserScripts] update check failed for ${script.meta.name}: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    }
   }
 }
 

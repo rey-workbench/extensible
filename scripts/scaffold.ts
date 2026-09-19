@@ -1,14 +1,15 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stdin } from "node:process";
 import { featureRoot, logSummary, writeTemplates } from "./scaffold/templates";
-import { askSelect, askYesNo, CYAN, GREEN, RED, RESET } from "./scaffold/term";
+import { askSelect, askYesNo, CYAN, GREEN, RED, RESET, YELLOW } from "./scaffold/term";
 
 function availableIcons(): string[] {
   try {
     const src = readFileSync(join(process.cwd(), "src", "lib", "icons.ts"), "utf8");
     const block = src.match(/export const ICON_NAMES = \[([\s\S]*?)\]/);
-    return block ? [...block[1].matchAll(/"([a-z]+)"/g)].map((m) => m[1]) : [];
+    return block ? [...block[1].matchAll(/"([a-z0-9-]+)"/g)].map((m) => m[1]) : [];
   } catch {
     return [];
   }
@@ -30,7 +31,13 @@ ${GREEN}Options:${RESET}
   --icon <name>           Ikon dari src/lib/icons.ts (default: puzzle)
   --color <hex>           Warna aksen fitur (default: #1B4DDB)
   --no-content            Lewati pembuatan content script
+  --api                   Buat api.ts untuk dipanggil fitur lain (default: tidak)
   -h, --help              Tampilkan bantuan ini
+
+${GREEN}Layout yang dibuat:${RESET}
+  register.ts  constants/  types/  services/  components/  utils/
+  background.ts  [+] content.ts  [+] api.ts
+  File yang dibuat selalu terpakai — hasilnya langsung lolos biome & knip.
 
 ${GREEN}Interactive:${RESET}
   Jalankan tanpa flags di terminal (TTY) → wizard TUI pilihan keyboard:
@@ -45,6 +52,7 @@ interface Options {
   icon: string;
   color: string;
   withContent: boolean;
+  withApi: boolean;
   iconProvided: boolean;
   colorProvided: boolean;
   contentProvided: boolean;
@@ -58,6 +66,7 @@ function parseArgs(argv: string[]): Options {
     icon: "puzzle",
     color: "#1B4DDB",
     withContent: true,
+    withApi: false,
     iconProvided: false,
     colorProvided: false,
     contentProvided: false,
@@ -82,6 +91,8 @@ function parseArgs(argv: string[]): Options {
     } else if (arg === "--no-content") {
       options.withContent = false;
       options.contentProvided = true;
+    } else if (arg === "--api") {
+      options.withApi = true;
     } else if (arg === "-h" || arg === "--help") {
       console.log(usage());
       process.exit(0);
@@ -187,6 +198,7 @@ async function main(): Promise<void> {
     join(root, "types"),
     join(root, "services"),
     join(root, "components"),
+    join(root, "utils"),
   ];
   for (const d of dirs) mkdirSync(d, { recursive: true });
 
@@ -195,23 +207,7 @@ async function main(): Promise<void> {
     console.log(`  + src/features/${id}/${rel}`);
   };
 
-  writeTemplates(
-    {
-      id,
-      root,
-      prefix: toPrefix(id),
-      camel,
-      Pascal,
-      Name,
-      Description,
-      icon: options.icon,
-      color: options.color,
-      withContent: options.withContent,
-    },
-    write,
-  );
-
-  logSummary({
+  const context = {
     id,
     root,
     prefix: toPrefix(id),
@@ -222,7 +218,25 @@ async function main(): Promise<void> {
     icon: options.icon,
     color: options.color,
     withContent: options.withContent,
-  });
+    withApi: options.withApi,
+  };
+
+  writeTemplates(context, write);
+  formatGenerated(id);
+  logSummary(context);
+}
+
+function formatGenerated(id: string): void {
+  const result = spawnSync(
+    "npx",
+    ["--no-install", "biome", "check", "--write", `src/features/${id}`],
+    { stdio: "pipe", shell: true, encoding: "utf8" },
+  );
+  if (result.status === 0) {
+    console.log(`  ${GREEN}formatted${RESET} (biome)`);
+    return;
+  }
+  console.log(`  ${YELLOW}biome belum jalan — jalankan manual: pnpm lint:fix${RESET}`);
 }
 
 main().catch((err) => {

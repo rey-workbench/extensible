@@ -128,6 +128,8 @@ export function setText(editor: HTMLElement, text: string): void {
     const sel = window.getSelection();
     sel?.removeAllRanges();
     sel?.addRange(range);
-  } catch {}
+  } catch {
+    // Penempatan kursor bersifat kosmetik; teksnya sudah masuk ke editor.
+  }
   editor.dispatchEvent(new Event("input", { bubbles: true }));
 }

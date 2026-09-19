@@ -9,7 +9,7 @@ export const AI_TOOLKIT_ACTIONS = {
 export const AI_TOOLKIT_STORAGE_KEYS = {
   HISTORY: "local:ai_toolkit_history",
 
-  HISTORY_BLOB: "session:ai_toolkit_history_blob:",
+  HISTORY_BLOB: "session:ai_toolkit:history_blob:",
   CAVEMAN_SETTINGS: "local:ai_toolkit_caveman",
 } as const;
 

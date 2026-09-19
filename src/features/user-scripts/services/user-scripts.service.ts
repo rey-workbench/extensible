@@ -1,25 +1,9 @@
 import { storage } from "wxt/utils/storage";
 import { USER_SCRIPTS_STORAGE_KEYS } from "../constants/user-scripts.constants";
 import type { UserScriptRecord, UserScriptRunLogEntry } from "../types/user-scripts.types";
+
 import { newScriptCopy } from "../utils/record-factory.utils";
-
-export function sanitizeRecord(s: UserScriptRecord): UserScriptRecord {
-  const meta = s.meta || ({} as UserScriptRecord["meta"]);
-  return {
-    ...s,
-    meta: {
-      ...meta,
-      matches: Array.isArray(meta.matches)
-        ? meta.matches
-        : typeof meta.matches === "string" && meta.matches
-          ? [meta.matches]
-          : ["*://*/*"],
-      excludes: Array.isArray(meta.excludes) ? meta.excludes : [],
-      grants: Array.isArray(meta.grants) && meta.grants.length ? meta.grants : ["none"],
-    },
-  };
-}
-
+import { sanitizeRecord } from "../utils/record-shape.utils";
 export const scriptsItem = storage.defineItem<UserScriptRecord[]>(
   USER_SCRIPTS_STORAGE_KEYS.SCRIPTS,
   {

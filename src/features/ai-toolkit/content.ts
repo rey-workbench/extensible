@@ -1,6 +1,7 @@
 import { onMessage } from "@/lib/messaging";
-import { AI_TOOLKIT_ACTIONS } from "./constants/ai-toolkit.constants";
-import { loadCavemanSettings, setupComposerToolbar } from "./services/composer-toolbar.service";
+import { AI_TOOLKIT_ACTIONS, DEFAULT_CAVEMAN_SETTINGS } from "./constants/ai-toolkit.constants";
+import { getCavemanSettings } from "./services/ai-toolkit.service";
+import { setupComposerToolbar } from "./services/composer-toolbar.service";
 import type { ChatConversation } from "./types/ai-toolkit.types";
 import { detectPlatform, hydrateVirtualizedChat, parseActivePage } from "./utils/chat-parser.utils";
 
@@ -23,5 +24,5 @@ export async function setupContent(): Promise<void> {
   const platform = detectPlatform(window.location.hostname);
   if (platform === "generic") return;
 
-  await setupComposerToolbar(await loadCavemanSettings());
+  await setupComposerToolbar(await getCavemanSettings().catch(() => DEFAULT_CAVEMAN_SETTINGS));
 }

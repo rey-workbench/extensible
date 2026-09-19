@@ -50,12 +50,25 @@ export async function copyWithFeedback(text: string): Promise<string> {
   return (await copyToClipboard(text)) ? COPY_MESSAGES.success : COPY_MESSAGES.failure;
 }
 
+export async function copyAndReport(
+  text: string,
+  report: (message: string, isError: boolean) => void,
+  successLabel?: string,
+): Promise<void> {
+  const message = await copyWithFeedback(text);
+  const copied = message === COPY_MESSAGES.success;
+  report(copied ? (successLabel ?? message) : message, !copied);
+}
+
 export async function setBadge(text: string, color = "#10b981"): Promise<void> {
   if (!browser.action) return;
   try {
     await browser.action.setBadgeText({ text: text || "" });
     if (text) await browser.action.setBadgeBackgroundColor({ color });
-  } catch {}
+  } catch {
+    // Badge tidak tersedia di sebagian konteks (mis. saat action tidak ada).
+    // Kosmetik saja — jangan sampai menggagalkan alur pemanggilnya.
+  }
 }
 
 const NOTIFICATION_ICON =
