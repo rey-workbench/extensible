@@ -40,7 +40,7 @@ export function buildToolbarHtml(settings: CavemanSettings): string {
         <span class="ext-bar-badge ext-lvl-badge ${badgeClass} rounded-full px-2 py-0.5 text-micro font-bold uppercase leading-none tracking-[0.4px] transition-colors ${
           enabled
             ? "border border-[#C48C1E] bg-ext-warning text-[#1A1A1A]"
-            : "border border-[#E2E8F0] bg-[#F1F5F9] text-ext-text-secondary"
+            : "border border-ext-border bg-ext-subtle-strong text-ext-text-secondary"
         }">${statusText}</span>
       </button>
 
@@ -65,24 +65,24 @@ export function buildMenuHtml(): string {
       <button type="button" class="ext-composer-menu-close ext-close-btn h-6 w-6 shrink-0 rounded-lg text-body font-bold leading-none" title="Close menu">✕</button>
     </div>
     <div class="pt-1.5 flex flex-col gap-1">
-      <button type="button" class="ext-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-semibold text-ext-text outline-none transition-all hover:bg-[#F1F5F9] hover:text-ext-text" data-format="markdown">
+      <button type="button" class="ext-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-semibold text-ext-text outline-none transition-all hover:bg-ext-subtle-strong hover:text-ext-text" data-format="markdown">
         ${renderIcon("markdown", 13, "text-ext-primary")}
         <span>Markdown (.md)</span>
       </button>
-      <button type="button" class="ext-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-semibold text-ext-text outline-none transition-all hover:bg-[#F1F5F9] hover:text-ext-text" data-format="pdf">
+      <button type="button" class="ext-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-semibold text-ext-text outline-none transition-all hover:bg-ext-subtle-strong hover:text-ext-text" data-format="pdf">
         ${renderIcon("pdf", 13, "text-ext-danger")}
         <span>Print to PDF</span>
       </button>
-      <button type="button" class="ext-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-semibold text-ext-text outline-none transition-all hover:bg-[#F1F5F9] hover:text-ext-text" data-format="json">
+      <button type="button" class="ext-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-semibold text-ext-text outline-none transition-all hover:bg-ext-subtle-strong hover:text-ext-text" data-format="json">
         ${renderIcon("json", 13, "text-[#b45309]")}
         <span>JSON (.json)</span>
       </button>
-      <button type="button" class="ext-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-semibold text-ext-text outline-none transition-all hover:bg-[#F1F5F9] hover:text-ext-text" data-format="html">
+      <button type="button" class="ext-composer-menu-item flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-semibold text-ext-text outline-none transition-all hover:bg-ext-subtle-strong hover:text-ext-text" data-format="html">
         ${renderIcon("html", 13, "text-ext-primary")}
         <span>HTML Document</span>
       </button>
       <div class="ext-composer-menu-divider my-1 h-px bg-ext-subtle-strong"></div>
-      <button type="button" class="ext-composer-menu-item ext-composer-copy-btn flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-medium text-ext-text outline-none transition-all hover:bg-[#F1F5F9] hover:text-ext-text">
+      <button type="button" class="ext-composer-menu-item ext-composer-copy-btn flex w-full cursor-pointer items-center gap-2 rounded-xl border-0 bg-transparent px-3 py-2 text-left text-body font-medium text-ext-text outline-none transition-all hover:bg-ext-subtle-strong hover:text-ext-text">
         ${renderIcon("copy", 13, "text-ext-muted")}
         <span>Copy to Clipboard</span>
       </button>
