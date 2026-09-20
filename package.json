@@ -3,7 +3,7 @@
   "version": "1.2.0",
   "description": "Modular Web Extension Suite (WXT + Svelte 5) with TempMail autofill, inbox reader and AI chat export",
   "type": "module",
-  "packageManager": "pnpm@10.29.3",
+  "packageManager": "pnpm@12.5.1",
   "engines": {
     "node": ">=20"
   },
