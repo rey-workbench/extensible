@@ -1,6 +1,6 @@
 {
   "name": "extensible",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Modular Web Extension Suite (WXT + Svelte 5) with TempMail autofill, inbox reader and AI chat export",
   "type": "module",
   "packageManager": "pnpm@12.5.1",
@@ -61,6 +61,7 @@
     "codejar": "^4.3.0",
     "crx3": "^2.0.0",
     "knip": "^6.35.1",
+    "linkedom": "^0.18.13",
     "prismjs": "^1.30.0",
     "svelte": "^5.57.0",
     "svelte-check": "^4.7.6",
