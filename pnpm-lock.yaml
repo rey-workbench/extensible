@@ -196,6 +196,9 @@ importers:
       knip:
         specifier: ^6.35.1
         version: 6.35.1
+      linkedom:
+        specifier: ^0.18.13
+        version: 0.18.13
       prismjs:
         specifier: ^1.30.0
         version: 1.30.0
